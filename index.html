@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>QR Asset Scanner</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0A84FF">
+<link rel="apple-touch-icon" href="assets/iqs-logo.jpg">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="app">
+
+  <!-- LOGIN -->
+  <section id="screen-login">
+    <div class="logo-chip"><img src="assets/iqs-logo.jpg" alt="IQS"></div>
+    <h1>QR Asset Scanner</h1>
+    <input id="login-username" class="field" type="text" placeholder="Utente" autocomplete="username">
+    <input id="login-password" class="field" type="password" placeholder="Password" autocomplete="current-password">
+    <button id="login-btn" class="btn-primary">Entra</button>
+    <div id="login-error" class="error-text"></div>
+  </section>
+
+  <!-- SCAN -->
+  <section id="screen-scan" class="hidden">
+    <div class="logo-chip"><img src="assets/iqs-logo.jpg" alt="IQS"></div>
+    <div class="scan-body">
+      <video id="qr-video" playsinline muted></video>
+      <div class="viewfinder">
+        <div class="corner tl"></div><div class="corner tr"></div>
+        <div class="corner bl"></div><div class="corner br"></div>
+        <div class="scan-line"></div>
+        <svg class="qr-glyph" id="qr-glyph-idle" viewBox="0 0 100 100" fill="none" stroke="#fff" stroke-width="4">
+          <rect x="10" y="10" width="30" height="30" rx="4"/>
+          <rect x="60" y="10" width="30" height="30" rx="4"/>
+          <rect x="10" y="60" width="30" height="30" rx="4"/>
+          <rect x="60" y="60" width="12" height="12" rx="2"/>
+          <rect x="78" y="60" width="12" height="12" rx="2"/>
+          <rect x="60" y="78" width="12" height="12" rx="2"/>
+          <rect x="78" y="78" width="12" height="12" rx="2"/>
+        </svg>
+      </div>
+      <div class="scan-hint" id="scan-hint">Inquadra il QR code sull'attrezzatura</div>
+    </div>
+    <div class="scan-cta">
+      <button id="scan-btn" class="btn-primary">Scansiona QR</button>
+    </div>
+  </section>
+
+  <!-- CONFIRM -->
+  <section id="screen-confirm" class="hidden">
+    <div class="confirm-header">
+      <button id="confirm-cancel" class="link-btn">Annulla</button>
+      <div class="confirm-title">Nuovo asset</div>
+      <button id="confirm-save" class="link-btn" disabled>Salva</button>
+    </div>
+    <div class="confirm-scroll">
+      <div class="card">
+        <div class="card-header">
+          <span class="section-title">Dati scansionati</span>
+          <span class="section-hint">modificabili se errati</span>
+        </div>
+        <div class="row"><label>Item N°</label><input id="f-itemNo" type="text"></div>
+        <div class="row"><label>Pipe N°</label><input id="f-pipeNo" type="text"></div>
+        <div class="row"><label>CS Heat</label><input id="f-csHeat" type="text"></div>
+        <div class="row"><label>CRA Heat</label><input id="f-craHeat" type="text"></div>
+        <div class="row"><label>Length</label><input id="f-length" type="text"></div>
+        <div class="row"><label>Data scansione</label><span class="readonly" id="f-scannedAt">-</span></div>
+      </div>
+
+      <button id="whatsapp-confirm-btn" class="whatsapp-btn">
+        <svg viewBox="0 0 32 32"><path d="M16 3C9 3 3.3 8.7 3.3 15.7c0 2.4.6 4.6 1.8 6.6L3 29l6.9-2c1.9 1 4 1.6 6.1 1.6 7 0 12.7-5.7 12.7-12.7S23 3 16 3zm0 23.2c-1.9 0-3.7-.5-5.3-1.5l-.4-.2-4.1 1.2 1.2-4-.2-.4c-1.1-1.7-1.6-3.6-1.6-5.6 0-5.8 4.7-10.5 10.5-10.5s10.4 4.7 10.4 10.5S21.8 26.2 16 26.2zm5.7-7.8c-.3-.2-1.8-.9-2.1-1s-.5-.2-.7.2-.8 1-.9 1.1-.3.2-.6 0a8.3 8.3 0 0 1-4-3.5c-.3-.5.3-.5.8-1.6.1-.2.1-.4 0-.5s-.7-1.7-1-2.3c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4s-1 1-1 2.4 1 2.8 1.2 3 2 3 4.7 4.3c2.8 1.2 2.8.8 3.3.8s1.7-.7 1.9-1.4.2-1.2.2-1.3-.2-.2-.5-.3z"/></svg>
+        Condividi su WhatsApp
+      </button>
+
+      <div class="card">
+        <div class="card-header"><span class="section-title">Da completare</span></div>
+        <div class="row" style="border-top:none;padding-bottom:0"><label>ITP Step *</label></div>
+        <div class="chip-group" id="itp-chips"></div>
+        <div class="row" style="border-top:0.5px solid var(--border-light);padding-bottom:0"><label>Condizione *</label></div>
+        <div class="chip-group" id="cond-chips"></div>
+        <div class="row" style="border-top:0.5px solid var(--border-light);display:block;padding-bottom:12px">
+          <label style="display:block;margin-bottom:6px">Commenti</label>
+          <textarea id="f-comment" class="field" rows="3" placeholder="Note su condizioni, danni, manutenzione..."></textarea>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DATASET -->
+  <section id="screen-dataset" class="hidden">
+    <div class="top-strip">
+      <div style="width:24px"></div>
+      <div class="logo-chip" style="padding:0"><img src="assets/iqs-logo.jpg" alt="IQS" style="height:28px"></div>
+      <button id="admin-gear" class="admin-gear hidden" title="Gestione ispettori">&#9881;</button>
+    </div>
+    <div class="large-title">Dataset asset</div>
+    <div class="search-wrap">
+      <input id="search-input" class="field" type="text" placeholder="Cerca per Pipe N°, Item N°...">
+    </div>
+    <div class="dataset-list" id="dataset-list"></div>
+    <nav class="tab-bar">
+      <button class="tab-btn" data-tab="scan">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="3" height="3"/><rect x="18" y="14" width="3" height="3"/><rect x="14" y="18" width="3" height="3"/><rect x="18" y="18" width="3" height="3"/></svg>
+        Scansiona
+      </button>
+      <button class="tab-btn active" data-tab="dataset">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
+        <span id="tab-dataset-label">Dataset (0)</span>
+      </button>
+    </nav>
+  </section>
+
+  <!-- DETAIL -->
+  <section id="screen-detail" class="hidden">
+    <button id="detail-back" class="back-link">&lsaquo; Dataset</button>
+    <div class="logo-chip"><img src="assets/iqs-logo.jpg" alt="IQS"></div>
+    <div class="detail-title" id="d-pipeNo">-</div>
+    <span class="badge" id="d-badge"></span>
+    <div style="height:16px"></div>
+    <button id="whatsapp-detail-btn" class="whatsapp-btn">
+      <svg viewBox="0 0 32 32"><path d="M16 3C9 3 3.3 8.7 3.3 15.7c0 2.4.6 4.6 1.8 6.6L3 29l6.9-2c1.9 1 4 1.6 6.1 1.6 7 0 12.7-5.7 12.7-12.7S23 3 16 3zm0 23.2c-1.9 0-3.7-.5-5.3-1.5l-.4-.2-4.1 1.2 1.2-4-.2-.4c-1.1-1.7-1.6-3.6-1.6-5.6 0-5.8 4.7-10.5 10.5-10.5s10.4 4.7 10.4 10.5S21.8 26.2 16 26.2zm5.7-7.8c-.3-.2-1.8-.9-2.1-1s-.5-.2-.7.2-.8 1-.9 1.1-.3.2-.6 0a8.3 8.3 0 0 1-4-3.5c-.3-.5.3-.5.8-1.6.1-.2.1-.4 0-.5s-.7-1.7-1-2.3c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4s-1 1-1 2.4 1 2.8 1.2 3 2 3 4.7 4.3c2.8 1.2 2.8.8 3.3.8s1.7-.7 1.9-1.4.2-1.2.2-1.3-.2-.2-.5-.3z"/></svg>
+      Condividi su WhatsApp
+    </button>
+    <div class="card">
+      <div class="row"><label>Item N°</label><span class="readonly" id="d-itemNo"></span></div>
+      <div class="row"><label>CS Heat</label><span class="readonly" id="d-csHeat"></span></div>
+      <div class="row"><label>CRA Heat</label><span class="readonly" id="d-craHeat"></span></div>
+      <div class="row"><label>Length</label><span class="readonly" id="d-length"></span></div>
+      <div class="row"><label>ITP Step</label><span class="readonly" id="d-itpStep"></span></div>
+      <div class="row"><label>Scansionato da</label><span class="readonly" id="d-scannedBy"></span></div>
+      <div class="row"><label>Scansionato il</label><span class="readonly" id="d-scannedAt"></span></div>
+    </div>
+    <div class="card hidden" id="d-comment-card">
+      <div class="card-header"><span class="section-title">Commenti</span></div>
+      <div class="row" style="border-top:none" id="d-comment"></div>
+    </div>
+  </section>
+
+  <!-- ADMIN -->
+  <section id="screen-admin" class="hidden">
+    <button id="admin-back" class="back-link">&lsaquo; Dataset</button>
+    <div class="large-title" style="padding-left:0">Gestione ispettori</div>
+    <div class="card">
+      <div class="row"><label>Username</label><input id="a-username" class="field" style="text-align:left" placeholder="es. mrossi"></div>
+      <div class="row"><label>Nome</label><input id="a-name" class="field" style="text-align:left" placeholder="Mario Rossi"></div>
+      <div class="row"><label>Password</label><input id="a-password" class="field" style="text-align:left" placeholder="password iniziale"></div>
+      <div class="row" style="justify-content:flex-end">
+        <button id="a-add-btn" class="btn-primary" style="width:auto;padding:0 20px;height:40px">Aggiungi ispettore</button>
+      </div>
+    </div>
+    <div class="card" id="a-user-list"></div>
+  </section>
+
+</div>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

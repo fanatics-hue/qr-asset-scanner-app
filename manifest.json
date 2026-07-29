@@ -1,0 +1,12 @@
+{
+  "name": "QR Asset Scanner",
+  "short_name": "QR Scanner",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#F2F2F7",
+  "theme_color": "#0A84FF",
+  "icons": [
+    { "src": "assets/iqs-logo.jpg", "sizes": "192x192", "type": "image/jpeg" },
+    { "src": "assets/iqs-logo.jpg", "sizes": "512x512", "type": "image/jpeg" }
+  ]
+}
