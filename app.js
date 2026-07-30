@@ -250,6 +250,8 @@ async function refreshVideoDevices() {
 let camPath = '';
 let camError = '';
 let focusInfo = '';
+let imageCapture = null;
+let usingPhotoCapture = false;
 async function startCamera() {
   try {
     const chosen = videoDevices[currentDeviceIndex];
@@ -288,6 +290,10 @@ async function startCamera() {
         focusInfo = 'AF non esposto dal browser';
       }
     } catch (focusErr) { focusInfo = 'AF errore: ' + (focusErr.message || focusErr.name); }
+    try {
+      imageCapture = ('ImageCapture' in window) ? new window.ImageCapture(stream.getVideoTracks()[0]) : null;
+      if (imageCapture && typeof imageCapture.takePhoto !== 'function') imageCapture = null;
+    } catch (e) { imageCapture = null; }
     if (!videoDevices.length) await refreshVideoDevices(); // le etichette/ID sono affidabili solo dopo il permesso
   } catch (err) {
     el('scan-hint').textContent = t('scan_hint_camera_error') + err.message;
@@ -309,7 +315,7 @@ function stopCamera() {
 let scanStartedAt = 0;
 let scanAttempts = 0;
 
-function getViewfinderCropRect() {
+function getViewfinderCropFraction() {
   const vfEl = document.querySelector('.viewfinder');
   const videoRect = video.getBoundingClientRect();
   const vfRect = vfEl.getBoundingClientRect();
@@ -321,52 +327,76 @@ function getViewfinderCropRect() {
   const cropTopNative = (Hn - Hc / s) / 2;
   const vfXCss = vfRect.left - videoRect.left;
   const vfYCss = vfRect.top - videoRect.top;
-  return {
-    x: cropLeftNative + vfXCss / s,
-    y: cropTopNative + vfYCss / s,
-    w: vfRect.width / s,
-    h: vfRect.height / s
-  };
+  const x = cropLeftNative + vfXCss / s;
+  const y = cropTopNative + vfYCss / s;
+  const w = vfRect.width / s;
+  const h = vfRect.height / s;
+  const pad = 0.3; // margine extra, in caso il QR non sia perfettamente centrato
+  const px = Math.max(0, x - w * pad);
+  const py = Math.max(0, y - h * pad);
+  const pw = Math.min(Wn - px, w * (1 + pad * 2));
+  const ph = Math.min(Hn - py, h * (1 + pad * 2));
+  return { fx: px / Wn, fy: py / Hn, fw: pw / Wn, fh: ph / Hn };
+}
+
+function cropDrawToCanvas(source, srcW, srcH) {
+  const frac = getViewfinderCropFraction();
+  let sx = 0, sy = 0, sw = srcW, sh = srcH;
+  if (frac) {
+    sx = frac.fx * srcW; sy = frac.fy * srcH;
+    sw = frac.fw * srcW; sh = frac.fh * srcH;
+  }
+  canvas.width = sw;
+  canvas.height = sh;
+  ctx2d.drawImage(source, sx, sy, sw, sh, 0, 0, sw, sh);
+}
+
+async function decodeCanvasAndHandle(sourceLabel) {
+  let decoded = null;
+  let engine = 'jsQR';
+  if (barcodeDetector) {
+    engine = 'nativo';
+    try {
+      const results = await barcodeDetector.detect(canvas);
+      if (results && results.length) decoded = results[0].rawValue;
+    } catch (e) { /* fallback sotto */ }
+  }
+  if (!decoded) {
+    const imageData = ctx2d.getImageData(0, 0, canvas.width, canvas.height);
+    const code = window.jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'attemptBoth' });
+    if (code && code.data) { decoded = code.data; engine = barcodeDetector ? 'nativo->jsQR' : 'jsQR'; }
+  }
+  scanAttempts++;
+  el('scan-debug').textContent = `${Math.round(canvas.width)}x${Math.round(canvas.height)} · ${sourceLabel} · ${engine} · ${focusInfo} · ${scanAttempts} tentativi`;
+  if (decoded) {
+    onQrDecoded(decoded);
+    return true;
+  }
+  if (scanStartedAt && Date.now() - scanStartedAt > 6000) {
+    el('scan-hint').textContent = t('scan_hint_tip');
+  }
+  return false;
+}
+
+async function photoCaptureLoop() {
+  if (!state.scanning) return;
+  try {
+    const blob = await imageCapture.takePhoto();
+    const bitmap = await createImageBitmap(blob);
+    cropDrawToCanvas(bitmap, bitmap.width, bitmap.height);
+    if (bitmap.close) bitmap.close();
+    const done = await decodeCanvasAndHandle('foto');
+    if (done) return;
+  } catch (e) { /* riprova al prossimo giro */ }
+  if (state.scanning) setTimeout(photoCaptureLoop, 500);
 }
 
 async function scanFrame() {
+  if (!state.scanning) return;
   if (video.videoWidth > 0 && video.videoHeight > 0) {
-    const crop = getViewfinderCropRect();
-    let sx = 0, sy = 0, sw = video.videoWidth, sh = video.videoHeight;
-    if (crop && crop.w > 0 && crop.h > 0) {
-      const pad = 0.3; // margine extra attorno al mirino, in caso il QR non sia perfettamente centrato
-      sx = Math.max(0, crop.x - crop.w * pad);
-      sy = Math.max(0, crop.y - crop.h * pad);
-      sw = Math.min(video.videoWidth - sx, crop.w * (1 + pad * 2));
-      sh = Math.min(video.videoHeight - sy, crop.h * (1 + pad * 2));
-    }
-    canvas.width = sw;
-    canvas.height = sh;
-    ctx2d.drawImage(video, sx, sy, sw, sh, 0, 0, sw, sh);
-
-    let decoded = null;
-    let engine = 'jsQR';
-    if (barcodeDetector) {
-      engine = 'nativo';
-      try {
-        const results = await barcodeDetector.detect(canvas);
-        if (results && results.length) decoded = results[0].rawValue;
-      } catch (e) { /* fallback sotto */ }
-    }
-    if (!decoded) {
-      const imageData = ctx2d.getImageData(0, 0, canvas.width, canvas.height);
-      const code = window.jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'attemptBoth' });
-      if (code && code.data) { decoded = code.data; engine = barcodeDetector ? 'nativo->jsQR' : 'jsQR'; }
-    }
-    scanAttempts++;
-    el('scan-debug').textContent = `${Math.round(sw)}x${Math.round(sh)} · ${engine} · ${focusInfo} · ${scanAttempts} tentativi`;
-    if (decoded) {
-      onQrDecoded(decoded);
-      return;
-    }
-    if (scanStartedAt && Date.now() - scanStartedAt > 6000) {
-      el('scan-hint').textContent = t('scan_hint_tip');
-    }
+    cropDrawToCanvas(video, video.videoWidth, video.videoHeight);
+    const done = await decodeCanvasAndHandle('video');
+    if (done) return;
   }
   scanLoopId = requestAnimationFrame(scanFrame);
 }
@@ -423,7 +453,13 @@ async function beginScan() {
     await startCamera();
     scanStartedAt = Date.now();
     scanAttempts = 0;
-    scanFrame();
+    if (imageCapture) {
+      usingPhotoCapture = true;
+      photoCaptureLoop();
+    } else {
+      usingPhotoCapture = false;
+      scanFrame();
+    }
   } catch (e) {
     state.scanning = false;
     el('scan-btn').textContent = t('scan_btn');
