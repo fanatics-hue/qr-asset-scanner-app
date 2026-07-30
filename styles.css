@@ -205,10 +205,10 @@ textarea.field { resize: vertical; font-family: inherit; }
   transition: background 0.12s ease, border-left-color 0.12s ease;
 }
 .list-row:hover, .list-row:focus-visible { background: var(--bg-input); }
-.list-row:has(.badge-excellent) { border-left-color: var(--green); }
-.list-row:has(.badge-good) { border-left-color: var(--blue-c); }
-.list-row:has(.badge-needs-review) { border-left-color: var(--orange); }
-.list-row:has(.badge-damaged) { border-left-color: var(--red); }
+.list-row.row-excellent { border-left-color: var(--green); }
+.list-row.row-good { border-left-color: var(--blue-c); }
+.list-row.row-needs-review { border-left-color: var(--orange); }
+.list-row.row-damaged { border-left-color: var(--red); }
 .list-row:first-child { border-top: none; }
 .list-row .info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .list-row .pipe { font-weight: 600; font-size: 16px; }

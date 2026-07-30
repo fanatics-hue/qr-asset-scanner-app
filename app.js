@@ -450,7 +450,7 @@ function renderDatasetList() {
   card.className = 'list-card';
   filtered.forEach(r => {
     const row = document.createElement('div');
-    row.className = 'list-row';
+    row.className = 'list-row row-' + r.condition;
     row.setAttribute('role', 'button');
     row.setAttribute('tabindex', '0');
     const dateStr = r.scannedAt ? new Date(r.scannedAt).toLocaleDateString(t('locale')) : '';
