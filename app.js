@@ -286,15 +286,45 @@ function stopCamera() {
 
 let scanStartedAt = 0;
 let scanAttempts = 0;
+
+function getViewfinderCropRect() {
+  const vfEl = document.querySelector('.viewfinder');
+  const videoRect = video.getBoundingClientRect();
+  const vfRect = vfEl.getBoundingClientRect();
+  const Wn = video.videoWidth, Hn = video.videoHeight;
+  const Wc = videoRect.width, Hc = videoRect.height;
+  if (!Wn || !Hn || !Wc || !Hc) return null;
+  const s = Math.max(Wc / Wn, Hc / Hn); // fattore di scala usato da object-fit:cover
+  const cropLeftNative = (Wn - Wc / s) / 2;
+  const cropTopNative = (Hn - Hc / s) / 2;
+  const vfXCss = vfRect.left - videoRect.left;
+  const vfYCss = vfRect.top - videoRect.top;
+  return {
+    x: cropLeftNative + vfXCss / s,
+    y: cropTopNative + vfYCss / s,
+    w: vfRect.width / s,
+    h: vfRect.height / s
+  };
+}
+
 function scanFrame() {
   if (video.videoWidth > 0 && video.videoHeight > 0) {
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    ctx2d.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const crop = getViewfinderCropRect();
+    let sx = 0, sy = 0, sw = video.videoWidth, sh = video.videoHeight;
+    if (crop && crop.w > 0 && crop.h > 0) {
+      const pad = 0.3; // margine extra attorno al mirino, in caso il QR non sia perfettamente centrato
+      sx = Math.max(0, crop.x - crop.w * pad);
+      sy = Math.max(0, crop.y - crop.h * pad);
+      sw = Math.min(video.videoWidth - sx, crop.w * (1 + pad * 2));
+      sh = Math.min(video.videoHeight - sy, crop.h * (1 + pad * 2));
+    }
+    canvas.width = sw;
+    canvas.height = sh;
+    ctx2d.drawImage(video, sx, sy, sw, sh, 0, 0, sw, sh);
     const imageData = ctx2d.getImageData(0, 0, canvas.width, canvas.height);
     const code = window.jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'attemptBoth' });
     scanAttempts++;
-    el('scan-debug').textContent = `${canvas.width}x${canvas.height} · ${camPath} · cam ${currentDeviceIndex + 1}/${videoDevices.length || 1} · ${scanAttempts} tentativi`;
+    el('scan-debug').textContent = `${Math.round(sw)}x${Math.round(sh)} (ritagliato) · ${camPath} · cam ${currentDeviceIndex + 1}/${videoDevices.length || 1} · ${scanAttempts} tentativi`;
     if (code && code.data) {
       onQrDecoded(code.data);
       return;
