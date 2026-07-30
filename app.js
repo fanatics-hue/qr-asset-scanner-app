@@ -6,11 +6,12 @@ const TRANSLATIONS = {
     login_password_ph: 'Password',
     login_btn: 'Entra',
     login_err_missing: 'Inserisci utente e password',
-    scan_hint_idle: "Inquadra il QR code sull'attrezzatura",
-    scan_hint_scanning: 'Scansione in corso...',
+    scan_hint_idle: 'Tocca il pulsante per scattare una foto del QR',
+    scan_hint_scanning: 'Analisi della foto in corso...',
     scan_hint_tip: 'Avvicina o allontana il telefono e assicurati che ci sia buona luce',
+    scan_hint_no_code_found: 'Nessun QR trovato nella foto, riprova (avvicinati e assicurati che sia a fuoco)',
     camera_flip_title: 'Cambia fotocamera',
-    scan_hint_camera_error: 'Fotocamera non disponibile: ',
+    scan_hint_camera_error: 'Errore: ',
     scan_btn: 'Scansiona QR',
     scan_btn_scanning: 'Scansione...',
     confirm_cancel: 'Annulla',
@@ -62,11 +63,12 @@ const TRANSLATIONS = {
     login_password_ph: 'Password',
     login_btn: 'Log in',
     login_err_missing: 'Enter username and password',
-    scan_hint_idle: 'Point the camera at the QR code on the equipment',
-    scan_hint_scanning: 'Scanning...',
+    scan_hint_idle: 'Tap the button to take a photo of the QR code',
+    scan_hint_scanning: 'Analyzing photo...',
     scan_hint_tip: 'Move the phone closer or further away and make sure there is good light',
+    scan_hint_no_code_found: 'No QR code found in the photo, try again (get closer and make sure it is in focus)',
     camera_flip_title: 'Switch camera',
-    scan_hint_camera_error: 'Camera not available: ',
+    scan_hint_camera_error: 'Error: ',
     scan_btn: 'Scan QR',
     scan_btn_scanning: 'Scanning...',
     confirm_cancel: 'Cancel',
@@ -237,10 +239,8 @@ document.querySelector('.scan-body').appendChild(canvas);
 
 el('save-frame-btn').addEventListener('click', () => {
   const dataUrl = canvas.toDataURL('image/png');
-  const win = window.open('', '_blank');
-  if (win) {
-    win.document.write('<title>Ritaglio analizzato</title><body style="margin:0;background:#111"><img src="' + dataUrl + '" style="max-width:100%;display:block;margin:auto"></body>');
-  } else {
+  const win = window.open(dataUrl, '_blank');
+  if (!win) {
     alert('Popup bloccato: consenti i popup per questo sito e riprova.');
   }
 });
@@ -456,46 +456,56 @@ function onQrDecoded(text) {
   openConfirm(parsed);
 }
 
-async function beginScan() {
-  state.scanning = true;
-  el('scan-btn').textContent = t('scan_btn_scanning');
-  el('scan-btn').disabled = true;
-  el('scan-hint').textContent = t('scan_hint_scanning');
-  document.querySelector('.viewfinder').classList.add('scanning');
-  try {
-    await startCamera();
-    scanStartedAt = Date.now();
-    scanAttempts = 0;
-    if (imageCapture) {
-      usingPhotoCapture = true;
-      photoCaptureLoop();
-    } else {
-      usingPhotoCapture = false;
-      scanFrame();
-    }
-  } catch (e) {
-    state.scanning = false;
-    el('scan-btn').textContent = t('scan_btn');
-    el('scan-btn').disabled = false;
-  }
-}
-
+// Scansione basata su scatto reale con l'app fotocamera nativa del telefono
+// (piu' affidabile del flusso video live del browser, vedi note in LL register)
 el('scan-btn').addEventListener('click', () => {
-  if (state.scanning) return;
-  beginScan();
+  el('photo-input').click();
 });
 
-el('camera-flip-btn').addEventListener('click', async () => {
-  if (videoDevices.length > 1) {
-    currentDeviceIndex = (currentDeviceIndex + 1) % videoDevices.length;
-  } else {
-    state.facingMode = state.facingMode === 'environment' ? 'user' : 'environment';
+el('photo-input').addEventListener('change', async (e) => {
+  const file = e.target.files && e.target.files[0];
+  e.target.value = ''; // permette di riselezionare la stessa foto in futuro
+  if (!file) return;
+  el('scan-hint').textContent = t('scan_hint_scanning');
+  el('scan-debug').textContent = '';
+  try {
+    const bitmap = await createImageBitmap(file);
+    canvas.width = bitmap.width;
+    canvas.height = bitmap.height;
+    ctx2d.drawImage(bitmap, 0, 0);
+    if (bitmap.close) bitmap.close();
+
+    let decoded = null;
+    let nativeStatus = '';
+    if (barcodeDetector) {
+      try {
+        const results = await barcodeDetector.detect(canvas);
+        if (results && results.length) {
+          // preferisce il codice che rispetta il formato noto Ordine-Item-Tubo, ignorando eventuali QR decorativi sull'etichetta
+          const preferred = results.find(r => /^\d+-\d+-\d+$/.test((r.rawValue || '').trim()));
+          decoded = (preferred || results[0]).rawValue;
+          nativeStatus = 'nativo:OK (' + results.length + ' trovati)';
+        } else {
+          nativeStatus = 'nativo:0risultati';
+        }
+      } catch (err) { nativeStatus = 'nativo:ERRORE(' + (err.name || err.message) + ')'; }
+    } else {
+      nativeStatus = 'nativo:non-disponibile';
+    }
+    if (!decoded) {
+      const imageData = ctx2d.getImageData(0, 0, canvas.width, canvas.height);
+      const code = window.jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'attemptBoth' });
+      if (code && code.data) decoded = code.data;
+    }
+    el('scan-debug').textContent = `${canvas.width}x${canvas.height} · ${nativeStatus}`;
+    if (decoded) {
+      onQrDecoded(decoded);
+    } else {
+      el('scan-hint').textContent = t('scan_hint_no_code_found');
+    }
+  } catch (err) {
+    el('scan-hint').textContent = t('scan_hint_camera_error') + (err.message || err.name);
   }
-  if (state.scanning) {
-    stopCamera();
-    await new Promise(r => setTimeout(r, 200)); // lascia il tempo all'hardware di rilasciare la fotocamera precedente
-  }
-  await beginScan();
 });
 
 // ---------------- Confirm ----------------

@@ -26,14 +26,7 @@
   <!-- SCAN -->
   <section id="screen-scan" class="hidden">
     <div class="logo-chip"><img src="assets/iqs-logo.jpg" alt="IQS"></div>
-    <button id="camera-flip-btn" class="camera-flip-btn" data-i18n-title="camera_flip_title" title="Cambia fotocamera">
-      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M17 3l4 4-4 4"/>
-        <path d="M21 7H8a4 4 0 0 0-4 4"/>
-        <path d="M7 21l-4-4 4-4"/>
-        <path d="M3 17h13a4 4 0 0 0 4-4"/>
-      </svg>
-    </button>
+    <input type="file" accept="image/*" capture="environment" id="photo-input" style="display:none">
     <div class="scan-body">
       <video id="qr-video" playsinline muted></video>
       <div class="viewfinder">
@@ -50,7 +43,7 @@
           <rect x="78" y="78" width="12" height="12" rx="2"/>
         </svg>
       </div>
-      <div class="scan-hint" id="scan-hint" data-i18n="scan_hint_idle">Inquadra il QR code sull'attrezzatura</div>
+      <div class="scan-hint" id="scan-hint" data-i18n="scan_hint_idle">Tocca il pulsante per scattare una foto del QR</div>
       <div class="scan-debug" id="scan-debug"></div>
       <button id="save-frame-btn" class="save-frame-btn">Salva immagine analizzata</button>
     </div>
@@ -166,6 +159,6 @@
 
 </div>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
-<script src="app.js?v=9"></script>
+<script src="app.js?v=10"></script>
 </body>
 </html>
