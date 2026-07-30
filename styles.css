@@ -102,7 +102,15 @@ html, body {
   color: #fff;
   overflow-y: auto;
   min-height: 0;
+  position: relative;
 }
+.camera-flip-btn {
+  position: absolute; top: 14px; right: 16px; z-index: 3;
+  width: 40px; height: 40px; border-radius: 50%;
+  background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3);
+  display: flex; align-items: center; justify-content: center; cursor: pointer;
+}
+.camera-flip-btn svg { width: 20px; height: 20px; }
 .scan-body {
   flex: 1;
   display: flex;

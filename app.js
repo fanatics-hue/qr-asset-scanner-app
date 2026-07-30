@@ -9,6 +9,7 @@ const TRANSLATIONS = {
     scan_hint_idle: "Inquadra il QR code sull'attrezzatura",
     scan_hint_scanning: 'Scansione in corso...',
     scan_hint_tip: 'Avvicina o allontana il telefono e assicurati che ci sia buona luce',
+    camera_flip_title: 'Cambia fotocamera',
     scan_hint_camera_error: 'Fotocamera non disponibile: ',
     scan_btn: 'Scansiona QR',
     scan_btn_scanning: 'Scansione...',
@@ -64,6 +65,7 @@ const TRANSLATIONS = {
     scan_hint_idle: 'Point the camera at the QR code on the equipment',
     scan_hint_scanning: 'Scanning...',
     scan_hint_tip: 'Move the phone closer or further away and make sure there is good light',
+    camera_flip_title: 'Switch camera',
     scan_hint_camera_error: 'Camera not available: ',
     scan_btn: 'Scan QR',
     scan_btn_scanning: 'Scanning...',
@@ -134,7 +136,8 @@ const state = {
   selectedId: null,
   session: null,
   meta: { itpSteps: [], conditions: [] },
-  lang: localStorage.getItem('qr_lang') || 'it'
+  lang: localStorage.getItem('qr_lang') || 'it',
+  facingMode: 'environment'
 };
 
 const el = (id) => document.getElementById(id);
@@ -231,7 +234,7 @@ async function startCamera() {
   try {
     const constraints = {
       video: {
-        facingMode: { ideal: 'environment' },
+        facingMode: { ideal: state.facingMode },
         width: { ideal: 1920 },
         height: { ideal: 1080 }
       }
@@ -240,7 +243,7 @@ async function startCamera() {
       stream = await navigator.mediaDevices.getUserMedia(constraints);
     } catch (e) {
       // alcuni telefoni rifiutano width/height ideal troppo alti insieme a facingMode: riprova piu' semplice
-      stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+      stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: state.facingMode } });
     }
     video.srcObject = stream;
     await video.play();
@@ -330,8 +333,7 @@ function onQrDecoded(text) {
   openConfirm(parsed);
 }
 
-el('scan-btn').addEventListener('click', async () => {
-  if (state.scanning) return;
+async function beginScan() {
   state.scanning = true;
   el('scan-btn').textContent = t('scan_btn_scanning');
   el('scan-btn').disabled = true;
@@ -346,6 +348,19 @@ el('scan-btn').addEventListener('click', async () => {
     state.scanning = false;
     el('scan-btn').textContent = t('scan_btn');
     el('scan-btn').disabled = false;
+  }
+}
+
+el('scan-btn').addEventListener('click', () => {
+  if (state.scanning) return;
+  beginScan();
+});
+
+el('camera-flip-btn').addEventListener('click', async () => {
+  state.facingMode = state.facingMode === 'environment' ? 'user' : 'environment';
+  if (state.scanning) {
+    stopCamera();
+    await beginScan();
   }
 });
 
