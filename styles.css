@@ -162,6 +162,7 @@ textarea.field { resize: vertical; font-family: inherit; }
 .list-row .meta { font-size: 13px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .list-row .right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 .chevron { color: var(--text-tertiary); font-size: 18px; }
+.delete-row-btn { background: none; border: none; font-size: 16px; cursor: pointer; padding: 4px; color: var(--red); }
 
 .badge {
   font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 8px; white-space: nowrap;

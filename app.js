@@ -55,6 +55,7 @@ const TRANSLATIONS = {
     err_generic: 'Errore: ',
     err_fill_all: 'Compila tutti i campi',
     confirm_remove_user: 'Rimuovere {u}?',
+    confirm_remove_record: 'Eliminare questo record? L\'operazione non e\' reversibile.',
     cond_excellent: 'Ottimo',
     cond_good: 'Buono',
     cond_needsreview: 'Da revisionare',
@@ -119,6 +120,7 @@ const TRANSLATIONS = {
     err_generic: 'Error: ',
     err_fill_all: 'Fill in all fields',
     confirm_remove_user: 'Remove {u}?',
+    confirm_remove_record: 'Delete this record? This cannot be undone.',
     cond_excellent: 'Excellent',
     cond_good: 'Good',
     cond_needsreview: 'Needs review',
@@ -152,7 +154,13 @@ const state = {
   selectedId: null,
   session: null,
   meta: { itpSteps: [], conditions: [] },
-  lang: localStorage.getItem('qr_lang') || 'it'
+  lang: localStorage.getItem('qr_lang') || 'it',
+  productionMap: new Map()
+};
+
+const prodKey = (itemNo, pipeNo) => {
+  const norm = (v) => { const n = parseInt(String(v || '').trim(), 10); return isNaN(n) ? String(v || '').trim() : String(n); };
+  return norm(itemNo) + '-' + norm(pipeNo);
 };
 
 const el = (id) => document.getElementById(id);
@@ -234,7 +242,16 @@ async function afterLogin() {
     state.meta = await api('/api/meta');
   } catch (e) { state.meta = { itpSteps: [], conditions: CONDITION_CODES }; }
   await loadRecords();
+  loadProductionData(); // in background, non blocca l'ingresso in dataset
   showScreen('dataset');
+}
+
+async function loadProductionData() {
+  try {
+    const data = await api('/api/production-data');
+    state.productionMap = new Map();
+    (data.records || []).forEach(r => state.productionMap.set(prodKey(r.itemNo, r.pipeNo), r));
+  } catch (e) { /* nessun dato di produzione disponibile, l'inserimento resta manuale */ }
 }
 
 // ---------------- Nuovo asset ----------------
@@ -292,6 +309,26 @@ function updateSaveState() {
   });
 });
 el('f-comment').addEventListener('input', () => { state.draft.comment = el('f-comment').value; });
+
+// Auto-compilazione da dati di produzione (Raw data COMP3B): quando Item N. e Pipe N. sono
+// entrambi valorizzati e corrispondono a un tubo noto, riempie CS Heat/CRA Heat/Length (solo se
+// vuoti, non sovrascrive correzioni manuali) e suggerisce l'ITP Step in base all'ultima fase completata.
+function tryAutoFillFromProduction() {
+  const itemNo = el('f-itemNo').value.trim();
+  const pipeNo = el('f-pipeNo').value.trim();
+  if (!itemNo || !pipeNo) return;
+  const match = state.productionMap.get(prodKey(itemNo, pipeNo));
+  if (!match) return;
+  if (!el('f-csHeat').value.trim() && match.csHeat) { el('f-csHeat').value = match.csHeat; state.draft.csHeat = match.csHeat; }
+  if (!el('f-craHeat').value.trim() && match.craHeat) { el('f-craHeat').value = match.craHeat; state.draft.craHeat = match.craHeat; }
+  if (!el('f-length').value.trim() && match.length) { el('f-length').value = match.length; state.draft.length = match.length; }
+  if (!state.draft.itpStep && match.currentStep) {
+    state.draft.itpStep = match.currentStep;
+    renderChips();
+    updateSaveState();
+  }
+}
+['f-itemNo', 'f-pipeNo'].forEach(id => el(id).addEventListener('input', tryAutoFillFromProduction));
 
 el('confirm-cancel').addEventListener('click', () => {
   state.draft = null;
@@ -377,6 +414,7 @@ function renderDatasetList() {
     row.setAttribute('role', 'button');
     row.setAttribute('tabindex', '0');
     const dateStr = r.scannedAt ? new Date(r.scannedAt).toLocaleDateString(t('locale')) : '';
+    const isAdmin = state.session && state.session.role === 'admin';
     row.innerHTML = `
       <div class="info">
         <span class="pipe">${escapeHtml(r.pipeNo || '-')}</span>
@@ -384,10 +422,23 @@ function renderDatasetList() {
       </div>
       <div class="right">
         <span class="badge badge-${r.condition}">${escapeHtml(condLabel(r.condition))}</span>
+        ${isAdmin ? `<button class="delete-row-btn" data-id="${escapeHtml(r.id)}" title="${escapeHtml(t('remove'))}">&#128465;</button>` : ''}
         <span class="chevron">&rsaquo;</span>
       </div>`;
     row.addEventListener('click', () => openDetail(r.id));
     row.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openDetail(r.id); } });
+    if (isAdmin) {
+      row.querySelector('.delete-row-btn').addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const id = e.currentTarget.dataset.id;
+        if (!confirm(t('confirm_remove_record'))) return;
+        try {
+          await api('/api/records/' + encodeURIComponent(id), { method: 'DELETE' });
+          state.records = state.records.filter(rec => rec.id !== id);
+          renderDatasetList();
+        } catch (err) { alert(t('err_generic') + err.message); }
+      });
+    }
     card.appendChild(row);
   });
   list.innerHTML = '';
