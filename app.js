@@ -229,11 +229,26 @@ const ctx2d = canvas.getContext('2d');
 
 async function startCamera() {
   try {
-    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+    const constraints = {
+      video: {
+        facingMode: { ideal: 'environment' },
+        width: { ideal: 1920 },
+        height: { ideal: 1080 }
+      }
+    };
+    try {
+      stream = await navigator.mediaDevices.getUserMedia(constraints);
+    } catch (e) {
+      // alcuni telefoni rifiutano width/height ideal troppo alti insieme a facingMode: riprova piu' semplice
+      stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+    }
     video.srcObject = stream;
     await video.play();
     video.classList.add('live');
     el('qr-glyph-idle').style.display = 'none';
+    const track = stream.getVideoTracks()[0];
+    const settings = track && track.getSettings ? track.getSettings() : {};
+    el('scan-debug').textContent = `${settings.width || video.videoWidth}x${settings.height || video.videoHeight}`;
   } catch (err) {
     el('scan-hint').textContent = t('scan_hint_camera_error') + err.message;
     throw err;
@@ -252,6 +267,7 @@ function stopCamera() {
 }
 
 let scanStartedAt = 0;
+let scanAttempts = 0;
 function scanFrame() {
   if (video.videoWidth > 0 && video.videoHeight > 0) {
     canvas.width = video.videoWidth;
@@ -259,6 +275,8 @@ function scanFrame() {
     ctx2d.drawImage(video, 0, 0, canvas.width, canvas.height);
     const imageData = ctx2d.getImageData(0, 0, canvas.width, canvas.height);
     const code = window.jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'attemptBoth' });
+    scanAttempts++;
+    el('scan-debug').textContent = `${canvas.width}x${canvas.height} · ${scanAttempts} tentativi`;
     if (code && code.data) {
       onQrDecoded(code.data);
       return;
@@ -322,6 +340,7 @@ el('scan-btn').addEventListener('click', async () => {
   try {
     await startCamera();
     scanStartedAt = Date.now();
+    scanAttempts = 0;
     scanFrame();
   } catch (e) {
     state.scanning = false;
