@@ -1,4 +1,5 @@
 const API_BASE = 'https://qr-scanner-api.fanatics.workers.dev';
+const APP_VERSION = 21;
 
 const TRANSLATIONS = {
   it: {
@@ -43,6 +44,8 @@ const TRANSLATIONS = {
     field_scannedBy: 'Scansionato da',
     field_scannedOn: 'Scansionato il',
     theme_toggle_title: 'Tema chiaro/scuro',
+    update_available: 'Nuova versione disponibile',
+    update_now: 'Aggiorna',
     admin_title: 'Gestione ispettori',
     admin_name: 'Nome',
     admin_username_ph: 'es. mrossi',
@@ -110,6 +113,8 @@ const TRANSLATIONS = {
     field_scannedBy: 'Scanned by',
     field_scannedOn: 'Scanned on',
     theme_toggle_title: 'Light/dark theme',
+    update_available: 'A new version is available',
+    update_now: 'Update',
     admin_title: 'Inspector management',
     admin_name: 'Name',
     admin_username_ph: 'e.g. jsmith',
@@ -636,3 +641,29 @@ if ('serviceWorker' in navigator) {
 if (window.caches) {
   caches.keys().then(keys => keys.forEach(k => caches.delete(k))).catch(() => {});
 }
+
+// ---------------- Controllo versione ----------------
+// GitHub Pages tiene index.html/css/js in cache lato server per ~10 min: invece di chiedere
+// all'utente di ricordarsi trucchi con ?t=, l'app stessa controlla se e' uscita una versione
+// piu' recente e propone un tasto per aggiornare al volo.
+function showUpdateBanner() {
+  if (el('update-banner')) return;
+  const b = document.createElement('div');
+  b.id = 'update-banner';
+  b.className = 'update-banner';
+  b.innerHTML = `<span>${escapeHtml(t('update_available'))}</span><button id="update-banner-btn">${escapeHtml(t('update_now'))}</button>`;
+  document.body.appendChild(b);
+  el('update-banner-btn').addEventListener('click', () => {
+    location.href = location.pathname + '?t=' + Date.now();
+  });
+}
+async function checkForUpdate() {
+  try {
+    const res = await fetch('version.json?_=' + Date.now(), { cache: 'no-store' });
+    const data = await res.json();
+    if (data.version && data.version > APP_VERSION) showUpdateBanner();
+  } catch (e) { /* offline o rete assente: nessun banner, non e' un errore da mostrare */ }
+}
+checkForUpdate();
+setInterval(checkForUpdate, 5 * 60 * 1000);
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') checkForUpdate(); });
