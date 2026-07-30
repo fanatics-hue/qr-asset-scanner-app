@@ -37,7 +37,7 @@ const TRANSLATIONS = {
     dataset_title_short: 'Dataset',
     search_ph: 'Cerca per Pipe N°, Item N°...',
     dataset_empty: 'Nessun asset ancora scansionato',
-    tab_scan: 'Scansiona',
+    tab_scan: 'Nuovo asset',
     tab_dataset_prefix: 'Dataset',
     field_scannedBy: 'Scansionato da',
     field_scannedOn: 'Scansionato il',
@@ -101,7 +101,7 @@ const TRANSLATIONS = {
     dataset_title_short: 'Dataset',
     search_ph: 'Search by Pipe No., Item No...',
     dataset_empty: 'No assets scanned yet',
-    tab_scan: 'Scan',
+    tab_scan: 'New asset',
     tab_dataset_prefix: 'Dataset',
     field_scannedBy: 'Scanned by',
     field_scannedOn: 'Scanned on',
@@ -158,7 +158,7 @@ const state = {
 const el = (id) => document.getElementById(id);
 const t = (key) => (TRANSLATIONS[state.lang] && TRANSLATIONS[state.lang][key]) || key;
 const condLabel = (code) => t(condKey(code));
-const screens = ['login', 'scan', 'confirm', 'dataset', 'detail', 'admin'];
+const screens = ['login', 'confirm', 'dataset', 'detail', 'admin'];
 
 function translateBackendError(msg) {
   const entry = BACKEND_ERR_MAP[msg];
@@ -237,150 +237,11 @@ async function afterLogin() {
   showScreen('dataset');
 }
 
-// ---------------- Scan ----------------
-// Metodo principale: incolla il codice letto dalla Fotocamera nativa del telefono (affidabile al 100%,
-// vedi LL register - la decodifica QR in-browser su questa etichetta si e' rivelata inaffidabile
-// nonostante video live, foto alta risoluzione, autofocus continuo e decoder nativo del browser).
-const canvas = document.createElement('canvas');
-const ctx2d = canvas.getContext('2d');
-canvas.id = 'debug-canvas-preview';
-canvas.style.cssText = 'position:relative;width:120px;height:120px;border:2px solid #0A84FF;background:#000;object-fit:contain;margin:10px auto;display:block;';
-document.querySelector('.scan-body-light').appendChild(canvas);
-
-el('save-frame-btn').addEventListener('click', () => {
-  const dataUrl = canvas.toDataURL('image/png');
-  const win = window.open(dataUrl, '_blank');
-  if (!win) {
-    alert('Popup bloccato: consenti i popup per questo sito e riprova.');
-  }
-});
-
-let barcodeDetector = null;
-if ('BarcodeDetector' in window) {
-  try { barcodeDetector = new window.BarcodeDetector({ formats: ['qr_code'] }); } catch (e) { barcodeDetector = null; }
-}
-
-function submitScannedText(rawText) {
-  const parsed = parseQrPayload(rawText);
-  openConfirm(parsed);
-}
-
-el('paste-continue-btn').addEventListener('click', () => {
-  const val = el('paste-input').value.trim();
-  el('paste-error').textContent = '';
-  if (!val) { el('paste-error').textContent = t('paste_err_empty'); return; }
-  submitScannedText(val);
-  el('paste-input').value = '';
-});
-
-// ---------------- Fallback: scansione automatica dalla foto (tenuta come opzione secondaria) ----------------
-async function tryDetectOnRegion(bitmap, fraction) {
-  const bw = bitmap.width, bh = bitmap.height;
-  const cw = bw * fraction, ch = bh * fraction;
-  const cx = (bw - cw) / 2, cy = (bh - ch) / 2;
-  canvas.width = cw;
-  canvas.height = ch;
-  ctx2d.drawImage(bitmap, cx, cy, cw, ch, 0, 0, cw, ch);
-
-  let decoded = null;
-  let status = '';
-  if (barcodeDetector) {
-    try {
-      const results = await barcodeDetector.detect(canvas);
-      if (results && results.length) {
-        // preferisce il codice che rispetta il formato noto Ordine-Item-Tubo, ignorando eventuali QR decorativi sull'etichetta
-        const preferred = results.find(r => /^\d+-\d+-\d+$/.test((r.rawValue || '').trim()));
-        decoded = (preferred || results[0]).rawValue;
-        status = 'nativo:OK';
-      } else {
-        status = 'nativo:0risultati';
-      }
-    } catch (err) { status = 'nativo:ERRORE(' + (err.name || err.message) + ')'; }
-  } else {
-    status = 'nativo:non-disponibile';
-  }
-  if (!decoded) {
-    const imageData = ctx2d.getImageData(0, 0, canvas.width, canvas.height);
-    const code = window.jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'attemptBoth' });
-    if (code && code.data) { decoded = code.data; status += '+jsQR:OK'; }
-  }
-  return { decoded, status };
-}
-
-el('scan-btn').addEventListener('click', () => {
-  el('photo-input').click();
-});
-
-el('photo-input').addEventListener('change', async (e) => {
-  const file = e.target.files && e.target.files[0];
-  e.target.value = ''; // permette di riselezionare la stessa foto in futuro
-  if (!file) return;
-  el('scan-hint').classList.remove('hidden');
-  el('save-frame-btn').classList.remove('hidden');
-  el('scan-hint').textContent = t('scan_hint_scanning');
-  el('scan-debug').textContent = '';
-  try {
-    const bitmap = await createImageBitmap(file);
-    // prova l'immagine intera, poi ritagli via via piu' stretti al centro
-    // (dove presumibilmente e' inquadrato il QR target, ignorando i QR decorativi ai bordi dell'etichetta)
-    const attempts = [1, 0.6, 0.35, 0.2];
-    let decoded = null, lastStatus = '';
-    for (const fraction of attempts) {
-      const result = await tryDetectOnRegion(bitmap, fraction);
-      lastStatus = `ritaglio ${Math.round(fraction * 100)}% · ${result.status}`;
-      el('scan-debug').textContent = `${bitmap.width}x${bitmap.height} · ${lastStatus}`;
-      if (result.decoded) { decoded = result.decoded; break; }
-    }
-    if (bitmap.close) bitmap.close();
-    if (decoded) {
-      onQrDecoded(decoded);
-    } else {
-      el('scan-hint').textContent = t('scan_hint_no_code_found');
-    }
-  } catch (err) {
-    el('scan-hint').textContent = t('scan_hint_camera_error') + (err.message || err.name);
-  }
-});
-
-function parseQrPayload(text) {
-  const result = { itemNo: '', pipeNo: '', csHeat: '', craHeat: '', length: '' };
-  const clean = text.trim();
-  // formato reale etichetta EEW: "45650-00400-2458" = Ordine-Item-Tubo (CS/CRA Heat e Length non sono nel QR)
-  const dashMatch = clean.match(/^(\d+)-(\d+)-(\d+)$/);
-  if (dashMatch) {
-    result.itemNo = String(parseInt(dashMatch[2], 10));
-    result.pipeNo = dashMatch[3];
-    return result;
-  }
-  try {
-    const obj = JSON.parse(clean);
-    result.itemNo = obj.itemNo || obj.item || obj.ItemNo || obj['Item N°'] || '';
-    result.pipeNo = obj.pipeNo || obj.pipe || obj.PipeNo || obj['Pipe N°'] || '';
-    result.csHeat = obj.csHeat || obj['CS Heat'] || '';
-    result.craHeat = obj.craHeat || obj['CRA Heat'] || '';
-    result.length = obj.length || obj.Length || '';
-    return result;
-  } catch (e) { /* not JSON, try key:value pairs */ }
-  const pairs = clean.split(/[\n;]+/).map(s => s.trim()).filter(Boolean);
-  let matchedAny = false;
-  pairs.forEach(pair => {
-    const m = pair.match(/^([^:=]+)[:=]\s*(.*)$/);
-    if (!m) return;
-    const key = m[1].trim().toLowerCase();
-    const val = m[2].trim();
-    if (key.includes('item')) { result.itemNo = val; matchedAny = true; }
-    else if (key.includes('pipe')) { result.pipeNo = val; matchedAny = true; }
-    else if (key.includes('cs') && key.includes('heat')) { result.csHeat = val; matchedAny = true; }
-    else if (key.includes('cra') && key.includes('heat')) { result.craHeat = val; matchedAny = true; }
-    else if (key.includes('length')) { result.length = val; matchedAny = true; }
-  });
-  if (!matchedAny) result.pipeNo = clean; // fallback: testo grezzo, l'utente corregge a mano
-  return result;
-}
-
-function onQrDecoded(text) {
-  const parsed = parseQrPayload(text);
-  openConfirm(parsed);
+// ---------------- Nuovo asset ----------------
+// I dati identificativi (Item N°/Pipe N°) sono stampati in chiaro sull'etichetta accanto al QR:
+// niente scansione, si digitano direttamente (vedi LL register per il perche').
+function startManualEntry() {
+  openConfirm({});
 }
 
 // ---------------- Confirm ----------------
@@ -396,15 +257,6 @@ function openConfirm(parsed) {
   renderChips();
   updateSaveState();
   showScreen('confirm');
-  resetScanBtn();
-}
-
-function resetScanBtn() {
-  el('paste-input').value = '';
-  el('paste-error').textContent = '';
-  el('scan-hint').classList.add('hidden');
-  el('save-frame-btn').classList.add('hidden');
-  el('scan-debug').textContent = '';
 }
 
 function renderChips() {
@@ -443,7 +295,7 @@ el('f-comment').addEventListener('input', () => { state.draft.comment = el('f-co
 
 el('confirm-cancel').addEventListener('click', () => {
   state.draft = null;
-  showScreen('scan');
+  showScreen('dataset');
 });
 
 el('confirm-save').addEventListener('click', async () => {
@@ -551,7 +403,7 @@ el('search-input').addEventListener('input', renderDatasetList);
 document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     const tab = btn.dataset.tab;
-    if (tab === 'scan') showScreen('scan');
+    if (tab === 'scan') startManualEntry();
     else { loadRecords(); showScreen('dataset'); }
   });
 });

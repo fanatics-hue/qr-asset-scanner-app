@@ -7,7 +7,7 @@
 <link rel="manifest" href="manifest.json?v=1">
 <meta name="theme-color" content="#0A84FF">
 <link rel="apple-touch-icon" href="assets/iqs-logo.jpg">
-<link rel="stylesheet" href="styles.css?v=3">
+<link rel="stylesheet" href="styles.css?v=4">
 </head>
 <body>
 <div id="app">
@@ -21,26 +21,6 @@
     <input id="login-password" class="field" type="password" data-i18n-ph="login_password_ph" autocomplete="current-password">
     <button id="login-btn" class="btn-primary" data-i18n="login_btn">Entra</button>
     <div id="login-error" class="error-text"></div>
-  </section>
-
-  <!-- SCAN -->
-  <section id="screen-scan" class="hidden">
-    <div class="logo-chip"><img src="assets/iqs-logo.jpg" alt="IQS"></div>
-    <input type="file" accept="image/*" capture="environment" id="photo-input" style="display:none">
-    <div class="scan-body-light">
-      <div class="scan-instructions">
-        <div class="scan-step"><span class="scan-step-num">1</span><span data-i18n="paste_step1">Apri la Fotocamera del telefono (o Google Lens) e inquadra il QR sull'attrezzatura</span></div>
-        <div class="scan-step"><span class="scan-step-num">2</span><span data-i18n="paste_step2">Tocca il testo riconosciuto per copiarlo</span></div>
-        <div class="scan-step"><span class="scan-step-num">3</span><span data-i18n="paste_step3">Torna qui, incolla il codice e continua</span></div>
-      </div>
-      <input id="paste-input" class="field paste-input" type="text" inputmode="text" data-i18n-ph="paste_ph" autocomplete="off">
-      <button id="paste-continue-btn" class="btn-primary" data-i18n="paste_continue_btn">Continua</button>
-      <div class="paste-error" id="paste-error"></div>
-      <button id="scan-btn" class="link-btn secondary-scan-link" data-i18n="scan_btn_alt">Prova invece la scansione automatica dalla foto</button>
-      <div class="scan-hint hidden" id="scan-hint"></div>
-      <div class="scan-debug" id="scan-debug"></div>
-      <button id="save-frame-btn" class="save-frame-btn hidden">Salva immagine analizzata</button>
-    </div>
   </section>
 
   <!-- CONFIRM -->
@@ -97,8 +77,8 @@
     <div class="dataset-list" id="dataset-list"></div>
     <nav class="tab-bar">
       <button class="tab-btn" data-tab="scan">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="3" height="3"/><rect x="18" y="14" width="3" height="3"/><rect x="14" y="18" width="3" height="3"/><rect x="18" y="18" width="3" height="3"/></svg>
-        <span data-i18n="tab_scan">Scansiona</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        <span data-i18n="tab_scan">Nuovo asset</span>
       </button>
       <button class="tab-btn active" data-tab="dataset">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
@@ -149,7 +129,6 @@
   </section>
 
 </div>
-<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
-<script src="app.js?v=12"></script>
+<script src="app.js?v=13"></script>
 </body>
 </html>

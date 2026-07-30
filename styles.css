@@ -93,61 +93,6 @@ html, body {
 .btn-primary:disabled { opacity: 0.35; cursor: default; }
 .error-text { color: var(--red); font-size: 13px; text-align: center; min-height: 16px; }
 
-/* ---------- Scan ---------- */
-#screen-scan {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow-y: auto;
-  min-height: 0;
-  position: relative;
-}
-.scan-body-light {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  padding: 8px 24px calc(24px + env(safe-area-inset-bottom));
-  gap: 14px;
-}
-.scan-instructions {
-  background: var(--bg-card);
-  border-radius: 14px;
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  margin-top: 8px;
-}
-.scan-step {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  font-size: 15px;
-  color: var(--text-primary);
-}
-.scan-step-num {
-  flex-shrink: 0;
-  width: 24px; height: 24px;
-  border-radius: 50%;
-  background: var(--blue);
-  color: #fff;
-  font-size: 13px;
-  font-weight: 700;
-  display: flex; align-items: center; justify-content: center;
-}
-.paste-input { text-align: left; font-size: 16px; }
-.paste-error { color: var(--red); font-size: 13px; text-align: center; min-height: 16px; }
-.secondary-scan-link {
-  background: none; border: none; color: var(--text-secondary); font-size: 13px;
-  text-decoration: underline; cursor: pointer; padding: 8px 0; text-align: center;
-}
-.scan-hint { font-size: 13px; color: var(--text-secondary); text-align: center; padding: 0 8px; }
-.scan-debug { font-size: 11px; color: var(--text-tertiary); text-align: center; font-family: monospace; }
-.save-frame-btn {
-  margin: 4px auto 0; background: var(--bg-input); border: 1px solid var(--border);
-  color: var(--text-primary); border-radius: 8px; padding: 6px 12px; font-size: 12px; cursor: pointer;
-}
-
 /* ---------- Confirm ---------- */
 #screen-confirm { flex: 1; display: flex; flex-direction: column; min-height: 0; }
 .confirm-header {
