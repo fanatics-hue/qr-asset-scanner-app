@@ -277,6 +277,7 @@ function startManualEntry() {
 // ---------------- Confirm ----------------
 function openConfirm(parsed) {
   state.draft = Object.assign({ itpStep: null, condition: null, comment: '' }, parsed);
+  state.draft._autoFields = new Set(); // campi attualmente auto-compilati, mai toccati a mano dall'utente
   el('f-itemNo').value = parsed.itemNo || '';
   el('f-pipeNo').value = parsed.pipeNo || '';
   el('f-csHeat').value = parsed.csHeat || '';
@@ -319,6 +320,8 @@ function updateSaveState() {
   el(id).addEventListener('input', () => {
     const key = id.replace('f-', '');
     state.draft[key] = el(id).value;
+    // l'utente sta digitando a mano: il campo non e' piu' "solo auto-compilato", non va piu' sovrascritto in automatico
+    if (state.draft._autoFields) state.draft._autoFields.delete(key);
   });
 });
 el('f-comment').addEventListener('input', () => { state.draft.comment = el('f-comment').value; });
@@ -326,7 +329,14 @@ el('f-comment').addEventListener('input', () => { state.draft.comment = el('f-co
 // Auto-compilazione da dati di produzione (Raw data COMP3B): basta il solo Pipe N. (come nel
 // foglio Excel "Ricerca da Elenco" - cerca su tutti gli Item, prima corrispondenza); se anche
 // Item N. e' valorizzato, cerca la corrispondenza esatta Item+Pipe. Riempie CS Heat/CRA Heat/
-// Length/Item N. solo se vuoti (non sovrascrive correzioni manuali) e suggerisce l'ITP Step.
+// Length/Item N. solo se vuoti O se il valore attuale viene da una precedente auto-compilazione
+// mai toccata a mano (cosi' cambiando Pipe N. si aggiorna, senza mai cancellare correzioni manuali)
+// e suggerisce l'ITP Step.
+function setAutoField(id, key, value) {
+  el(id).value = value;
+  state.draft[key] = value;
+  state.draft._autoFields.add(key);
+}
 function tryAutoFillFromProduction() {
   const itemNo = el('f-itemNo').value.trim();
   const pipeNo = el('f-pipeNo').value.trim();
@@ -335,10 +345,11 @@ function tryAutoFillFromProduction() {
   if (itemNo) match = state.productionMap.get(prodKey(itemNo, pipeNo));
   if (!match) match = state.productionByPipe.get(normProdNum(pipeNo));
   if (!match) return;
+  const canOverwrite = (id, key) => !el(id).value.trim() || state.draft._autoFields.has(key);
   if (!itemNo && match.itemNo) { el('f-itemNo').value = match.itemNo; state.draft.itemNo = match.itemNo; }
-  if (!el('f-csHeat').value.trim() && match.csHeat) { el('f-csHeat').value = match.csHeat; state.draft.csHeat = match.csHeat; }
-  if (!el('f-craHeat').value.trim() && match.craHeat) { el('f-craHeat').value = match.craHeat; state.draft.craHeat = match.craHeat; }
-  if (!el('f-length').value.trim() && match.length) { el('f-length').value = match.length; state.draft.length = match.length; }
+  if (canOverwrite('f-csHeat', 'csHeat') && match.csHeat) setAutoField('f-csHeat', 'csHeat', match.csHeat);
+  if (canOverwrite('f-craHeat', 'craHeat') && match.craHeat) setAutoField('f-craHeat', 'craHeat', match.craHeat);
+  if (canOverwrite('f-length', 'length') && match.length) setAutoField('f-length', 'length', match.length);
   if (!state.draft.itpStep && match.currentStep) {
     state.draft.itpStep = match.currentStep;
     renderChips();
