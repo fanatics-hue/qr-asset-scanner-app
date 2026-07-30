@@ -250,10 +250,19 @@ async function loadProductionData() {
     const data = await api('/api/production-data');
     state.productionMap = new Map();
     state.productionByPipe = new Map();
+    const pipeItemCount = new Map(); // conta quanti Item diversi condividono lo stesso Pipe N. (i numeri pipe non sono univoci tra Item)
     (data.records || []).forEach(r => {
       state.productionMap.set(prodKey(r.itemNo, r.pipeNo), r);
       const pipeKey = normProdNum(r.pipeNo);
-      if (!state.productionByPipe.has(pipeKey)) state.productionByPipe.set(pipeKey, r); // prima corrispondenza, come nel foglio Excel
+      if (!state.productionByPipe.has(pipeKey)) state.productionByPipe.set(pipeKey, r);
+      const itemsForPipe = pipeItemCount.get(pipeKey) || new Set();
+      itemsForPipe.add(normProdNum(r.itemNo));
+      pipeItemCount.set(pipeKey, itemsForPipe);
+    });
+    // rimuove dalla ricerca "solo Pipe" i numeri ambigui (stesso Pipe N. su piu' Item diversi):
+    // meglio non compilare nulla che compilare il tubo sbagliato
+    pipeItemCount.forEach((items, pipeKey) => {
+      if (items.size > 1) state.productionByPipe.delete(pipeKey);
     });
   } catch (e) { /* nessun dato di produzione disponibile, l'inserimento resta manuale */ }
 }
