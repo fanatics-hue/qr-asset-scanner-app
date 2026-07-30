@@ -239,6 +239,8 @@ async function refreshVideoDevices() {
   } catch (e) { videoDevices = []; }
 }
 
+let camPath = '';
+let camError = '';
 async function startCamera() {
   try {
     const chosen = videoDevices[currentDeviceIndex];
@@ -247,9 +249,12 @@ async function startCamera() {
       : { facingMode: { ideal: state.facingMode } };
     try {
       stream = await navigator.mediaDevices.getUserMedia({ video: Object.assign({}, baseVideo, { width: { ideal: 1920 }, height: { ideal: 1080 } }) });
+      camPath = 'HD';
     } catch (e) {
       // alcuni telefoni rifiutano width/height ideal troppo alti insieme al vincolo fotocamera: riprova piu' semplice
+      camError = e.name || e.message || 'err';
       stream = await navigator.mediaDevices.getUserMedia({ video: baseVideo });
+      camPath = 'fallback(' + camError + ')';
     }
     video.srcObject = stream;
     try {
@@ -262,9 +267,6 @@ async function startCamera() {
     video.classList.add('live');
     el('qr-glyph-idle').style.display = 'none';
     if (!videoDevices.length) await refreshVideoDevices(); // le etichette/ID sono affidabili solo dopo il permesso
-    const track = stream.getVideoTracks()[0];
-    const settings = track && track.getSettings ? track.getSettings() : {};
-    el('scan-debug').textContent = `${settings.width || video.videoWidth}x${settings.height || video.videoHeight} (cam ${currentDeviceIndex + 1}/${videoDevices.length || 1})`;
   } catch (err) {
     el('scan-hint').textContent = t('scan_hint_camera_error') + err.message;
     throw err;
@@ -292,7 +294,7 @@ function scanFrame() {
     const imageData = ctx2d.getImageData(0, 0, canvas.width, canvas.height);
     const code = window.jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'attemptBoth' });
     scanAttempts++;
-    el('scan-debug').textContent = `${canvas.width}x${canvas.height} · ${scanAttempts} tentativi`;
+    el('scan-debug').textContent = `${canvas.width}x${canvas.height} · ${camPath} · cam ${currentDeviceIndex + 1}/${videoDevices.length || 1} · ${scanAttempts} tentativi`;
     if (code && code.data) {
       onQrDecoded(code.data);
       return;
