@@ -1,5 +1,5 @@
 const API_BASE = 'https://qr-scanner-api.fanatics.workers.dev';
-const APP_VERSION = 21;
+const APP_VERSION = 22;
 
 const TRANSLATIONS = {
   it: {
@@ -35,7 +35,7 @@ const TRANSLATIONS = {
     comments_ph: 'Note su condizioni, danni, manutenzione...',
     whatsapp_share: 'Condividi su WhatsApp',
     confirm_section_todo: 'Da completare',
-    dataset_title: 'Dataset asset',
+    dataset_title: 'Equipment Master Data',
     dataset_title_short: 'Dataset',
     search_ph: 'Cerca per Pipe N°, Item N°...',
     dataset_empty: 'Nessun asset ancora scansionato',
@@ -104,7 +104,7 @@ const TRANSLATIONS = {
     comments_ph: 'Notes on condition, damage, maintenance...',
     whatsapp_share: 'Share on WhatsApp',
     confirm_section_todo: 'To complete',
-    dataset_title: 'Asset dataset',
+    dataset_title: 'Equipment Master Data',
     dataset_title_short: 'Dataset',
     search_ph: 'Search by Pipe No., Item No...',
     dataset_empty: 'No assets scanned yet',
