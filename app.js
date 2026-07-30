@@ -155,13 +155,12 @@ const state = {
   session: null,
   meta: { itpSteps: [], conditions: [] },
   lang: localStorage.getItem('qr_lang') || 'it',
-  productionMap: new Map()
+  productionMap: new Map(),
+  productionByPipe: new Map()
 };
 
-const prodKey = (itemNo, pipeNo) => {
-  const norm = (v) => { const n = parseInt(String(v || '').trim(), 10); return isNaN(n) ? String(v || '').trim() : String(n); };
-  return norm(itemNo) + '-' + norm(pipeNo);
-};
+const normProdNum = (v) => { const n = parseInt(String(v || '').trim(), 10); return isNaN(n) ? String(v || '').trim() : String(n); };
+const prodKey = (itemNo, pipeNo) => normProdNum(itemNo) + '-' + normProdNum(pipeNo);
 
 const el = (id) => document.getElementById(id);
 const t = (key) => (TRANSLATIONS[state.lang] && TRANSLATIONS[state.lang][key]) || key;
@@ -250,7 +249,12 @@ async function loadProductionData() {
   try {
     const data = await api('/api/production-data');
     state.productionMap = new Map();
-    (data.records || []).forEach(r => state.productionMap.set(prodKey(r.itemNo, r.pipeNo), r));
+    state.productionByPipe = new Map();
+    (data.records || []).forEach(r => {
+      state.productionMap.set(prodKey(r.itemNo, r.pipeNo), r);
+      const pipeKey = normProdNum(r.pipeNo);
+      if (!state.productionByPipe.has(pipeKey)) state.productionByPipe.set(pipeKey, r); // prima corrispondenza, come nel foglio Excel
+    });
   } catch (e) { /* nessun dato di produzione disponibile, l'inserimento resta manuale */ }
 }
 
@@ -310,15 +314,19 @@ function updateSaveState() {
 });
 el('f-comment').addEventListener('input', () => { state.draft.comment = el('f-comment').value; });
 
-// Auto-compilazione da dati di produzione (Raw data COMP3B): quando Item N. e Pipe N. sono
-// entrambi valorizzati e corrispondono a un tubo noto, riempie CS Heat/CRA Heat/Length (solo se
-// vuoti, non sovrascrive correzioni manuali) e suggerisce l'ITP Step in base all'ultima fase completata.
+// Auto-compilazione da dati di produzione (Raw data COMP3B): basta il solo Pipe N. (come nel
+// foglio Excel "Ricerca da Elenco" - cerca su tutti gli Item, prima corrispondenza); se anche
+// Item N. e' valorizzato, cerca la corrispondenza esatta Item+Pipe. Riempie CS Heat/CRA Heat/
+// Length/Item N. solo se vuoti (non sovrascrive correzioni manuali) e suggerisce l'ITP Step.
 function tryAutoFillFromProduction() {
   const itemNo = el('f-itemNo').value.trim();
   const pipeNo = el('f-pipeNo').value.trim();
-  if (!itemNo || !pipeNo) return;
-  const match = state.productionMap.get(prodKey(itemNo, pipeNo));
+  if (!pipeNo) return;
+  let match = null;
+  if (itemNo) match = state.productionMap.get(prodKey(itemNo, pipeNo));
+  if (!match) match = state.productionByPipe.get(normProdNum(pipeNo));
   if (!match) return;
+  if (!itemNo && match.itemNo) { el('f-itemNo').value = match.itemNo; state.draft.itemNo = match.itemNo; }
   if (!el('f-csHeat').value.trim() && match.csHeat) { el('f-csHeat').value = match.csHeat; state.draft.csHeat = match.csHeat; }
   if (!el('f-craHeat').value.trim() && match.craHeat) { el('f-craHeat').value = match.craHeat; state.draft.craHeat = match.craHeat; }
   if (!el('f-length').value.trim() && match.length) { el('f-length').value = match.length; state.draft.length = match.length; }
