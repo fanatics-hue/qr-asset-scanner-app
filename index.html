@@ -7,7 +7,7 @@
 <link rel="manifest" href="manifest.json?v=1">
 <meta name="theme-color" content="#0A84FF">
 <link rel="apple-touch-icon" href="assets/iqs-logo.jpg">
-<link rel="stylesheet" href="styles.css?v=2">
+<link rel="stylesheet" href="styles.css?v=3">
 </head>
 <body>
 <div id="app">
@@ -27,28 +27,19 @@
   <section id="screen-scan" class="hidden">
     <div class="logo-chip"><img src="assets/iqs-logo.jpg" alt="IQS"></div>
     <input type="file" accept="image/*" capture="environment" id="photo-input" style="display:none">
-    <div class="scan-body">
-      <video id="qr-video" playsinline muted></video>
-      <div class="viewfinder">
-        <div class="corner tl"></div><div class="corner tr"></div>
-        <div class="corner bl"></div><div class="corner br"></div>
-        <div class="scan-line"></div>
-        <svg class="qr-glyph" id="qr-glyph-idle" viewBox="0 0 100 100" fill="none" stroke="#fff" stroke-width="4">
-          <rect x="10" y="10" width="30" height="30" rx="4"/>
-          <rect x="60" y="10" width="30" height="30" rx="4"/>
-          <rect x="10" y="60" width="30" height="30" rx="4"/>
-          <rect x="60" y="60" width="12" height="12" rx="2"/>
-          <rect x="78" y="60" width="12" height="12" rx="2"/>
-          <rect x="60" y="78" width="12" height="12" rx="2"/>
-          <rect x="78" y="78" width="12" height="12" rx="2"/>
-        </svg>
+    <div class="scan-body-light">
+      <div class="scan-instructions">
+        <div class="scan-step"><span class="scan-step-num">1</span><span data-i18n="paste_step1">Apri la Fotocamera del telefono (o Google Lens) e inquadra il QR sull'attrezzatura</span></div>
+        <div class="scan-step"><span class="scan-step-num">2</span><span data-i18n="paste_step2">Tocca il testo riconosciuto per copiarlo</span></div>
+        <div class="scan-step"><span class="scan-step-num">3</span><span data-i18n="paste_step3">Torna qui, incolla il codice e continua</span></div>
       </div>
-      <div class="scan-hint" id="scan-hint" data-i18n="scan_hint_idle">Tocca il pulsante per scattare una foto del QR</div>
+      <input id="paste-input" class="field paste-input" type="text" inputmode="text" data-i18n-ph="paste_ph" autocomplete="off">
+      <button id="paste-continue-btn" class="btn-primary" data-i18n="paste_continue_btn">Continua</button>
+      <div class="paste-error" id="paste-error"></div>
+      <button id="scan-btn" class="link-btn secondary-scan-link" data-i18n="scan_btn_alt">Prova invece la scansione automatica dalla foto</button>
+      <div class="scan-hint hidden" id="scan-hint"></div>
       <div class="scan-debug" id="scan-debug"></div>
-      <button id="save-frame-btn" class="save-frame-btn">Salva immagine analizzata</button>
-    </div>
-    <div class="scan-cta">
-      <button id="scan-btn" class="btn-primary" data-i18n="scan_btn">Scansiona QR</button>
+      <button id="save-frame-btn" class="save-frame-btn hidden">Salva immagine analizzata</button>
     </div>
   </section>
 
@@ -159,6 +150,6 @@
 
 </div>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
-<script src="app.js?v=11"></script>
+<script src="app.js?v=12"></script>
 </body>
 </html>

@@ -98,71 +98,54 @@ html, body {
   flex: 1;
   display: flex;
   flex-direction: column;
-  background: linear-gradient(160deg,#1c1e22,#000);
-  color: #fff;
   overflow-y: auto;
   min-height: 0;
   position: relative;
 }
-.camera-flip-btn {
-  position: absolute; top: 14px; right: 16px; z-index: 3;
-  width: 40px; height: 40px; border-radius: 50%;
-  background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3);
-  display: flex; align-items: center; justify-content: center; cursor: pointer;
-}
-.camera-flip-btn svg { width: 20px; height: 20px; }
-.scan-body {
+.scan-body-light {
   flex: 1;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 18px;
-  position: relative;
-  min-height: 0;
+  padding: 8px 24px calc(24px + env(safe-area-inset-bottom));
+  gap: 14px;
 }
-#qr-video {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  opacity: 0;
-  transition: opacity .3s;
+.scan-instructions {
+  background: var(--bg-card);
+  border-radius: 14px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 8px;
 }
-#qr-video.live { opacity: 1; }
-.viewfinder {
-  width: 230px; height: 230px;
-  position: relative;
-  z-index: 2;
+.scan-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: 15px;
+  color: var(--text-primary);
 }
-.corner {
-  position: absolute; width: 36px; height: 36px;
-  border: 4px solid #fff; border-radius: 6px;
+.scan-step-num {
+  flex-shrink: 0;
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  background: var(--blue);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
 }
-.corner.tl { top:0; left:0; border-right:none; border-bottom:none; }
-.corner.tr { top:0; right:0; border-left:none; border-bottom:none; }
-.corner.bl { bottom:0; left:0; border-right:none; border-top:none; }
-.corner.br { bottom:0; right:0; border-left:none; border-top:none; }
-.scan-line {
-  position: absolute; left: 8px; right: 8px; height: 2px;
-  background: #0A84FF; box-shadow: 0 0 8px #0A84FF;
-  top: 0; display: none;
+.paste-input { text-align: left; font-size: 16px; }
+.paste-error { color: var(--red); font-size: 13px; text-align: center; min-height: 16px; }
+.secondary-scan-link {
+  background: none; border: none; color: var(--text-secondary); font-size: 13px;
+  text-decoration: underline; cursor: pointer; padding: 8px 0; text-align: center;
 }
-.scanning .scan-line { display: block; animation: sweep 1.1s linear infinite; }
-@keyframes sweep {
-  0% { top: 4px; } 100% { top: 222px; }
-}
-.qr-glyph { opacity: .5; width: 64px; height: 64px; }
-.scan-hint { font-size: 15px; color: rgba(255,255,255,.7); z-index: 2; text-align: center; padding: 0 24px;}
-.scan-debug { font-size: 11px; color: rgba(255,255,255,.4); z-index: 2; text-align: center; font-family: monospace; }
+.scan-hint { font-size: 13px; color: var(--text-secondary); text-align: center; padding: 0 8px; }
+.scan-debug { font-size: 11px; color: var(--text-tertiary); text-align: center; font-family: monospace; }
 .save-frame-btn {
-  z-index: 2; margin-top: 10px; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.4);
-  color: #fff; border-radius: 8px; padding: 6px 12px; font-size: 12px; cursor: pointer;
-}
-.scan-cta {
-  padding: 20px 20px calc(20px + env(safe-area-inset-bottom));
-  z-index: 2;
+  margin: 4px auto 0; background: var(--bg-input); border: 1px solid var(--border);
+  color: var(--text-primary); border-radius: 8px; padding: 6px 12px; font-size: 12px; cursor: pointer;
 }
 
 /* ---------- Confirm ---------- */

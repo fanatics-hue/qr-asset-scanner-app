@@ -14,6 +14,13 @@ const TRANSLATIONS = {
     scan_hint_camera_error: 'Errore: ',
     scan_btn: 'Scansiona QR',
     scan_btn_scanning: 'Scansione...',
+    paste_step1: "Apri la Fotocamera del telefono (o Google Lens) e inquadra il QR sull'attrezzatura",
+    paste_step2: 'Tocca il testo riconosciuto per copiarlo',
+    paste_step3: 'Torna qui, incolla il codice e continua',
+    paste_ph: 'Incolla qui il codice (es. 45650-00400-2458)',
+    paste_continue_btn: 'Continua',
+    paste_err_empty: 'Incolla prima il codice letto dalla fotocamera',
+    scan_btn_alt: 'Prova invece la scansione automatica dalla foto',
     confirm_cancel: 'Annulla',
     confirm_title: 'Nuovo asset',
     confirm_save: 'Salva',
@@ -71,6 +78,13 @@ const TRANSLATIONS = {
     scan_hint_camera_error: 'Error: ',
     scan_btn: 'Scan QR',
     scan_btn_scanning: 'Scanning...',
+    paste_step1: 'Open the phone Camera (or Google Lens) and point it at the QR code on the equipment',
+    paste_step2: 'Tap the recognized text to copy it',
+    paste_step3: 'Come back here, paste the code and continue',
+    paste_ph: 'Paste the code here (e.g. 45650-00400-2458)',
+    paste_continue_btn: 'Continue',
+    paste_err_empty: 'Paste the code read by the camera first',
+    scan_btn_alt: 'Try automatic scan from photo instead',
     confirm_cancel: 'Cancel',
     confirm_title: 'New asset',
     confirm_save: 'Save',
@@ -138,8 +152,7 @@ const state = {
   selectedId: null,
   session: null,
   meta: { itpSteps: [], conditions: [] },
-  lang: localStorage.getItem('qr_lang') || 'it',
-  facingMode: 'environment'
+  lang: localStorage.getItem('qr_lang') || 'it'
 };
 
 const el = (id) => document.getElementById(id);
@@ -178,7 +191,6 @@ function showScreen(name) {
   document.querySelectorAll('.tab-btn').forEach(b => {
     b.classList.toggle('active', b.dataset.tab === name);
   });
-  if (name === 'scan') stopCamera(); // idle state until user taps scan
 }
 
 // ---------------- API ----------------
@@ -226,16 +238,14 @@ async function afterLogin() {
 }
 
 // ---------------- Scan ----------------
-let stream = null;
-let scanLoopId = null;
-let videoDevices = [];
-let currentDeviceIndex = 0;
-const video = el('qr-video');
+// Metodo principale: incolla il codice letto dalla Fotocamera nativa del telefono (affidabile al 100%,
+// vedi LL register - la decodifica QR in-browser su questa etichetta si e' rivelata inaffidabile
+// nonostante video live, foto alta risoluzione, autofocus continuo e decoder nativo del browser).
 const canvas = document.createElement('canvas');
 const ctx2d = canvas.getContext('2d');
 canvas.id = 'debug-canvas-preview';
-canvas.style.cssText = 'position:absolute;bottom:96px;right:10px;width:120px;height:120px;border:2px solid #0A84FF;z-index:5;background:#000;object-fit:contain;';
-document.querySelector('.scan-body').appendChild(canvas);
+canvas.style.cssText = 'position:relative;width:120px;height:120px;border:2px solid #0A84FF;background:#000;object-fit:contain;margin:10px auto;display:block;';
+document.querySelector('.scan-body-light').appendChild(canvas);
 
 el('save-frame-btn').addEventListener('click', () => {
   const dataUrl = canvas.toDataURL('image/png');
@@ -250,169 +260,87 @@ if ('BarcodeDetector' in window) {
   try { barcodeDetector = new window.BarcodeDetector({ formats: ['qr_code'] }); } catch (e) { barcodeDetector = null; }
 }
 
-async function refreshVideoDevices() {
-  try {
-    const devices = await navigator.mediaDevices.enumerateDevices();
-    videoDevices = devices.filter(d => d.kind === 'videoinput');
-  } catch (e) { videoDevices = []; }
+function submitScannedText(rawText) {
+  const parsed = parseQrPayload(rawText);
+  openConfirm(parsed);
 }
 
-let camPath = '';
-let camError = '';
-let focusInfo = '';
-let imageCapture = null;
-let usingPhotoCapture = false;
-async function startCamera() {
-  try {
-    const chosen = videoDevices[currentDeviceIndex];
-    const baseVideo = chosen
-      ? { deviceId: { exact: chosen.deviceId } }
-      : { facingMode: { ideal: state.facingMode } };
-    try {
-      stream = await navigator.mediaDevices.getUserMedia({ video: Object.assign({}, baseVideo, { width: { ideal: 1920 }, height: { ideal: 1080 }, advanced: [{ focusMode: 'continuous' }] }) });
-      camPath = 'HD';
-    } catch (e) {
-      // alcuni telefoni rifiutano width/height ideal troppo alti insieme al vincolo fotocamera: riprova piu' semplice
-      camError = e.name || e.message || 'err';
-      stream = await navigator.mediaDevices.getUserMedia({ video: baseVideo });
-      camPath = 'fallback(' + camError + ')';
-    }
-    video.srcObject = stream;
-    try {
-      await video.play();
-    } catch (playErr) {
-      // interruzione benigna (nuovo srcObject assegnato mentre play() era in corso): ignorare,
-      // il flusso video risultera' comunque attivo un istante dopo
-      if (!/interrupted/i.test(playErr.message || '')) throw playErr;
-    }
-    video.classList.add('live');
-    el('qr-glyph-idle').style.display = 'none';
-    // forza autofocus continuo dopo l'avvio, se il dispositivo lo supporta (alcuni telefoni lo ignorano nei constraints iniziali)
-    try {
-      const t2 = stream.getVideoTracks()[0];
-      const caps = t2.getCapabilities ? t2.getCapabilities() : {};
-      if (caps.focusMode && caps.focusMode.includes('continuous')) {
-        await t2.applyConstraints({ advanced: [{ focusMode: 'continuous' }] });
-        focusInfo = 'AF-continuo applicato';
-      } else if (caps.focusMode) {
-        focusInfo = 'AF disponibile ma senza continuous: ' + caps.focusMode.join(',');
-      } else {
-        focusInfo = 'AF non esposto dal browser';
-      }
-    } catch (focusErr) { focusInfo = 'AF errore: ' + (focusErr.message || focusErr.name); }
-    try {
-      imageCapture = ('ImageCapture' in window) ? new window.ImageCapture(stream.getVideoTracks()[0]) : null;
-      if (imageCapture && typeof imageCapture.takePhoto !== 'function') imageCapture = null;
-    } catch (e) { imageCapture = null; }
-    if (!videoDevices.length) await refreshVideoDevices(); // le etichette/ID sono affidabili solo dopo il permesso
-  } catch (err) {
-    el('scan-hint').textContent = t('scan_hint_camera_error') + err.message;
-    throw err;
-  }
-}
+el('paste-continue-btn').addEventListener('click', () => {
+  const val = el('paste-input').value.trim();
+  el('paste-error').textContent = '';
+  if (!val) { el('paste-error').textContent = t('paste_err_empty'); return; }
+  submitScannedText(val);
+  el('paste-input').value = '';
+});
 
-function stopCamera() {
-  if (scanLoopId) cancelAnimationFrame(scanLoopId);
-  scanLoopId = null;
-  if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
-  video.classList.remove('live');
-  el('qr-glyph-idle').style.display = '';
-  document.querySelector('.viewfinder').classList.remove('scanning');
-  state.scanning = false;
-  scanStartedAt = 0;
-}
+// ---------------- Fallback: scansione automatica dalla foto (tenuta come opzione secondaria) ----------------
+async function tryDetectOnRegion(bitmap, fraction) {
+  const bw = bitmap.width, bh = bitmap.height;
+  const cw = bw * fraction, ch = bh * fraction;
+  const cx = (bw - cw) / 2, cy = (bh - ch) / 2;
+  canvas.width = cw;
+  canvas.height = ch;
+  ctx2d.drawImage(bitmap, cx, cy, cw, ch, 0, 0, cw, ch);
 
-let scanStartedAt = 0;
-let scanAttempts = 0;
-
-function getViewfinderCropFraction() {
-  const vfEl = document.querySelector('.viewfinder');
-  const videoRect = video.getBoundingClientRect();
-  const vfRect = vfEl.getBoundingClientRect();
-  const Wn = video.videoWidth, Hn = video.videoHeight;
-  const Wc = videoRect.width, Hc = videoRect.height;
-  if (!Wn || !Hn || !Wc || !Hc) return null;
-  const s = Math.max(Wc / Wn, Hc / Hn); // fattore di scala usato da object-fit:cover
-  const cropLeftNative = (Wn - Wc / s) / 2;
-  const cropTopNative = (Hn - Hc / s) / 2;
-  const vfXCss = vfRect.left - videoRect.left;
-  const vfYCss = vfRect.top - videoRect.top;
-  const x = cropLeftNative + vfXCss / s;
-  const y = cropTopNative + vfYCss / s;
-  const w = vfRect.width / s;
-  const h = vfRect.height / s;
-  const pad = 0.3; // margine extra, in caso il QR non sia perfettamente centrato
-  const px = Math.max(0, x - w * pad);
-  const py = Math.max(0, y - h * pad);
-  const pw = Math.min(Wn - px, w * (1 + pad * 2));
-  const ph = Math.min(Hn - py, h * (1 + pad * 2));
-  return { fx: px / Wn, fy: py / Hn, fw: pw / Wn, fh: ph / Hn };
-}
-
-function cropDrawToCanvas(source, srcW, srcH) {
-  const frac = getViewfinderCropFraction();
-  let sx = 0, sy = 0, sw = srcW, sh = srcH;
-  if (frac) {
-    sx = frac.fx * srcW; sy = frac.fy * srcH;
-    sw = frac.fw * srcW; sh = frac.fh * srcH;
-  }
-  canvas.width = sw;
-  canvas.height = sh;
-  ctx2d.drawImage(source, sx, sy, sw, sh, 0, 0, sw, sh);
-}
-
-async function decodeCanvasAndHandle(sourceLabel) {
   let decoded = null;
-  let engine = 'jsQR';
-  let nativeStatus = '';
+  let status = '';
   if (barcodeDetector) {
     try {
       const results = await barcodeDetector.detect(canvas);
-      nativeStatus = 'nativo:0risultati';
-      if (results && results.length) { decoded = results[0].rawValue; engine = 'nativo'; nativeStatus = 'nativo:OK'; }
-    } catch (e) { nativeStatus = 'nativo:ERRORE(' + (e.name || e.message) + ')'; }
+      if (results && results.length) {
+        // preferisce il codice che rispetta il formato noto Ordine-Item-Tubo, ignorando eventuali QR decorativi sull'etichetta
+        const preferred = results.find(r => /^\d+-\d+-\d+$/.test((r.rawValue || '').trim()));
+        decoded = (preferred || results[0]).rawValue;
+        status = 'nativo:OK';
+      } else {
+        status = 'nativo:0risultati';
+      }
+    } catch (err) { status = 'nativo:ERRORE(' + (err.name || err.message) + ')'; }
   } else {
-    nativeStatus = 'nativo:non-disponibile';
+    status = 'nativo:non-disponibile';
   }
   if (!decoded) {
     const imageData = ctx2d.getImageData(0, 0, canvas.width, canvas.height);
     const code = window.jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'attemptBoth' });
-    if (code && code.data) { decoded = code.data; engine = 'jsQR'; }
+    if (code && code.data) { decoded = code.data; status += '+jsQR:OK'; }
   }
-  scanAttempts++;
-  el('scan-debug').textContent = `${Math.round(canvas.width)}x${Math.round(canvas.height)} · ${sourceLabel} · ${nativeStatus} · ${scanAttempts} tentativi`;
-  if (decoded) {
-    onQrDecoded(decoded);
-    return true;
-  }
-  if (scanStartedAt && Date.now() - scanStartedAt > 6000) {
-    el('scan-hint').textContent = t('scan_hint_tip');
-  }
-  return false;
+  return { decoded, status };
 }
 
-async function photoCaptureLoop() {
-  if (!state.scanning) return;
+el('scan-btn').addEventListener('click', () => {
+  el('photo-input').click();
+});
+
+el('photo-input').addEventListener('change', async (e) => {
+  const file = e.target.files && e.target.files[0];
+  e.target.value = ''; // permette di riselezionare la stessa foto in futuro
+  if (!file) return;
+  el('scan-hint').classList.remove('hidden');
+  el('save-frame-btn').classList.remove('hidden');
+  el('scan-hint').textContent = t('scan_hint_scanning');
+  el('scan-debug').textContent = '';
   try {
-    const blob = await imageCapture.takePhoto();
-    const bitmap = await createImageBitmap(blob);
-    cropDrawToCanvas(bitmap, bitmap.width, bitmap.height);
+    const bitmap = await createImageBitmap(file);
+    // prova l'immagine intera, poi ritagli via via piu' stretti al centro
+    // (dove presumibilmente e' inquadrato il QR target, ignorando i QR decorativi ai bordi dell'etichetta)
+    const attempts = [1, 0.6, 0.35, 0.2];
+    let decoded = null, lastStatus = '';
+    for (const fraction of attempts) {
+      const result = await tryDetectOnRegion(bitmap, fraction);
+      lastStatus = `ritaglio ${Math.round(fraction * 100)}% · ${result.status}`;
+      el('scan-debug').textContent = `${bitmap.width}x${bitmap.height} · ${lastStatus}`;
+      if (result.decoded) { decoded = result.decoded; break; }
+    }
     if (bitmap.close) bitmap.close();
-    const done = await decodeCanvasAndHandle('foto');
-    if (done) return;
-  } catch (e) { /* riprova al prossimo giro */ }
-  if (state.scanning) setTimeout(photoCaptureLoop, 500);
-}
-
-async function scanFrame() {
-  if (!state.scanning) return;
-  if (video.videoWidth > 0 && video.videoHeight > 0) {
-    cropDrawToCanvas(video, video.videoWidth, video.videoHeight);
-    const done = await decodeCanvasAndHandle('video');
-    if (done) return;
+    if (decoded) {
+      onQrDecoded(decoded);
+    } else {
+      el('scan-hint').textContent = t('scan_hint_no_code_found');
+    }
+  } catch (err) {
+    el('scan-hint').textContent = t('scan_hint_camera_error') + (err.message || err.name);
   }
-  scanLoopId = requestAnimationFrame(scanFrame);
-}
+});
 
 function parseQrPayload(text) {
   const result = { itemNo: '', pipeNo: '', csHeat: '', craHeat: '', length: '' };
@@ -451,78 +379,9 @@ function parseQrPayload(text) {
 }
 
 function onQrDecoded(text) {
-  stopCamera();
   const parsed = parseQrPayload(text);
   openConfirm(parsed);
 }
-
-// Scansione basata su scatto reale con l'app fotocamera nativa del telefono
-// (piu' affidabile del flusso video live del browser, vedi note in LL register)
-el('scan-btn').addEventListener('click', () => {
-  el('photo-input').click();
-});
-
-async function tryDetectOnRegion(bitmap, fraction) {
-  const bw = bitmap.width, bh = bitmap.height;
-  const cw = bw * fraction, ch = bh * fraction;
-  const cx = (bw - cw) / 2, cy = (bh - ch) / 2;
-  canvas.width = cw;
-  canvas.height = ch;
-  ctx2d.drawImage(bitmap, cx, cy, cw, ch, 0, 0, cw, ch);
-
-  let decoded = null;
-  let status = '';
-  if (barcodeDetector) {
-    try {
-      const results = await barcodeDetector.detect(canvas);
-      if (results && results.length) {
-        // preferisce il codice che rispetta il formato noto Ordine-Item-Tubo, ignorando eventuali QR decorativi sull'etichetta
-        const preferred = results.find(r => /^\d+-\d+-\d+$/.test((r.rawValue || '').trim()));
-        decoded = (preferred || results[0]).rawValue;
-        status = 'nativo:OK';
-      } else {
-        status = 'nativo:0risultati';
-      }
-    } catch (err) { status = 'nativo:ERRORE(' + (err.name || err.message) + ')'; }
-  } else {
-    status = 'nativo:non-disponibile';
-  }
-  if (!decoded) {
-    const imageData = ctx2d.getImageData(0, 0, canvas.width, canvas.height);
-    const code = window.jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'attemptBoth' });
-    if (code && code.data) { decoded = code.data; status += '+jsQR:OK'; }
-  }
-  return { decoded, status };
-}
-
-el('photo-input').addEventListener('change', async (e) => {
-  const file = e.target.files && e.target.files[0];
-  e.target.value = ''; // permette di riselezionare la stessa foto in futuro
-  if (!file) return;
-  el('scan-hint').textContent = t('scan_hint_scanning');
-  el('scan-debug').textContent = '';
-  try {
-    const bitmap = await createImageBitmap(file);
-    // prova l'immagine intera, poi ritagli via via piu' stretti al centro
-    // (dove presumibilmente e' inquadrato il QR target, ignorando i QR decorativi ai bordi dell'etichetta)
-    const attempts = [1, 0.6, 0.35, 0.2];
-    let decoded = null, lastStatus = '';
-    for (const fraction of attempts) {
-      const result = await tryDetectOnRegion(bitmap, fraction);
-      lastStatus = `ritaglio ${Math.round(fraction * 100)}% · ${result.status}`;
-      el('scan-debug').textContent = `${bitmap.width}x${bitmap.height} · ${lastStatus}`;
-      if (result.decoded) { decoded = result.decoded; break; }
-    }
-    if (bitmap.close) bitmap.close();
-    if (decoded) {
-      onQrDecoded(decoded);
-    } else {
-      el('scan-hint').textContent = t('scan_hint_no_code_found');
-    }
-  } catch (err) {
-    el('scan-hint').textContent = t('scan_hint_camera_error') + (err.message || err.name);
-  }
-});
 
 // ---------------- Confirm ----------------
 function openConfirm(parsed) {
@@ -541,9 +400,11 @@ function openConfirm(parsed) {
 }
 
 function resetScanBtn() {
-  el('scan-btn').textContent = t('scan_btn');
-  el('scan-btn').disabled = false;
-  el('scan-hint').textContent = t('scan_hint_idle');
+  el('paste-input').value = '';
+  el('paste-error').textContent = '';
+  el('scan-hint').classList.add('hidden');
+  el('save-frame-btn').classList.add('hidden');
+  el('scan-debug').textContent = '';
 }
 
 function renderChips() {
