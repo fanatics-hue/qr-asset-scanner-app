@@ -358,10 +358,8 @@ el('scan-btn').addEventListener('click', () => {
 
 el('camera-flip-btn').addEventListener('click', async () => {
   state.facingMode = state.facingMode === 'environment' ? 'user' : 'environment';
-  if (state.scanning) {
-    stopCamera();
-    await beginScan();
-  }
+  if (state.scanning) stopCamera();
+  await beginScan();
 });
 
 // ---------------- Confirm ----------------
