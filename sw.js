@@ -1,4 +1,4 @@
-const CACHE = 'qr-scanner-v2';
+const CACHE = 'qr-scanner-v3';
 const ASSETS = [
   './',
   './index.html',
@@ -21,10 +21,16 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
+// network-first: mentre sei online prendi sempre l'ultima versione pubblicata,
+// la cache serve solo come riserva se il telefono e' offline (in cantiere/plant senza rete)
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
   if (url.origin.includes('workers.dev') || url.pathname.startsWith('/api/')) return; // mai la cache per le chiamate API
   event.respondWith(
-    caches.match(event.request).then(cached => cached || fetch(event.request))
+    fetch(event.request).then(resp => {
+      const clone = resp.clone();
+      caches.open(CACHE).then(cache => cache.put(event.request, clone));
+      return resp;
+    }).catch(() => caches.match(event.request))
   );
 });
