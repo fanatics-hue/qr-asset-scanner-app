@@ -1,4 +1,4 @@
-const CACHE = 'qr-scanner-v1';
+const CACHE = 'qr-scanner-v2';
 const ASSETS = [
   './',
   './index.html',

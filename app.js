@@ -1,5 +1,129 @@
 const API_BASE = 'https://qr-scanner-api.fanatics.workers.dev';
 
+const TRANSLATIONS = {
+  it: {
+    login_username_ph: 'Utente',
+    login_password_ph: 'Password',
+    login_btn: 'Entra',
+    login_err_missing: 'Inserisci utente e password',
+    scan_hint_idle: "Inquadra il QR code sull'attrezzatura",
+    scan_hint_scanning: 'Scansione in corso...',
+    scan_hint_camera_error: 'Fotocamera non disponibile: ',
+    scan_btn: 'Scansiona QR',
+    scan_btn_scanning: 'Scansione...',
+    confirm_cancel: 'Annulla',
+    confirm_title: 'Nuovo asset',
+    confirm_save: 'Salva',
+    confirm_save_saving: 'Salvataggio...',
+    confirm_section_scanned: 'Dati scansionati',
+    confirm_hint_editable: 'modificabili se errati',
+    field_scannedAt: 'Data scansione',
+    field_condition: 'Condizione *',
+    field_comments: 'Commenti',
+    comments_ph: 'Note su condizioni, danni, manutenzione...',
+    whatsapp_share: 'Condividi su WhatsApp',
+    confirm_section_todo: 'Da completare',
+    dataset_title: 'Dataset asset',
+    dataset_title_short: 'Dataset',
+    search_ph: 'Cerca per Pipe N°, Item N°...',
+    dataset_empty: 'Nessun asset ancora scansionato',
+    tab_scan: 'Scansiona',
+    tab_dataset_prefix: 'Dataset',
+    field_scannedBy: 'Scansionato da',
+    field_scannedOn: 'Scansionato il',
+    admin_title: 'Gestione ispettori',
+    admin_name: 'Nome',
+    admin_username_ph: 'es. mrossi',
+    admin_name_ph: 'Mario Rossi',
+    admin_password_ph: 'password iniziale',
+    admin_add_btn: 'Aggiungi ispettore',
+    admin_empty: 'Nessun ispettore ancora aggiunto',
+    admin_role_admin: 'Admin',
+    admin_role_inspector: 'Ispettore',
+    remove: 'Rimuovi',
+    err_save: 'Errore salvataggio: ',
+    err_generic: 'Errore: ',
+    err_fill_all: 'Compila tutti i campi',
+    confirm_remove_user: 'Rimuovere {u}?',
+    cond_excellent: 'Ottimo',
+    cond_good: 'Buono',
+    cond_needsreview: 'Da revisionare',
+    cond_damaged: 'Danneggiato',
+    wa_title: 'Asset scansionato:',
+    wa_condition: 'Condizione',
+    wa_comments: 'Commenti',
+    wa_date: 'Data',
+    locale: 'it-IT'
+  },
+  en: {
+    login_username_ph: 'Username',
+    login_password_ph: 'Password',
+    login_btn: 'Log in',
+    login_err_missing: 'Enter username and password',
+    scan_hint_idle: 'Point the camera at the QR code on the equipment',
+    scan_hint_scanning: 'Scanning...',
+    scan_hint_camera_error: 'Camera not available: ',
+    scan_btn: 'Scan QR',
+    scan_btn_scanning: 'Scanning...',
+    confirm_cancel: 'Cancel',
+    confirm_title: 'New asset',
+    confirm_save: 'Save',
+    confirm_save_saving: 'Saving...',
+    confirm_section_scanned: 'Scanned data',
+    confirm_hint_editable: 'editable if incorrect',
+    field_scannedAt: 'Scan date',
+    field_condition: 'Condition *',
+    field_comments: 'Comments',
+    comments_ph: 'Notes on condition, damage, maintenance...',
+    whatsapp_share: 'Share on WhatsApp',
+    confirm_section_todo: 'To complete',
+    dataset_title: 'Asset dataset',
+    dataset_title_short: 'Dataset',
+    search_ph: 'Search by Pipe No., Item No...',
+    dataset_empty: 'No assets scanned yet',
+    tab_scan: 'Scan',
+    tab_dataset_prefix: 'Dataset',
+    field_scannedBy: 'Scanned by',
+    field_scannedOn: 'Scanned on',
+    admin_title: 'Inspector management',
+    admin_name: 'Name',
+    admin_username_ph: 'e.g. jsmith',
+    admin_name_ph: 'John Smith',
+    admin_password_ph: 'initial password',
+    admin_add_btn: 'Add inspector',
+    admin_empty: 'No inspectors added yet',
+    admin_role_admin: 'Admin',
+    admin_role_inspector: 'Inspector',
+    remove: 'Remove',
+    err_save: 'Save error: ',
+    err_generic: 'Error: ',
+    err_fill_all: 'Fill in all fields',
+    confirm_remove_user: 'Remove {u}?',
+    cond_excellent: 'Excellent',
+    cond_good: 'Good',
+    cond_needsreview: 'Needs review',
+    cond_damaged: 'Damaged',
+    wa_title: 'Scanned asset:',
+    wa_condition: 'Condition',
+    wa_comments: 'Comments',
+    wa_date: 'Date',
+    locale: 'en-GB'
+  }
+};
+
+const BACKEND_ERR_MAP = {
+  'Credenziali mancanti': { it: 'Credenziali mancanti', en: 'Missing credentials' },
+  'Utente o password errati': { it: 'Utente o password errati', en: 'Incorrect username or password' },
+  'Non autenticato': { it: 'Non autenticato', en: 'Not authenticated' },
+  'Campi obbligatori mancanti (Pipe N°, ITP Step, Condizione)': { it: 'Campi obbligatori mancanti (Pipe N°, ITP Step, Condizione)', en: 'Missing required fields (Pipe No., ITP Step, Condition)' },
+  'Solo admin': { it: 'Solo admin', en: 'Admins only' },
+  'Campi mancanti': { it: 'Campi mancanti', en: 'Missing fields' },
+  'Record non trovato': { it: 'Record non trovato', en: 'Record not found' }
+};
+
+const CONDITION_CODES = ['excellent', 'good', 'needs-review', 'damaged'];
+const condKey = (code) => 'cond_' + String(code || '').replace(/-/g, '');
+
 const state = {
   screen: 'login',
   scanning: false,
@@ -7,17 +131,43 @@ const state = {
   records: [],
   selectedId: null,
   session: null,
-  meta: { itpSteps: [], conditions: [] }
+  meta: { itpSteps: [], conditions: [] },
+  lang: localStorage.getItem('qr_lang') || 'it'
 };
 
 const el = (id) => document.getElementById(id);
-const slug = (s) => String(s || '').toLowerCase().replace(/\s+/g, '-');
+const t = (key) => (TRANSLATIONS[state.lang] && TRANSLATIONS[state.lang][key]) || key;
+const condLabel = (code) => t(condKey(code));
 const screens = ['login', 'scan', 'confirm', 'dataset', 'detail', 'admin'];
+
+function translateBackendError(msg) {
+  const entry = BACKEND_ERR_MAP[msg];
+  return entry ? entry[state.lang] : msg;
+}
+
+function applyTranslations() {
+  document.documentElement.lang = state.lang;
+  document.querySelectorAll('[data-i18n]').forEach(elx => { elx.textContent = t(elx.dataset.i18n); });
+  document.querySelectorAll('[data-i18n-ph]').forEach(elx => { elx.placeholder = t(elx.dataset.i18nPh); });
+  document.querySelectorAll('[data-i18n-title]').forEach(elx => { elx.title = t(elx.dataset.i18nTitle); });
+  const other = state.lang === 'it' ? 'EN' : 'IT';
+  ['lang-toggle-login', 'lang-toggle-dataset'].forEach(id => { if (el(id)) el(id).textContent = other; });
+  el('tab-dataset-label').textContent = `${t('tab_dataset_prefix')} (${state.records.length})`;
+}
+
+function setLang(lang) {
+  state.lang = lang;
+  localStorage.setItem('qr_lang', lang);
+  applyTranslations();
+  if (state.screen === 'confirm' && state.draft) renderChips();
+  if (state.screen === 'dataset') renderDatasetList();
+  if (state.screen === 'detail' && state.selectedId) openDetail(state.selectedId);
+  if (state.screen === 'admin') loadUsers();
+}
 
 function showScreen(name) {
   state.screen = name;
   screens.forEach(s => el('screen-' + s).classList.toggle('hidden', s !== name));
-  const tabBarVisible = name === 'dataset';
   document.querySelectorAll('.tab-btn').forEach(b => {
     b.classList.toggle('active', b.dataset.tab === name);
   });
@@ -30,7 +180,7 @@ async function api(path, opts = {}) {
   if (state.session && state.session.token) headers['Authorization'] = 'Bearer ' + state.session.token;
   const resp = await fetch(API_BASE + path, Object.assign({}, opts, { headers }));
   const data = await resp.json().catch(() => ({}));
-  if (!resp.ok) throw new Error(data.error || ('Errore ' + resp.status));
+  if (!resp.ok) throw new Error(translateBackendError(data.error) || ('Error ' + resp.status));
   return data;
 }
 
@@ -43,18 +193,13 @@ function loadSession() {
   const raw = localStorage.getItem('qr_session');
   if (raw) state.session = JSON.parse(raw);
 }
-function logout() {
-  localStorage.removeItem('qr_session');
-  state.session = null;
-  showScreen('login');
-}
 
 // ---------------- Login ----------------
 el('login-btn').addEventListener('click', async () => {
   const username = el('login-username').value.trim();
   const password = el('login-password').value;
   el('login-error').textContent = '';
-  if (!username || !password) { el('login-error').textContent = 'Inserisci utente e password'; return; }
+  if (!username || !password) { el('login-error').textContent = t('login_err_missing'); return; }
   try {
     const data = await api('/api/login', { method: 'POST', body: JSON.stringify({ username, password }) });
     saveSession(data);
@@ -68,7 +213,7 @@ el('login-btn').addEventListener('click', async () => {
 async function afterLogin() {
   try {
     state.meta = await api('/api/meta');
-  } catch (e) { state.meta = { itpSteps: [], conditions: [] }; }
+  } catch (e) { state.meta = { itpSteps: [], conditions: CONDITION_CODES }; }
   await loadRecords();
   showScreen('dataset');
 }
@@ -88,7 +233,7 @@ async function startCamera() {
     video.classList.add('live');
     el('qr-glyph-idle').style.display = 'none';
   } catch (err) {
-    el('scan-hint').textContent = 'Fotocamera non disponibile: ' + err.message;
+    el('scan-hint').textContent = t('scan_hint_camera_error') + err.message;
     throw err;
   }
 }
@@ -155,16 +300,16 @@ function onQrDecoded(text) {
 el('scan-btn').addEventListener('click', async () => {
   if (state.scanning) return;
   state.scanning = true;
-  el('scan-btn').textContent = 'Scansione...';
+  el('scan-btn').textContent = t('scan_btn_scanning');
   el('scan-btn').disabled = true;
-  el('scan-hint').textContent = 'Scansione in corso...';
+  el('scan-hint').textContent = t('scan_hint_scanning');
   document.querySelector('.viewfinder').classList.add('scanning');
   try {
     await startCamera();
     scanFrame();
   } catch (e) {
     state.scanning = false;
-    el('scan-btn').textContent = 'Scansiona QR';
+    el('scan-btn').textContent = t('scan_btn');
     el('scan-btn').disabled = false;
   }
 });
@@ -177,7 +322,7 @@ function openConfirm(parsed) {
   el('f-csHeat').value = parsed.csHeat || '';
   el('f-craHeat').value = parsed.craHeat || '';
   el('f-length').value = parsed.length || '';
-  el('f-scannedAt').textContent = new Date().toLocaleString('it-IT');
+  el('f-scannedAt').textContent = new Date().toLocaleString(t('locale'));
   el('f-comment').value = '';
   renderChips();
   updateSaveState();
@@ -186,9 +331,9 @@ function openConfirm(parsed) {
 }
 
 function resetScanBtn() {
-  el('scan-btn').textContent = 'Scansiona QR';
+  el('scan-btn').textContent = t('scan_btn');
   el('scan-btn').disabled = false;
-  el('scan-hint').textContent = "Inquadra il QR code sull'attrezzatura";
+  el('scan-hint').textContent = t('scan_hint_idle');
 }
 
 function renderChips() {
@@ -202,12 +347,12 @@ function renderChips() {
     itpWrap.appendChild(b);
   });
   const condWrap = el('cond-chips'); condWrap.innerHTML = '';
-  (state.meta.conditions.length ? state.meta.conditions : ['Ottimo','Buono','Da revisionare','Danneggiato']).forEach(cond => {
+  (state.meta.conditions.length ? state.meta.conditions : CONDITION_CODES).forEach(code => {
     const b = document.createElement('button');
     b.type = 'button';
-    b.className = 'chip' + (state.draft.condition === cond ? ' selected cond-' + slug(cond) : '');
-    b.textContent = cond;
-    b.addEventListener('click', () => { state.draft.condition = cond; renderChips(); updateSaveState(); });
+    b.className = 'chip' + (state.draft.condition === code ? ' selected cond-' + code : '');
+    b.textContent = condLabel(code);
+    b.addEventListener('click', () => { state.draft.condition = code; renderChips(); updateSaveState(); });
     condWrap.appendChild(b);
   });
 }
@@ -233,7 +378,7 @@ el('confirm-cancel').addEventListener('click', () => {
 el('confirm-save').addEventListener('click', async () => {
   if (!state.draft || !state.draft.itpStep || !state.draft.condition) return;
   el('confirm-save').disabled = true;
-  el('confirm-save').textContent = 'Salvataggio...';
+  el('confirm-save').textContent = t('confirm_save_saving');
   try {
     const { record } = await api('/api/records', { method: 'POST', body: JSON.stringify(state.draft) });
     state.records.unshift(record);
@@ -241,26 +386,26 @@ el('confirm-save').addEventListener('click', async () => {
     state.draft = null;
     showScreen('dataset');
   } catch (err) {
-    alert('Errore salvataggio: ' + err.message);
+    alert(t('err_save') + err.message);
   } finally {
-    el('confirm-save').textContent = 'Salva';
+    el('confirm-save').textContent = t('confirm_save');
     updateSaveState();
   }
 });
 
 function whatsappText(rec) {
   const lines = [
-    'Asset scansionato:',
+    t('wa_title'),
     `Item N°: ${rec.itemNo || '-'}`,
     `Pipe N°: ${rec.pipeNo || '-'}`,
     `CS Heat: ${rec.csHeat || '-'}`,
     `CRA Heat: ${rec.craHeat || '-'}`,
     `Length: ${rec.length || '-'}`,
     `ITP Step: ${rec.itpStep || '-'}`,
-    `Condizione: ${rec.condition || '-'}`,
+    `${t('wa_condition')}: ${condLabel(rec.condition) || '-'}`,
   ];
-  if (rec.comment) lines.push(`Commenti: ${rec.comment}`);
-  lines.push(`Data: ${rec.scannedAt ? new Date(rec.scannedAt).toLocaleString('it-IT') : new Date().toLocaleString('it-IT')}`);
+  if (rec.comment) lines.push(`${t('wa_comments')}: ${rec.comment}`);
+  lines.push(`${t('wa_date')}: ${rec.scannedAt ? new Date(rec.scannedAt).toLocaleString(t('locale')) : new Date().toLocaleString(t('locale'))}`);
   return lines.join('\n');
 }
 
@@ -296,9 +441,9 @@ function renderDatasetList() {
            (r.csHeat || '').toLowerCase().includes(q) ||
            (r.craHeat || '').toLowerCase().includes(q);
   });
-  el('tab-dataset-label').textContent = `Dataset (${state.records.length})`;
+  el('tab-dataset-label').textContent = `${t('tab_dataset_prefix')} (${state.records.length})`;
   if (!filtered.length) {
-    list.innerHTML = '<div class="empty-state">Nessun asset ancora scansionato</div>';
+    list.innerHTML = `<div class="empty-state">${escapeHtml(t('dataset_empty'))}</div>`;
     return;
   }
   const card = document.createElement('div');
@@ -308,14 +453,14 @@ function renderDatasetList() {
     row.className = 'list-row';
     row.setAttribute('role', 'button');
     row.setAttribute('tabindex', '0');
-    const dateStr = r.scannedAt ? new Date(r.scannedAt).toLocaleDateString('it-IT') : '';
+    const dateStr = r.scannedAt ? new Date(r.scannedAt).toLocaleDateString(t('locale')) : '';
     row.innerHTML = `
       <div class="info">
         <span class="pipe">${escapeHtml(r.pipeNo || '-')}</span>
         <span class="meta">${escapeHtml(r.itemNo || '-')} · ${escapeHtml(r.itpStep || '-')} · ${dateStr}</span>
       </div>
       <div class="right">
-        <span class="badge badge-${slug(r.condition)}">${escapeHtml(r.condition || '')}</span>
+        <span class="badge badge-${r.condition}">${escapeHtml(condLabel(r.condition))}</span>
         <span class="chevron">&rsaquo;</span>
       </div>`;
     row.addEventListener('click', () => openDetail(r.id));
@@ -340,21 +485,24 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
   });
 });
 
+el('lang-toggle-login').addEventListener('click', () => setLang(state.lang === 'it' ? 'en' : 'it'));
+el('lang-toggle-dataset').addEventListener('click', () => setLang(state.lang === 'it' ? 'en' : 'it'));
+
 // ---------------- Detail ----------------
 function openDetail(id) {
   const rec = state.records.find(r => r.id === id);
   if (!rec) return;
   state.selectedId = id;
   el('d-pipeNo').textContent = rec.pipeNo || '-';
-  el('d-badge').textContent = rec.condition || '';
-  el('d-badge').className = 'badge badge-' + slug(rec.condition);
+  el('d-badge').textContent = condLabel(rec.condition);
+  el('d-badge').className = 'badge badge-' + rec.condition;
   el('d-itemNo').textContent = rec.itemNo || '-';
   el('d-csHeat').textContent = rec.csHeat || '-';
   el('d-craHeat').textContent = rec.craHeat || '-';
   el('d-length').textContent = rec.length || '-';
   el('d-itpStep').textContent = rec.itpStep || '-';
   el('d-scannedBy').textContent = rec.scannedBy || '-';
-  el('d-scannedAt').textContent = rec.scannedAt ? new Date(rec.scannedAt).toLocaleString('it-IT') : '-';
+  el('d-scannedAt').textContent = rec.scannedAt ? new Date(rec.scannedAt).toLocaleString(t('locale')) : '-';
   if (rec.comment) {
     el('d-comment-card').classList.remove('hidden');
     el('d-comment').textContent = rec.comment;
@@ -386,7 +534,7 @@ function renderUsers(users) {
   const wrap = el('a-user-list');
   wrap.innerHTML = '';
   if (!users.length) {
-    wrap.innerHTML = '<div class="row">Nessun ispettore ancora aggiunto</div>';
+    wrap.innerHTML = `<div class="row">${escapeHtml(t('admin_empty'))}</div>`;
     return;
   }
   users.forEach(u => {
@@ -395,16 +543,16 @@ function renderUsers(users) {
     row.innerHTML = `
       <div>
         <div style="font-weight:600">${escapeHtml(u.name)} <span style="color:var(--text-secondary);font-weight:400">(${escapeHtml(u.username)})</span></div>
-        <div style="font-size:12px;color:var(--text-secondary)">${u.role === 'admin' ? 'Admin' : 'Ispettore'}</div>
+        <div style="font-size:12px;color:var(--text-secondary)">${u.role === 'admin' ? escapeHtml(t('admin_role_admin')) : escapeHtml(t('admin_role_inspector'))}</div>
       </div>
-      <button class="danger-link" data-username="${escapeHtml(u.username)}">Rimuovi</button>`;
+      <button class="danger-link" data-username="${escapeHtml(u.username)}">${escapeHtml(t('remove'))}</button>`;
     row.querySelector('.danger-link').addEventListener('click', async (e) => {
       const username = e.target.dataset.username;
-      if (!confirm(`Rimuovere ${username}?`)) return;
+      if (!confirm(t('confirm_remove_user').replace('{u}', username))) return;
       try {
         await api('/api/admin/users/' + encodeURIComponent(username), { method: 'DELETE' });
         await loadUsers();
-      } catch (err) { alert('Errore: ' + err.message); }
+      } catch (err) { alert(t('err_generic') + err.message); }
     });
     wrap.appendChild(row);
   });
@@ -414,16 +562,17 @@ el('a-add-btn').addEventListener('click', async () => {
   const username = el('a-username').value.trim();
   const name = el('a-name').value.trim();
   const password = el('a-password').value;
-  if (!username || !name || !password) { alert('Compila tutti i campi'); return; }
+  if (!username || !name || !password) { alert(t('err_fill_all')); return; }
   try {
     await api('/api/admin/users', { method: 'POST', body: JSON.stringify({ username, name, password, role: 'inspector' }) });
     el('a-username').value = ''; el('a-name').value = ''; el('a-password').value = '';
     await loadUsers();
-  } catch (err) { alert('Errore: ' + err.message); }
+  } catch (err) { alert(t('err_generic') + err.message); }
 });
 
 // ---------------- Boot ----------------
 (async function boot() {
+  applyTranslations();
   loadSession();
   if (state.session && state.session.token) {
     el('admin-gear').classList.toggle('hidden', state.session.role !== 'admin');
