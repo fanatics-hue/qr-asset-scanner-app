@@ -8,6 +8,7 @@ const TRANSLATIONS = {
     login_err_missing: 'Inserisci utente e password',
     scan_hint_idle: "Inquadra il QR code sull'attrezzatura",
     scan_hint_scanning: 'Scansione in corso...',
+    scan_hint_tip: 'Avvicina o allontana il telefono e assicurati che ci sia buona luce',
     scan_hint_camera_error: 'Fotocamera non disponibile: ',
     scan_btn: 'Scansiona QR',
     scan_btn_scanning: 'Scansione...',
@@ -62,6 +63,7 @@ const TRANSLATIONS = {
     login_err_missing: 'Enter username and password',
     scan_hint_idle: 'Point the camera at the QR code on the equipment',
     scan_hint_scanning: 'Scanning...',
+    scan_hint_tip: 'Move the phone closer or further away and make sure there is good light',
     scan_hint_camera_error: 'Camera not available: ',
     scan_btn: 'Scan QR',
     scan_btn_scanning: 'Scanning...',
@@ -246,18 +248,23 @@ function stopCamera() {
   el('qr-glyph-idle').style.display = '';
   document.querySelector('.viewfinder').classList.remove('scanning');
   state.scanning = false;
+  scanStartedAt = 0;
 }
 
+let scanStartedAt = 0;
 function scanFrame() {
-  if (video.readyState === video.HAVE_ENOUGH_DATA) {
+  if (video.videoWidth > 0 && video.videoHeight > 0) {
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
     ctx2d.drawImage(video, 0, 0, canvas.width, canvas.height);
     const imageData = ctx2d.getImageData(0, 0, canvas.width, canvas.height);
-    const code = window.jsQR(imageData.data, imageData.width, imageData.height);
+    const code = window.jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'attemptBoth' });
     if (code && code.data) {
       onQrDecoded(code.data);
       return;
+    }
+    if (scanStartedAt && Date.now() - scanStartedAt > 6000) {
+      el('scan-hint').textContent = t('scan_hint_tip');
     }
   }
   scanLoopId = requestAnimationFrame(scanFrame);
@@ -314,6 +321,7 @@ el('scan-btn').addEventListener('click', async () => {
   document.querySelector('.viewfinder').classList.add('scanning');
   try {
     await startCamera();
+    scanStartedAt = Date.now();
     scanFrame();
   } catch (e) {
     state.scanning = false;
