@@ -228,7 +228,6 @@ let stream = null;
 let scanLoopId = null;
 let videoDevices = [];
 let currentDeviceIndex = 0;
-let autoBackCameraChecked = false;
 const video = el('qr-video');
 const canvas = document.createElement('canvas');
 const ctx2d = canvas.getContext('2d');
@@ -253,21 +252,16 @@ async function startCamera() {
       stream = await navigator.mediaDevices.getUserMedia({ video: baseVideo });
     }
     video.srcObject = stream;
-    await video.play();
+    try {
+      await video.play();
+    } catch (playErr) {
+      // interruzione benigna (nuovo srcObject assegnato mentre play() era in corso): ignorare,
+      // il flusso video risultera' comunque attivo un istante dopo
+      if (!/interrupted/i.test(playErr.message || '')) throw playErr;
+    }
     video.classList.add('live');
     el('qr-glyph-idle').style.display = 'none';
-    if (!videoDevices.length) {
-      await refreshVideoDevices(); // le etichette/ID sono affidabili solo dopo il permesso
-      if (!autoBackCameraChecked) {
-        autoBackCameraChecked = true;
-        const backIdx = videoDevices.findIndex(d => /back|rear|environment/i.test(d.label));
-        if (backIdx > -1 && backIdx !== currentDeviceIndex) {
-          currentDeviceIndex = backIdx;
-          stream.getTracks().forEach(tr => tr.stop());
-          return startCamera(); // riparte subito con la fotocamera posteriore corretta
-        }
-      }
-    }
+    if (!videoDevices.length) await refreshVideoDevices(); // le etichette/ID sono affidabili solo dopo il permesso
     const track = stream.getVideoTracks()[0];
     const settings = track && track.getSettings ? track.getSettings() : {};
     el('scan-debug').textContent = `${settings.width || video.videoWidth}x${settings.height || video.videoHeight} (cam ${currentDeviceIndex + 1}/${videoDevices.length || 1})`;
