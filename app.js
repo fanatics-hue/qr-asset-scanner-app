@@ -235,6 +235,14 @@ canvas.id = 'debug-canvas-preview';
 canvas.style.cssText = 'position:absolute;bottom:96px;right:10px;width:120px;height:120px;border:2px solid #0A84FF;z-index:5;background:#000;object-fit:contain;';
 document.querySelector('.scan-body').appendChild(canvas);
 
+el('save-frame-btn').addEventListener('click', () => {
+  canvas.toBlob(blob => {
+    if (!blob) return;
+    const url = URL.createObjectURL(blob);
+    window.open(url, '_blank');
+  }, 'image/png');
+});
+
 let barcodeDetector = null;
 if ('BarcodeDetector' in window) {
   try { barcodeDetector = new window.BarcodeDetector({ formats: ['qr_code'] }); } catch (e) { barcodeDetector = null; }
@@ -354,20 +362,23 @@ function cropDrawToCanvas(source, srcW, srcH) {
 async function decodeCanvasAndHandle(sourceLabel) {
   let decoded = null;
   let engine = 'jsQR';
+  let nativeStatus = '';
   if (barcodeDetector) {
-    engine = 'nativo';
     try {
       const results = await barcodeDetector.detect(canvas);
-      if (results && results.length) decoded = results[0].rawValue;
-    } catch (e) { /* fallback sotto */ }
+      nativeStatus = 'nativo:0risultati';
+      if (results && results.length) { decoded = results[0].rawValue; engine = 'nativo'; nativeStatus = 'nativo:OK'; }
+    } catch (e) { nativeStatus = 'nativo:ERRORE(' + (e.name || e.message) + ')'; }
+  } else {
+    nativeStatus = 'nativo:non-disponibile';
   }
   if (!decoded) {
     const imageData = ctx2d.getImageData(0, 0, canvas.width, canvas.height);
     const code = window.jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'attemptBoth' });
-    if (code && code.data) { decoded = code.data; engine = barcodeDetector ? 'nativo->jsQR' : 'jsQR'; }
+    if (code && code.data) { decoded = code.data; engine = 'jsQR'; }
   }
   scanAttempts++;
-  el('scan-debug').textContent = `${Math.round(canvas.width)}x${Math.round(canvas.height)} · ${sourceLabel} · ${engine} · ${focusInfo} · ${scanAttempts} tentativi`;
+  el('scan-debug').textContent = `${Math.round(canvas.width)}x${Math.round(canvas.height)} · ${sourceLabel} · ${nativeStatus} · ${scanAttempts} tentativi`;
   if (decoded) {
     onQrDecoded(decoded);
     return true;
