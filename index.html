@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=8">
+<link rel="stylesheet" href="styles.css?v=9">
 </head>
 <body>
 <div id="app">
@@ -18,6 +18,7 @@
   <!-- LOGIN -->
   <section id="screen-login">
     <button id="lang-toggle-login" class="lang-toggle">EN</button>
+    <button id="theme-toggle-login" class="theme-toggle" data-i18n-title="theme_toggle_title" title="Tema chiaro/scuro">&#9789;</button>
     <div class="logo-chip"><img src="assets/iqs-logo.jpg" alt="IQS"></div>
     <h1>QR Asset Scanner</h1>
     <input id="login-username" class="field" type="text" data-i18n-ph="login_username_ph" autocomplete="username">
@@ -73,7 +74,10 @@
   <!-- DATASET -->
   <section id="screen-dataset" class="hidden">
     <div class="top-strip">
-      <button id="lang-toggle-dataset" class="lang-toggle">EN</button>
+      <div class="toggles">
+        <button id="lang-toggle-dataset" class="lang-toggle">EN</button>
+        <button id="theme-toggle-dataset" class="theme-toggle" data-i18n-title="theme_toggle_title" title="Tema chiaro/scuro">&#9789;</button>
+      </div>
       <div class="logo-chip" style="padding:0"><img src="assets/iqs-logo.jpg" alt="IQS" style="height:28px"></div>
       <button id="admin-gear" class="admin-gear hidden" data-i18n-title="admin_title" title="Gestione ispettori">&#9881;</button>
     </div>
@@ -136,6 +140,6 @@
   </section>
 
 </div>
-<script src="app.js?v=19"></script>
+<script src="app.js?v=20"></script>
 </body>
 </html>

@@ -42,6 +42,7 @@ const TRANSLATIONS = {
     tab_dataset_prefix: 'Dataset',
     field_scannedBy: 'Scansionato da',
     field_scannedOn: 'Scansionato il',
+    theme_toggle_title: 'Tema chiaro/scuro',
     admin_title: 'Gestione ispettori',
     admin_name: 'Nome',
     admin_username_ph: 'es. mrossi',
@@ -108,6 +109,7 @@ const TRANSLATIONS = {
     tab_dataset_prefix: 'Dataset',
     field_scannedBy: 'Scanned by',
     field_scannedOn: 'Scanned on',
+    theme_toggle_title: 'Light/dark theme',
     admin_title: 'Inspector management',
     admin_name: 'Name',
     admin_username_ph: 'e.g. jsmith',
@@ -158,6 +160,7 @@ const state = {
   session: null,
   meta: { itpSteps: [], conditions: [] },
   lang: localStorage.getItem('qr_lang') || 'it',
+  theme: localStorage.getItem('qr_theme') || 'auto',
   productionMap: new Map(),
   productionByPipe: new Map()
 };
@@ -184,6 +187,29 @@ function applyTranslations() {
   ['lang-toggle-login', 'lang-toggle-dataset'].forEach(id => { if (el(id)) el(id).textContent = other; });
   el('tab-dataset-label').textContent = `${t('tab_dataset_prefix')} (${state.records.length})`;
 }
+
+const darkMediaQuery = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+
+function effectiveDark() {
+  if (state.theme === 'dark') return true;
+  if (state.theme === 'light') return false;
+  return !!(darkMediaQuery && darkMediaQuery.matches);
+}
+
+function applyTheme() {
+  if (state.theme === 'auto') document.documentElement.removeAttribute('data-theme');
+  else document.documentElement.setAttribute('data-theme', state.theme);
+  const icon = effectiveDark() ? '☀' : '☽';
+  ['theme-toggle-login', 'theme-toggle-dataset'].forEach(id => { if (el(id)) el(id).textContent = icon; });
+}
+
+function toggleTheme() {
+  state.theme = effectiveDark() ? 'light' : 'dark';
+  localStorage.setItem('qr_theme', state.theme);
+  applyTheme();
+}
+
+if (darkMediaQuery) darkMediaQuery.addEventListener('change', () => { if (state.theme === 'auto') applyTheme(); });
 
 function setLang(lang) {
   state.lang = lang;
@@ -501,6 +527,9 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 
 el('lang-toggle-login').addEventListener('click', () => setLang(state.lang === 'it' ? 'en' : 'it'));
 el('lang-toggle-dataset').addEventListener('click', () => setLang(state.lang === 'it' ? 'en' : 'it'));
+el('theme-toggle-login').addEventListener('click', toggleTheme);
+el('theme-toggle-dataset').addEventListener('click', toggleTheme);
+applyTheme();
 
 // ---------------- Detail ----------------
 function openDetail(id) {
