@@ -235,6 +235,11 @@ canvas.id = 'debug-canvas-preview';
 canvas.style.cssText = 'position:absolute;bottom:96px;right:10px;width:120px;height:120px;border:2px solid #0A84FF;z-index:5;background:#000;object-fit:contain;';
 document.querySelector('.scan-body').appendChild(canvas);
 
+let barcodeDetector = null;
+if ('BarcodeDetector' in window) {
+  try { barcodeDetector = new window.BarcodeDetector({ formats: ['qr_code'] }); } catch (e) { barcodeDetector = null; }
+}
+
 async function refreshVideoDevices() {
   try {
     const devices = await navigator.mediaDevices.enumerateDevices();
@@ -310,7 +315,7 @@ function getViewfinderCropRect() {
   };
 }
 
-function scanFrame() {
+async function scanFrame() {
   if (video.videoWidth > 0 && video.videoHeight > 0) {
     const crop = getViewfinderCropRect();
     let sx = 0, sy = 0, sw = video.videoWidth, sh = video.videoHeight;
@@ -324,12 +329,25 @@ function scanFrame() {
     canvas.width = sw;
     canvas.height = sh;
     ctx2d.drawImage(video, sx, sy, sw, sh, 0, 0, sw, sh);
-    const imageData = ctx2d.getImageData(0, 0, canvas.width, canvas.height);
-    const code = window.jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'attemptBoth' });
+
+    let decoded = null;
+    let engine = 'jsQR';
+    if (barcodeDetector) {
+      engine = 'nativo';
+      try {
+        const results = await barcodeDetector.detect(canvas);
+        if (results && results.length) decoded = results[0].rawValue;
+      } catch (e) { /* fallback sotto */ }
+    }
+    if (!decoded) {
+      const imageData = ctx2d.getImageData(0, 0, canvas.width, canvas.height);
+      const code = window.jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'attemptBoth' });
+      if (code && code.data) { decoded = code.data; engine = barcodeDetector ? 'nativo->jsQR' : 'jsQR'; }
+    }
     scanAttempts++;
-    el('scan-debug').textContent = `${Math.round(sw)}x${Math.round(sh)} (ritagliato) · ${camPath} · cam ${currentDeviceIndex + 1}/${videoDevices.length || 1} · ${scanAttempts} tentativi`;
-    if (code && code.data) {
-      onQrDecoded(code.data);
+    el('scan-debug').textContent = `${Math.round(sw)}x${Math.round(sh)} (ritagliato) · ${engine} · cam ${currentDeviceIndex + 1}/${videoDevices.length || 1} · ${scanAttempts} tentativi`;
+    if (decoded) {
+      onQrDecoded(decoded);
       return;
     }
     if (scanStartedAt && Date.now() - scanStartedAt > 6000) {
