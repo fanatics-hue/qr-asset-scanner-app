@@ -236,11 +236,13 @@ canvas.style.cssText = 'position:absolute;bottom:96px;right:10px;width:120px;hei
 document.querySelector('.scan-body').appendChild(canvas);
 
 el('save-frame-btn').addEventListener('click', () => {
-  canvas.toBlob(blob => {
-    if (!blob) return;
-    const url = URL.createObjectURL(blob);
-    window.open(url, '_blank');
-  }, 'image/png');
+  const dataUrl = canvas.toDataURL('image/png');
+  const win = window.open('', '_blank');
+  if (win) {
+    win.document.write('<title>Ritaglio analizzato</title><body style="margin:0;background:#111"><img src="' + dataUrl + '" style="max-width:100%;display:block;margin:auto"></body>');
+  } else {
+    alert('Popup bloccato: consenti i popup per questo sito e riprova.');
+  }
 });
 
 let barcodeDetector = null;
