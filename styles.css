@@ -116,6 +116,8 @@ html, body {
   display: flex; align-items: center; justify-content: space-between;
   padding: 12px 14px; border-top: 0.5px solid var(--border-light);
 }
+.prod-progress-row { background: var(--blue-bg); }
+.prod-progress-row .readonly { color: var(--blue-c); }
 .row:first-of-type { border-top: none; }
 .row label { color: var(--text-secondary); font-size: 15px; }
 .row input {

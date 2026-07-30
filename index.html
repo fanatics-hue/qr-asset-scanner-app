@@ -7,7 +7,7 @@
 <link rel="manifest" href="manifest.json?v=1">
 <meta name="theme-color" content="#0A84FF">
 <link rel="apple-touch-icon" href="assets/iqs-logo.jpg">
-<link rel="stylesheet" href="styles.css?v=5">
+<link rel="stylesheet" href="styles.css?v=6">
 </head>
 <body>
 <div id="app">
@@ -38,6 +38,10 @@
         </div>
         <div class="row"><label>Item N°</label><input id="f-itemNo" type="text"></div>
         <div class="row"><label>Pipe N°</label><input id="f-pipeNo" type="text"></div>
+        <div class="row prod-progress-row hidden" id="prod-progress-row">
+          <label data-i18n="field_progress">Avanzamento</label>
+          <span class="readonly" id="f-progress"></span>
+        </div>
         <div class="row"><label>CS Heat</label><input id="f-csHeat" type="text"></div>
         <div class="row"><label>CRA Heat</label><input id="f-craHeat" type="text"></div>
         <div class="row"><label>Length</label><input id="f-length" type="text"></div>
@@ -129,6 +133,6 @@
   </section>
 
 </div>
-<script src="app.js?v=17"></script>
+<script src="app.js?v=18"></script>
 </body>
 </html>

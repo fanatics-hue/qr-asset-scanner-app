@@ -28,6 +28,7 @@ const TRANSLATIONS = {
     confirm_section_scanned: 'Dati scansionati',
     confirm_hint_editable: 'modificabili se errati',
     field_scannedAt: 'Data scansione',
+    field_progress: 'Avanzamento',
     field_condition: 'Condizione *',
     field_comments: 'Commenti',
     comments_ph: 'Note su condizioni, danni, manutenzione...',
@@ -93,6 +94,7 @@ const TRANSLATIONS = {
     confirm_section_scanned: 'Scanned data',
     confirm_hint_editable: 'editable if incorrect',
     field_scannedAt: 'Scan date',
+    field_progress: 'Progress',
     field_condition: 'Condition *',
     field_comments: 'Comments',
     comments_ph: 'Notes on condition, damage, maintenance...',
@@ -144,6 +146,7 @@ const BACKEND_ERR_MAP = {
 };
 
 const CONDITION_CODES = ['excellent', 'good', 'needs-review', 'damaged'];
+const ITP_STEPS_FALLBACK = ['Milling', 'Welding Base', 'Welding Clad', 'Hydro', 'UT', 'RT', 'PT', 'FI (Final Inspection)'];
 const condKey = (code) => 'cond_' + String(code || '').replace(/-/g, '');
 
 const state = {
@@ -285,6 +288,7 @@ function openConfirm(parsed) {
   el('f-length').value = parsed.length || '';
   el('f-scannedAt').textContent = new Date().toLocaleString(t('locale'));
   el('f-comment').value = '';
+  el('prod-progress-row').classList.add('hidden');
   renderChips();
   updateSaveState();
   showScreen('confirm');
@@ -340,11 +344,11 @@ function setAutoField(id, key, value) {
 function tryAutoFillFromProduction() {
   const itemNo = el('f-itemNo').value.trim();
   const pipeNo = el('f-pipeNo').value.trim();
-  if (!pipeNo) return;
+  if (!pipeNo) { el('prod-progress-row').classList.add('hidden'); return; }
   let match = null;
   if (itemNo) match = state.productionMap.get(prodKey(itemNo, pipeNo));
   if (!match) match = state.productionByPipe.get(normProdNum(pipeNo));
-  if (!match) return;
+  if (!match) { el('prod-progress-row').classList.add('hidden'); return; }
   const canOverwrite = (id, key) => !el(id).value.trim() || state.draft._autoFields.has(key);
   if (!itemNo && match.itemNo) { el('f-itemNo').value = match.itemNo; state.draft.itemNo = match.itemNo; }
   if (canOverwrite('f-csHeat', 'csHeat') && match.csHeat) setAutoField('f-csHeat', 'csHeat', match.csHeat);
@@ -354,6 +358,14 @@ function tryAutoFillFromProduction() {
     state.draft.itpStep = match.currentStep;
     renderChips();
     updateSaveState();
+  }
+  if (typeof match.progress === 'number' && match.currentStep) {
+    const pct = Math.round(match.progress * 100);
+    const stepNum = match.currentStepNum || (ITP_STEPS_FALLBACK.indexOf(match.currentStep) + 1);
+    el('f-progress').textContent = `${pct}% — ITP Step N° ${stepNum}: ${match.currentStep}`;
+    el('prod-progress-row').classList.remove('hidden');
+  } else {
+    el('prod-progress-row').classList.add('hidden');
   }
 }
 ['f-itemNo', 'f-pipeNo'].forEach(id => el(id).addEventListener('input', tryAutoFillFromProduction));
