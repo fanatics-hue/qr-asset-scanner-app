@@ -462,6 +462,39 @@ el('scan-btn').addEventListener('click', () => {
   el('photo-input').click();
 });
 
+async function tryDetectOnRegion(bitmap, fraction) {
+  const bw = bitmap.width, bh = bitmap.height;
+  const cw = bw * fraction, ch = bh * fraction;
+  const cx = (bw - cw) / 2, cy = (bh - ch) / 2;
+  canvas.width = cw;
+  canvas.height = ch;
+  ctx2d.drawImage(bitmap, cx, cy, cw, ch, 0, 0, cw, ch);
+
+  let decoded = null;
+  let status = '';
+  if (barcodeDetector) {
+    try {
+      const results = await barcodeDetector.detect(canvas);
+      if (results && results.length) {
+        // preferisce il codice che rispetta il formato noto Ordine-Item-Tubo, ignorando eventuali QR decorativi sull'etichetta
+        const preferred = results.find(r => /^\d+-\d+-\d+$/.test((r.rawValue || '').trim()));
+        decoded = (preferred || results[0]).rawValue;
+        status = 'nativo:OK';
+      } else {
+        status = 'nativo:0risultati';
+      }
+    } catch (err) { status = 'nativo:ERRORE(' + (err.name || err.message) + ')'; }
+  } else {
+    status = 'nativo:non-disponibile';
+  }
+  if (!decoded) {
+    const imageData = ctx2d.getImageData(0, 0, canvas.width, canvas.height);
+    const code = window.jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'attemptBoth' });
+    if (code && code.data) { decoded = code.data; status += '+jsQR:OK'; }
+  }
+  return { decoded, status };
+}
+
 el('photo-input').addEventListener('change', async (e) => {
   const file = e.target.files && e.target.files[0];
   e.target.value = ''; // permette di riselezionare la stessa foto in futuro
@@ -470,34 +503,17 @@ el('photo-input').addEventListener('change', async (e) => {
   el('scan-debug').textContent = '';
   try {
     const bitmap = await createImageBitmap(file);
-    canvas.width = bitmap.width;
-    canvas.height = bitmap.height;
-    ctx2d.drawImage(bitmap, 0, 0);
+    // prova l'immagine intera, poi ritagli via via piu' stretti al centro
+    // (dove presumibilmente e' inquadrato il QR target, ignorando i QR decorativi ai bordi dell'etichetta)
+    const attempts = [1, 0.6, 0.35, 0.2];
+    let decoded = null, lastStatus = '';
+    for (const fraction of attempts) {
+      const result = await tryDetectOnRegion(bitmap, fraction);
+      lastStatus = `ritaglio ${Math.round(fraction * 100)}% · ${result.status}`;
+      el('scan-debug').textContent = `${bitmap.width}x${bitmap.height} · ${lastStatus}`;
+      if (result.decoded) { decoded = result.decoded; break; }
+    }
     if (bitmap.close) bitmap.close();
-
-    let decoded = null;
-    let nativeStatus = '';
-    if (barcodeDetector) {
-      try {
-        const results = await barcodeDetector.detect(canvas);
-        if (results && results.length) {
-          // preferisce il codice che rispetta il formato noto Ordine-Item-Tubo, ignorando eventuali QR decorativi sull'etichetta
-          const preferred = results.find(r => /^\d+-\d+-\d+$/.test((r.rawValue || '').trim()));
-          decoded = (preferred || results[0]).rawValue;
-          nativeStatus = 'nativo:OK (' + results.length + ' trovati)';
-        } else {
-          nativeStatus = 'nativo:0risultati';
-        }
-      } catch (err) { nativeStatus = 'nativo:ERRORE(' + (err.name || err.message) + ')'; }
-    } else {
-      nativeStatus = 'nativo:non-disponibile';
-    }
-    if (!decoded) {
-      const imageData = ctx2d.getImageData(0, 0, canvas.width, canvas.height);
-      const code = window.jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'attemptBoth' });
-      if (code && code.data) decoded = code.data;
-    }
-    el('scan-debug').textContent = `${canvas.width}x${canvas.height} · ${nativeStatus}`;
     if (decoded) {
       onQrDecoded(decoded);
     } else {
