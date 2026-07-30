@@ -249,6 +249,7 @@ async function refreshVideoDevices() {
 
 let camPath = '';
 let camError = '';
+let focusInfo = '';
 async function startCamera() {
   try {
     const chosen = videoDevices[currentDeviceIndex];
@@ -256,7 +257,7 @@ async function startCamera() {
       ? { deviceId: { exact: chosen.deviceId } }
       : { facingMode: { ideal: state.facingMode } };
     try {
-      stream = await navigator.mediaDevices.getUserMedia({ video: Object.assign({}, baseVideo, { width: { ideal: 1920 }, height: { ideal: 1080 } }) });
+      stream = await navigator.mediaDevices.getUserMedia({ video: Object.assign({}, baseVideo, { width: { ideal: 1920 }, height: { ideal: 1080 }, advanced: [{ focusMode: 'continuous' }] }) });
       camPath = 'HD';
     } catch (e) {
       // alcuni telefoni rifiutano width/height ideal troppo alti insieme al vincolo fotocamera: riprova piu' semplice
@@ -274,6 +275,19 @@ async function startCamera() {
     }
     video.classList.add('live');
     el('qr-glyph-idle').style.display = 'none';
+    // forza autofocus continuo dopo l'avvio, se il dispositivo lo supporta (alcuni telefoni lo ignorano nei constraints iniziali)
+    try {
+      const t2 = stream.getVideoTracks()[0];
+      const caps = t2.getCapabilities ? t2.getCapabilities() : {};
+      if (caps.focusMode && caps.focusMode.includes('continuous')) {
+        await t2.applyConstraints({ advanced: [{ focusMode: 'continuous' }] });
+        focusInfo = 'AF-continuo applicato';
+      } else if (caps.focusMode) {
+        focusInfo = 'AF disponibile ma senza continuous: ' + caps.focusMode.join(',');
+      } else {
+        focusInfo = 'AF non esposto dal browser';
+      }
+    } catch (focusErr) { focusInfo = 'AF errore: ' + (focusErr.message || focusErr.name); }
     if (!videoDevices.length) await refreshVideoDevices(); // le etichette/ID sono affidabili solo dopo il permesso
   } catch (err) {
     el('scan-hint').textContent = t('scan_hint_camera_error') + err.message;
@@ -345,7 +359,7 @@ async function scanFrame() {
       if (code && code.data) { decoded = code.data; engine = barcodeDetector ? 'nativo->jsQR' : 'jsQR'; }
     }
     scanAttempts++;
-    el('scan-debug').textContent = `${Math.round(sw)}x${Math.round(sh)} (ritagliato) · ${engine} · cam ${currentDeviceIndex + 1}/${videoDevices.length || 1} · ${scanAttempts} tentativi`;
+    el('scan-debug').textContent = `${Math.round(sw)}x${Math.round(sh)} · ${engine} · ${focusInfo} · ${scanAttempts} tentativi`;
     if (decoded) {
       onQrDecoded(decoded);
       return;
