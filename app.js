@@ -652,8 +652,12 @@ el('a-add-btn').addEventListener('click', async () => {
   showScreen('login');
 })();
 
+// Service worker disattivato durante lo sviluppo attivo: la sua cache ha causato piu' problemi
+// (versioni vecchie bloccate) che benefici. Questo si autopulisce: disinstalla qualsiasi SW e
+// cache residui da visite precedenti, cosi' ogni caricamento prende sempre l'ultima versione pubblicata.
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js').catch(() => {});
-  });
+  navigator.serviceWorker.getRegistrations().then(regs => regs.forEach(r => r.unregister())).catch(() => {});
+}
+if (window.caches) {
+  caches.keys().then(keys => keys.forEach(k => caches.delete(k))).catch(() => {});
 }
