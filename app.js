@@ -226,32 +226,39 @@ async function afterLogin() {
 // ---------------- Scan ----------------
 let stream = null;
 let scanLoopId = null;
+let videoDevices = [];
+let currentDeviceIndex = 0;
 const video = el('qr-video');
 const canvas = document.createElement('canvas');
 const ctx2d = canvas.getContext('2d');
 
+async function refreshVideoDevices() {
+  try {
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    videoDevices = devices.filter(d => d.kind === 'videoinput');
+  } catch (e) { videoDevices = []; }
+}
+
 async function startCamera() {
   try {
-    const constraints = {
-      video: {
-        facingMode: { ideal: state.facingMode },
-        width: { ideal: 1920 },
-        height: { ideal: 1080 }
-      }
-    };
+    const chosen = videoDevices[currentDeviceIndex];
+    const baseVideo = chosen
+      ? { deviceId: { exact: chosen.deviceId } }
+      : { facingMode: { ideal: state.facingMode } };
     try {
-      stream = await navigator.mediaDevices.getUserMedia(constraints);
+      stream = await navigator.mediaDevices.getUserMedia({ video: Object.assign({}, baseVideo, { width: { ideal: 1920 }, height: { ideal: 1080 } }) });
     } catch (e) {
-      // alcuni telefoni rifiutano width/height ideal troppo alti insieme a facingMode: riprova piu' semplice
-      stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: state.facingMode } });
+      // alcuni telefoni rifiutano width/height ideal troppo alti insieme al vincolo fotocamera: riprova piu' semplice
+      stream = await navigator.mediaDevices.getUserMedia({ video: baseVideo });
     }
     video.srcObject = stream;
     await video.play();
     video.classList.add('live');
     el('qr-glyph-idle').style.display = 'none';
+    if (!videoDevices.length) await refreshVideoDevices(); // le etichette/ID sono affidabili solo dopo il permesso
     const track = stream.getVideoTracks()[0];
     const settings = track && track.getSettings ? track.getSettings() : {};
-    el('scan-debug').textContent = `${settings.width || video.videoWidth}x${settings.height || video.videoHeight}`;
+    el('scan-debug').textContent = `${settings.width || video.videoWidth}x${settings.height || video.videoHeight} (cam ${currentDeviceIndex + 1}/${videoDevices.length || 1})`;
   } catch (err) {
     el('scan-hint').textContent = t('scan_hint_camera_error') + err.message;
     throw err;
@@ -357,8 +364,15 @@ el('scan-btn').addEventListener('click', () => {
 });
 
 el('camera-flip-btn').addEventListener('click', async () => {
-  state.facingMode = state.facingMode === 'environment' ? 'user' : 'environment';
-  if (state.scanning) stopCamera();
+  if (videoDevices.length > 1) {
+    currentDeviceIndex = (currentDeviceIndex + 1) % videoDevices.length;
+  } else {
+    state.facingMode = state.facingMode === 'environment' ? 'user' : 'environment';
+  }
+  if (state.scanning) {
+    stopCamera();
+    await new Promise(r => setTimeout(r, 200)); // lascia il tempo all'hardware di rilasciare la fotocamera precedente
+  }
   await beginScan();
 });
 
