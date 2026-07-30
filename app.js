@@ -231,6 +231,9 @@ let currentDeviceIndex = 0;
 const video = el('qr-video');
 const canvas = document.createElement('canvas');
 const ctx2d = canvas.getContext('2d');
+canvas.id = 'debug-canvas-preview';
+canvas.style.cssText = 'position:absolute;bottom:96px;right:10px;width:120px;height:120px;border:2px solid #0A84FF;z-index:5;background:#000;object-fit:contain;';
+document.querySelector('.scan-body').appendChild(canvas);
 
 async function refreshVideoDevices() {
   try {
