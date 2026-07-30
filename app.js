@@ -265,8 +265,16 @@ function scanFrame() {
 
 function parseQrPayload(text) {
   const result = { itemNo: '', pipeNo: '', csHeat: '', craHeat: '', length: '' };
+  const clean = text.trim();
+  // formato reale etichetta EEW: "45650-00400-2458" = Ordine-Item-Tubo (CS/CRA Heat e Length non sono nel QR)
+  const dashMatch = clean.match(/^(\d+)-(\d+)-(\d+)$/);
+  if (dashMatch) {
+    result.itemNo = String(parseInt(dashMatch[2], 10));
+    result.pipeNo = dashMatch[3];
+    return result;
+  }
   try {
-    const obj = JSON.parse(text);
+    const obj = JSON.parse(clean);
     result.itemNo = obj.itemNo || obj.item || obj.ItemNo || obj['Item N°'] || '';
     result.pipeNo = obj.pipeNo || obj.pipe || obj.PipeNo || obj['Pipe N°'] || '';
     result.csHeat = obj.csHeat || obj['CS Heat'] || '';
@@ -274,7 +282,7 @@ function parseQrPayload(text) {
     result.length = obj.length || obj.Length || '';
     return result;
   } catch (e) { /* not JSON, try key:value pairs */ }
-  const pairs = text.split(/[\n;]+/).map(s => s.trim()).filter(Boolean);
+  const pairs = clean.split(/[\n;]+/).map(s => s.trim()).filter(Boolean);
   let matchedAny = false;
   pairs.forEach(pair => {
     const m = pair.match(/^([^:=]+)[:=]\s*(.*)$/);
@@ -287,7 +295,7 @@ function parseQrPayload(text) {
     else if (key.includes('cra') && key.includes('heat')) { result.craHeat = val; matchedAny = true; }
     else if (key.includes('length')) { result.length = val; matchedAny = true; }
   });
-  if (!matchedAny) result.pipeNo = text; // fallback: testo grezzo, l'utente corregge a mano
+  if (!matchedAny) result.pipeNo = clean; // fallback: testo grezzo, l'utente corregge a mano
   return result;
 }
 
