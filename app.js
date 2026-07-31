@@ -1,5 +1,5 @@
 const API_BASE = 'https://qr-scanner-api.fanatics.workers.dev';
-const APP_VERSION = 31;
+const APP_VERSION = 32;
 
 const TRANSLATIONS = {
   it: {
@@ -61,6 +61,8 @@ const TRANSLATIONS = {
     stats_defects: 'Difetti (da rev./danneggiato)',
     stats_defect_pct: '% difetti',
     stats_weekly_title: 'Rilievi per settimana',
+    stats_defects_list_title: 'Elenco difetti',
+    stats_no_defects: 'Nessun difetto registrato',
     admin_title: 'Gestione ispettori',
     admin_name: 'Nome',
     admin_username_ph: 'es. mrossi',
@@ -145,6 +147,8 @@ const TRANSLATIONS = {
     stats_defects: 'Defects (needs review/damaged)',
     stats_defect_pct: '% defects',
     stats_weekly_title: 'Findings per week',
+    stats_defects_list_title: 'Defects list',
+    stats_no_defects: 'No defects logged',
     admin_title: 'Inspector management',
     admin_name: 'Name',
     admin_username_ph: 'e.g. jsmith',
@@ -922,6 +926,38 @@ function renderStats() {
     item.innerHTML = `<span class="stats-legend-dot" style="background:${CONDITION_COLORS[code]}"></span><span>${escapeHtml(condLabel(code))}</span>`;
     legend.appendChild(item);
   });
+
+  const defectRecords = state.records
+    .filter(r => r.condition === 'needs-review' || r.condition === 'damaged')
+    .sort((a, b) => (b.scannedAt || '').localeCompare(a.scannedAt || ''));
+  const listWrap = el('stats-defects-list');
+  listWrap.innerHTML = '';
+  if (!defectRecords.length) {
+    listWrap.innerHTML = `<div class="empty-state">${escapeHtml(t('stats_no_defects'))}</div>`;
+  } else {
+    const card = document.createElement('div');
+    card.className = 'list-card';
+    defectRecords.forEach(r => {
+      const row = document.createElement('div');
+      row.className = 'list-row row-' + r.condition;
+      row.setAttribute('role', 'button');
+      row.setAttribute('tabindex', '0');
+      const dateStr = r.scannedAt ? new Date(r.scannedAt).toLocaleDateString(t('locale')) : '';
+      row.innerHTML = `
+        <div class="info">
+          <span class="pipe">${escapeHtml(r.pipeNo || '-')}</span>
+          <span class="meta">${escapeHtml(r.itemNo || '-')} · ${escapeHtml(r.itpStep || '-')} · ${dateStr}</span>
+        </div>
+        <div class="right">
+          <span class="badge badge-${r.condition}">${escapeHtml(condLabel(r.condition))}</span>
+          <span class="chevron">&rsaquo;</span>
+        </div>`;
+      row.addEventListener('click', () => openDetail(r.id));
+      row.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openDetail(r.id); } });
+      card.appendChild(row);
+    });
+    listWrap.appendChild(card);
+  }
 }
 
 el('stats-btn').addEventListener('click', () => {
