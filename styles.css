@@ -302,6 +302,10 @@ textarea.field { resize: vertical; font-family: inherit; }
 .back-link { background: none; border: none; color: var(--blue); font-size: 16px; padding: 10px 0; cursor: pointer; }
 .detail-title { font-family: var(--font-heading); font-size: 26px; font-weight: 700; margin: 4px 0 8px; letter-spacing: -0.01em; }
 
+/* ---------- Guida ---------- */
+#screen-help { flex: 1; padding: 0 16px 24px; overflow-y: auto; min-height: 0; }
+.help-scroll .help-p { padding: 0 14px 14px; font-size: 14px; line-height: 1.5; color: var(--text-secondary); }
+
 /* ---------- Admin ---------- */
 #screen-admin { flex: 1; padding: 0 16px 24px; overflow-y: auto; min-height: 0; }
 .user-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; border-top: 1px solid var(--border-light); }

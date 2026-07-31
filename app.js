@@ -1,5 +1,5 @@
 const API_BASE = 'https://qr-scanner-api.fanatics.workers.dev';
-const APP_VERSION = 25;
+const APP_VERSION = 26;
 
 const TRANSLATIONS = {
   it: {
@@ -51,6 +51,7 @@ const TRANSLATIONS = {
     photo_loading: 'Carico foto...',
     err_photo: 'Impossibile elaborare la foto, riprova.',
     err_photo_load: 'Impossibile caricare la foto.',
+    help_title: 'Guida',
     admin_title: 'Gestione ispettori',
     admin_name: 'Nome',
     admin_username_ph: 'es. mrossi',
@@ -125,6 +126,7 @@ const TRANSLATIONS = {
     photo_loading: 'Loading photo...',
     err_photo: 'Could not process the photo, please try again.',
     err_photo_load: 'Could not load the photo.',
+    help_title: 'Help',
     admin_title: 'Inspector management',
     admin_name: 'Name',
     admin_username_ph: 'e.g. jsmith',
@@ -150,6 +152,67 @@ const TRANSLATIONS = {
     wa_date: 'Date',
     locale: 'en-GB'
   }
+};
+
+const HELP_CONTENT = {
+  it: `
+    <div class="card"><div class="card-header"><span class="section-title">Cos'è</span></div>
+      <div class="help-p">App per registrare rapidamente lo stato di un tubo/asset durante l'ispezione: Item N°, Pipe N°, CS Heat, CRA Heat, Length, ITP Step e Condizione.</div>
+    </div>
+    <div class="card"><div class="card-header"><span class="section-title">Registrare un nuovo asset</span></div>
+      <div class="help-p">Tab "Nuovo asset" → inserisci il Pipe N° (l'Item N° si auto-compila se il tubo è univoco). Se il tubo è nei dati di produzione del giorno, si auto-compilano CS Heat, CRA Heat, Length, avanzamento % e ITP Step — puoi comunque correggere a mano. Scegli ITP Step e Condizione (obbligatori), commenti facoltativi, poi "Salva".</div>
+    </div>
+    <div class="card"><div class="card-header"><span class="section-title">Foto</span></div>
+      <div class="help-p">Facoltativa, tocca "Aggiungi foto". Viene compressa in automatico e salvata nel repository dell'app. La vede qualunque ispettore loggato riaprendo la scheda dal Dataset — tocca per aprirla a schermo intero.</div>
+    </div>
+    <div class="card"><div class="card-header"><span class="section-title">Avviso automatico</span></div>
+      <div class="help-p">Se salvi una scheda con condizione "Da revisionare" o "Danneggiato" parte in automatico un'email di avviso con i dettagli.</div>
+    </div>
+    <div class="card"><div class="card-header"><span class="section-title">WhatsApp</span></div>
+      <div class="help-p">Il pulsante verde apre WhatsApp con il messaggio già pronto, sia durante l'inserimento che riaprendo la scheda.</div>
+    </div>
+    <div class="card"><div class="card-header"><span class="section-title">Dataset</span></div>
+      <div class="help-p">La striscia colorata a sinistra indica la condizione: verde = ottimo, blu = buono, arancio = da revisionare, rosso = danneggiato. Cerca per Pipe N°, Item N°, CS Heat o CRA Heat. Solo l'admin può eliminare una scheda (cestino).</div>
+    </div>
+    <div class="card"><div class="card-header"><span class="section-title">Lingua e tema</span></div>
+      <div class="help-p">Pulsante "EN"/"IT" cambia lingua. Pulsante ☽/☀ forza il tema chiaro o scuro (di default segue il telefono).</div>
+    </div>
+    <div class="card"><div class="card-header"><span class="section-title">Aggiornamenti</span></div>
+      <div class="help-p">Se compare il banner "Nuova versione disponibile", tocca "Aggiorna": l'app ricarica da sola l'ultima versione pubblicata.</div>
+    </div>
+    <div class="card"><div class="card-header"><span class="section-title">Icona sulla Home (consigliato)</span></div>
+      <div class="help-p"><b>Android:</b> tre puntini in alto a destra → "Aggiungi a schermata Home".<br><b>iPhone:</b> icona di condivisione → "Aggiungi a Home". Se l'app resta bloccata su una versione vecchia, rimuovi l'icona e rifalla.</div>
+    </div>
+  `,
+  en: `
+    <div class="card"><div class="card-header"><span class="section-title">What it is</span></div>
+      <div class="help-p">App to quickly log the status of a pipe/asset during inspection: Item No., Pipe No., CS Heat, CRA Heat, Length, ITP Step and Condition.</div>
+    </div>
+    <div class="card"><div class="card-header"><span class="section-title">Logging a new asset</span></div>
+      <div class="help-p">"New asset" tab → enter the Pipe No. (Item No. auto-fills if the pipe is unique). If the pipe is in today's production data, CS Heat/CRA Heat/Length/progress %/ITP Step auto-fill too — you can still edit any field by hand. Choose ITP Step and Condition (required), optional comments, then "Save".</div>
+    </div>
+    <div class="card"><div class="card-header"><span class="section-title">Photo</span></div>
+      <div class="help-p">Optional, tap "Add photo". It's compressed automatically and saved to the app's repository. Any logged-in inspector can see it by reopening the record from the Dataset — tap to open full screen.</div>
+    </div>
+    <div class="card"><div class="card-header"><span class="section-title">Automatic alert</span></div>
+      <div class="help-p">Saving a record with condition "Needs review" or "Damaged" automatically triggers an alert email with the details.</div>
+    </div>
+    <div class="card"><div class="card-header"><span class="section-title">WhatsApp</span></div>
+      <div class="help-p">The green button opens WhatsApp with the message ready to send, both while entering data and when reopening a record.</div>
+    </div>
+    <div class="card"><div class="card-header"><span class="section-title">Dataset</span></div>
+      <div class="help-p">The colored stripe on the left shows the condition: green = excellent, blue = good, orange = needs review, red = damaged. Search by Pipe No., Item No., CS Heat or CRA Heat. Only admins can delete a record (trash icon).</div>
+    </div>
+    <div class="card"><div class="card-header"><span class="section-title">Language and theme</span></div>
+      <div class="help-p">"EN"/"IT" button switches language. ☽/☀ button forces light or dark theme (follows the phone by default).</div>
+    </div>
+    <div class="card"><div class="card-header"><span class="section-title">Updates</span></div>
+      <div class="help-p">If the "New version available" banner appears, tap "Update": the app reloads the latest published version on its own.</div>
+    </div>
+    <div class="card"><div class="card-header"><span class="section-title">Home screen icon (recommended)</span></div>
+      <div class="help-p"><b>Android:</b> top-right menu → "Add to Home screen".<br><b>iPhone:</b> share icon → "Add to Home Screen". If the app seems stuck on an old version, remove the icon and re-add it.</div>
+    </div>
+  `
 };
 
 const BACKEND_ERR_MAP = {
@@ -186,7 +249,7 @@ const prodKey = (itemNo, pipeNo) => normProdNum(itemNo) + '-' + normProdNum(pipe
 const el = (id) => document.getElementById(id);
 const t = (key) => (TRANSLATIONS[state.lang] && TRANSLATIONS[state.lang][key]) || key;
 const condLabel = (code) => t(condKey(code));
-const screens = ['login', 'confirm', 'dataset', 'detail', 'admin'];
+const screens = ['login', 'confirm', 'dataset', 'detail', 'admin', 'help'];
 
 function translateBackendError(msg) {
   const entry = BACKEND_ERR_MAP[msg];
@@ -657,6 +720,13 @@ el('admin-gear').addEventListener('click', async () => {
   showScreen('admin');
 });
 el('admin-back').addEventListener('click', () => showScreen('dataset'));
+
+// ---------------- Guida ----------------
+el('help-btn').addEventListener('click', () => {
+  el('help-content').innerHTML = HELP_CONTENT[state.lang] || HELP_CONTENT.it;
+  showScreen('help');
+});
+el('help-back').addEventListener('click', () => showScreen('dataset'));
 
 async function loadUsers() {
   try {

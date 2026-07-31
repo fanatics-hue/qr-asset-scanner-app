@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=13">
+<link rel="stylesheet" href="styles.css?v=14">
 </head>
 <body>
 <div id="app">
@@ -94,7 +94,10 @@
         <button id="theme-toggle-dataset" class="theme-toggle" data-i18n-title="theme_toggle_title" title="Tema chiaro/scuro">&#9789;</button>
       </div>
       <div class="logo-chip" style="padding:0"><img src="assets/iqs-logo.jpg" alt="IQS" style="height:28px"></div>
-      <button id="admin-gear" class="admin-gear hidden" data-i18n-title="admin_title" title="Gestione ispettori">&#9881;</button>
+      <div class="toggles">
+        <button id="help-btn" class="admin-gear" data-i18n-title="help_title" title="Guida">?</button>
+        <button id="admin-gear" class="admin-gear hidden" data-i18n-title="admin_title" title="Gestione ispettori">&#9881;</button>
+      </div>
     </div>
     <div class="large-title" data-i18n="dataset_title">Dataset asset</div>
     <div class="search-wrap">
@@ -161,7 +164,14 @@
     <div class="card" id="a-user-list"></div>
   </section>
 
+  <!-- GUIDA -->
+  <section id="screen-help" class="hidden">
+    <button id="help-back" class="back-link">&lsaquo; <span data-i18n="dataset_title_short">Dataset</span></button>
+    <div class="large-title" style="padding-left:0" data-i18n="help_title">Guida</div>
+    <div class="help-scroll" id="help-content"></div>
+  </section>
+
 </div>
-<script src="app.js?v=25"></script>
+<script src="app.js?v=26"></script>
 </body>
 </html>
