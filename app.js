@@ -1,5 +1,5 @@
 const API_BASE = 'https://qr-scanner-api.fanatics.workers.dev';
-const APP_VERSION = 27;
+const APP_VERSION = 28;
 
 const TRANSLATIONS = {
   it: {
@@ -52,6 +52,10 @@ const TRANSLATIONS = {
     err_photo: 'Impossibile elaborare la foto, riprova.',
     err_photo_load: 'Impossibile caricare la foto.',
     help_title: 'Guida',
+    detail_edit: 'Modifica',
+    confirm_title_edit: 'Modifica asset',
+    photo_existing_note: 'Foto già presente — scegline una nuova solo se vuoi sostituirla.',
+    pipe_ambiguous_hint: 'Questo Pipe N° esiste su più Item: inserisci anche l\'Item N° per l\'auto-compilazione.',
     admin_title: 'Gestione ispettori',
     admin_name: 'Nome',
     admin_username_ph: 'es. mrossi',
@@ -127,6 +131,10 @@ const TRANSLATIONS = {
     err_photo: 'Could not process the photo, please try again.',
     err_photo_load: 'Could not load the photo.',
     help_title: 'Help',
+    detail_edit: 'Edit',
+    confirm_title_edit: 'Edit asset',
+    photo_existing_note: 'Photo already attached — pick a new one only to replace it.',
+    pipe_ambiguous_hint: 'This Pipe No. exists on more than one Item: enter the Item No. too for auto-fill.',
     admin_title: 'Inspector management',
     admin_name: 'Name',
     admin_username_ph: 'e.g. jsmith',
@@ -240,7 +248,9 @@ const state = {
   lang: localStorage.getItem('qr_lang') || 'it',
   theme: localStorage.getItem('qr_theme') || 'auto',
   productionMap: new Map(),
-  productionByPipe: new Map()
+  productionByPipe: new Map(),
+  ambiguousPipes: new Set(),
+  editingId: null
 };
 
 const normProdNum = (v) => { const n = parseInt(String(v || '').trim(), 10); return isNaN(n) ? String(v || '').trim() : String(n); };
@@ -293,7 +303,10 @@ function setLang(lang) {
   state.lang = lang;
   localStorage.setItem('qr_lang', lang);
   applyTranslations();
-  if (state.screen === 'confirm' && state.draft) renderChips();
+  if (state.screen === 'confirm' && state.draft) {
+    renderChips();
+    el('confirm-title').textContent = state.editingId ? t('confirm_title_edit') : t('confirm_title');
+  }
   if (state.screen === 'dataset') renderDatasetList();
   if (state.screen === 'detail' && state.selectedId) openDetail(state.selectedId);
   if (state.screen === 'admin') loadUsers();
@@ -357,6 +370,7 @@ async function loadProductionData() {
     const data = await api('/api/production-data');
     state.productionMap = new Map();
     state.productionByPipe = new Map();
+    state.ambiguousPipes = new Set(); // Pipe N. che compaiono su piu' Item diversi
     const pipeItemCount = new Map(); // conta quanti Item diversi condividono lo stesso Pipe N. (i numeri pipe non sono univoci tra Item)
     (data.records || []).forEach(r => {
       state.productionMap.set(prodKey(r.itemNo, r.pipeNo), r);
@@ -367,9 +381,13 @@ async function loadProductionData() {
       pipeItemCount.set(pipeKey, itemsForPipe);
     });
     // rimuove dalla ricerca "solo Pipe" i numeri ambigui (stesso Pipe N. su piu' Item diversi):
-    // meglio non compilare nulla che compilare il tubo sbagliato
+    // meglio non compilare nulla che compilare il tubo sbagliato - ma lo segnala all'ispettore
+    // (vedi tryAutoFillFromProduction) invece di restare muta senza spiegazioni.
     pipeItemCount.forEach((items, pipeKey) => {
-      if (items.size > 1) state.productionByPipe.delete(pipeKey);
+      if (items.size > 1) {
+        state.productionByPipe.delete(pipeKey);
+        state.ambiguousPipes.add(pipeKey);
+      }
     });
   } catch (e) { /* nessun dato di produzione disponibile, l'inserimento resta manuale */ }
 }
@@ -383,6 +401,7 @@ function startManualEntry() {
 
 // ---------------- Confirm ----------------
 function openConfirm(parsed) {
+  state.editingId = null;
   state.draft = Object.assign({ itpStep: null, condition: null, comment: '' }, parsed);
   state.draft._autoFields = new Set(); // campi attualmente auto-compilati, mai toccati a mano dall'utente
   el('f-itemNo').value = parsed.itemNo || '';
@@ -393,7 +412,37 @@ function openConfirm(parsed) {
   el('f-scannedAt').textContent = new Date().toLocaleString(t('locale'));
   el('f-comment').value = '';
   el('prod-progress-row').classList.add('hidden');
+  el('pipe-ambiguous-hint').classList.add('hidden');
   resetPhotoField();
+  el('photo-existing-note').classList.add('hidden');
+  el('confirm-title').textContent = t('confirm_title');
+  renderChips();
+  updateSaveState();
+  showScreen('confirm');
+}
+
+// Admin: apre la scheda Conferma pre-compilata con i dati di un record gia' salvato,
+// per correggerlo (es. ITP Step calcolato male prima di un fix) senza doverlo ricreare.
+function openEditRecord(rec) {
+  state.editingId = rec.id;
+  state.draft = {
+    itemNo: rec.itemNo || '', pipeNo: rec.pipeNo || '', csHeat: rec.csHeat || '',
+    craHeat: rec.craHeat || '', length: rec.length || '',
+    itpStep: rec.itpStep || null, condition: rec.condition || null, comment: rec.comment || '',
+    _autoFields: new Set()
+  };
+  el('f-itemNo').value = rec.itemNo || '';
+  el('f-pipeNo').value = rec.pipeNo || '';
+  el('f-csHeat').value = rec.csHeat || '';
+  el('f-craHeat').value = rec.craHeat || '';
+  el('f-length').value = rec.length || '';
+  el('f-scannedAt').textContent = rec.scannedAt ? new Date(rec.scannedAt).toLocaleString(t('locale')) : '-';
+  el('f-comment').value = rec.comment || '';
+  el('prod-progress-row').classList.add('hidden');
+  el('pipe-ambiguous-hint').classList.add('hidden');
+  resetPhotoField();
+  el('photo-existing-note').classList.toggle('hidden', !rec.photoPath);
+  el('confirm-title').textContent = t('confirm_title_edit');
   renderChips();
   updateSaveState();
   showScreen('confirm');
@@ -442,9 +491,16 @@ el('f-photo').addEventListener('change', async () => {
     el('photo-preview').src = dataUrl;
     el('photo-preview-wrap').classList.remove('hidden');
     el('photo-pick-btn').classList.add('hidden');
+    el('photo-existing-note').classList.add('hidden');
   } catch (e) { alert(t('err_photo')); }
 });
-el('photo-remove-btn').addEventListener('click', resetPhotoField);
+el('photo-remove-btn').addEventListener('click', () => {
+  resetPhotoField();
+  if (state.editingId) {
+    const rec = state.records.find(r => r.id === state.editingId);
+    el('photo-existing-note').classList.toggle('hidden', !(rec && rec.photoPath));
+  }
+});
 
 function renderChips() {
   const itpWrap = el('itp-chips'); itpWrap.innerHTML = '';
@@ -501,10 +557,16 @@ function setAutoField(id, key, value) {
 function tryAutoFillFromProduction() {
   const itemNo = el('f-itemNo').value.trim();
   const pipeNo = el('f-pipeNo').value.trim();
-  if (!pipeNo) { el('prod-progress-row').classList.add('hidden'); return; }
+  if (!pipeNo) {
+    el('prod-progress-row').classList.add('hidden');
+    el('pipe-ambiguous-hint').classList.add('hidden');
+    return;
+  }
   let match = null;
   if (itemNo) match = state.productionMap.get(prodKey(itemNo, pipeNo));
   if (!match) match = state.productionByPipe.get(normProdNum(pipeNo));
+  const isAmbiguous = !itemNo && !match && state.ambiguousPipes.has(normProdNum(pipeNo));
+  el('pipe-ambiguous-hint').classList.toggle('hidden', !isAmbiguous);
   if (!match) { el('prod-progress-row').classList.add('hidden'); return; }
   const canOverwrite = (id, key) => !el(id).value.trim() || state.draft._autoFields.has(key);
   if (!itemNo && match.itemNo) { el('f-itemNo').value = match.itemNo; state.draft.itemNo = match.itemNo; }
@@ -545,6 +607,7 @@ function tryAutoFillFromProduction() {
 
 el('confirm-cancel').addEventListener('click', () => {
   state.draft = null;
+  state.editingId = null;
   showScreen('dataset');
 });
 
@@ -553,8 +616,15 @@ el('confirm-save').addEventListener('click', async () => {
   el('confirm-save').disabled = true;
   el('confirm-save').textContent = t('confirm_save_saving');
   try {
-    const { record } = await api('/api/records', { method: 'POST', body: JSON.stringify(state.draft) });
-    state.records.unshift(record);
+    if (state.editingId) {
+      const { record } = await api('/api/records/' + encodeURIComponent(state.editingId), { method: 'PUT', body: JSON.stringify(state.draft) });
+      const idx = state.records.findIndex(r => r.id === state.editingId);
+      if (idx >= 0) state.records[idx] = record; else state.records.unshift(record);
+      state.editingId = null;
+    } else {
+      const { record } = await api('/api/records', { method: 'POST', body: JSON.stringify(state.draft) });
+      state.records.unshift(record);
+    }
     renderDatasetList();
     state.draft = null;
     showScreen('dataset');
@@ -730,10 +800,15 @@ function openDetail(id) {
   } else {
     el('d-photo-card').classList.add('hidden');
   }
+  el('detail-edit-btn').classList.toggle('hidden', !(state.session && state.session.role === 'admin'));
   showScreen('detail');
 }
 
 el('detail-back').addEventListener('click', () => showScreen('dataset'));
+el('detail-edit-btn').addEventListener('click', () => {
+  const rec = state.records.find(r => r.id === state.selectedId);
+  if (rec) openEditRecord(rec);
+});
 
 // ---------------- Admin ----------------
 el('admin-gear').addEventListener('click', async () => {

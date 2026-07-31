@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=14">
+<link rel="stylesheet" href="styles.css?v=15">
 </head>
 <body>
 <div id="app">
@@ -31,7 +31,7 @@
   <section id="screen-confirm" class="hidden">
     <div class="confirm-header">
       <button id="confirm-cancel" class="link-btn" data-i18n="confirm_cancel">Annulla</button>
-      <div class="confirm-title" data-i18n="confirm_title">Nuovo asset</div>
+      <div class="confirm-title" id="confirm-title">Nuovo asset</div>
       <button id="confirm-save" class="link-btn" disabled data-i18n="confirm_save">Salva</button>
     </div>
     <div class="confirm-scroll">
@@ -46,6 +46,7 @@
           <label data-i18n="field_progress">Avanzamento</label>
           <span class="readonly" id="f-progress"></span>
         </div>
+        <div class="ambiguous-hint hidden" id="pipe-ambiguous-hint" data-i18n="pipe_ambiguous_hint">Questo Pipe N° esiste su più Item: inserisci anche l'Item N° per l'auto-compilazione.</div>
         <div class="row"><label>CS Heat</label><input id="f-csHeat" type="text"></div>
         <div class="row"><label>CRA Heat</label><input id="f-craHeat" type="text"></div>
         <div class="row"><label>Length</label><input id="f-length" type="text"></div>
@@ -60,6 +61,7 @@
       <div class="card">
         <div class="card-header"><span class="section-title" data-i18n="confirm_section_photo">Foto (opzionale)</span></div>
         <div class="photo-upload-row">
+          <div id="photo-existing-note" class="photo-existing-note hidden" data-i18n="photo_existing_note">Foto già presente — scegline una nuova solo se vuoi sostituirla.</div>
           <input type="file" id="f-photo" accept="image/*" capture="environment" class="hidden">
           <button id="photo-pick-btn" class="photo-pick-btn" type="button">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 8a2 2 0 0 1 2-2h1.5l1-1.5h7l1 1.5H18a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8z"/><circle cx="12" cy="13" r="3.5"/></svg>
@@ -118,7 +120,10 @@
 
   <!-- DETAIL -->
   <section id="screen-detail" class="hidden">
-    <button id="detail-back" class="back-link">&lsaquo; <span data-i18n="dataset_title_short">Dataset</span></button>
+    <div class="detail-top-row">
+      <button id="detail-back" class="back-link">&lsaquo; <span data-i18n="dataset_title_short">Dataset</span></button>
+      <button id="detail-edit-btn" class="link-btn hidden" data-i18n="detail_edit">Modifica</button>
+    </div>
     <div class="logo-chip"><img src="assets/iqs-logo.jpg" alt="IQS"></div>
     <div class="detail-title" id="d-pipeNo">-</div>
     <span class="badge" id="d-badge"></span>
@@ -172,6 +177,6 @@
   </section>
 
 </div>
-<script src="app.js?v=27"></script>
+<script src="app.js?v=28"></script>
 </body>
 </html>

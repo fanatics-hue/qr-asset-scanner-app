@@ -202,6 +202,7 @@ html, body {
   transition: background 0.12s ease;
 }
 .prod-progress-row { background: var(--blue-bg); }
+.ambiguous-hint { padding: 8px 14px; font-size: 12px; color: var(--orange); background: var(--orange-bg); }
 .prod-progress-row .readonly { color: var(--blue-c); }
 .row:first-of-type { border-top: none; }
 .row label { color: var(--text-secondary); font-size: 15px; }
@@ -300,6 +301,7 @@ textarea.field { resize: vertical; font-family: inherit; }
 /* ---------- Detail ---------- */
 #screen-detail { flex: 1; padding: 0 16px 24px; overflow-y: auto; min-height: 0; }
 .back-link { background: none; border: none; color: var(--blue); font-size: 16px; padding: 10px 0; cursor: pointer; }
+.detail-top-row { display: flex; align-items: center; justify-content: space-between; }
 .detail-title { font-family: var(--font-heading); font-size: 26px; font-weight: 700; margin: 4px 0 8px; letter-spacing: -0.01em; }
 
 /* ---------- Guida ---------- */
@@ -346,6 +348,7 @@ textarea.field { resize: vertical; font-family: inherit; }
 
 /* ---------- Foto ---------- */
 .photo-upload-row { padding: 10px 14px 14px; }
+.photo-existing-note { font-size: 12px; color: var(--text-tertiary); margin-bottom: 8px; }
 .photo-pick-btn {
   display: flex; align-items: center; justify-content: center; gap: 8px;
   border: 1px dashed var(--border); background: var(--bg-input); color: var(--text-secondary);
