@@ -314,6 +314,16 @@ textarea.field { resize: vertical; font-family: inherit; }
 .btn-status-toggle:disabled { opacity: 0.6; cursor: default; }
 .btn-status-toggle.btn-status-close { background: var(--green); color: #06280f; }
 .btn-status-toggle.btn-status-reopen { background: var(--orange); color: #2a1600; }
+.aging-text { font-size: 11px; color: var(--red); font-weight: 700; }
+.close-note-prompt { margin: 0 16px 14px; padding: 12px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 12px; }
+.close-note-prompt textarea { margin-bottom: 8px; }
+.close-note-actions { display: flex; justify-content: flex-end; gap: 14px; align-items: center; }
+.timeline { padding: 6px 14px 14px; }
+.tl-item { display: flex; gap: 10px; padding: 8px 0; border-top: 1px solid var(--border-light); }
+.tl-item:first-child { border-top: none; }
+.tl-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; background: var(--blue); }
+.tl-text { font-size: 13px; line-height: 1.4; color: var(--text-primary); }
+.tl-text span { color: var(--text-tertiary); font-size: 11px; display: block; margin-top: 1px; }
 .detail-title { font-family: var(--font-heading); font-size: 26px; font-weight: 700; margin: 4px 0 8px; letter-spacing: -0.01em; }
 
 /* ---------- Guida ---------- */

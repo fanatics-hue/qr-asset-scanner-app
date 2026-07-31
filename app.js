@@ -1,5 +1,5 @@
 const API_BASE = 'https://qr-scanner-api.fanatics.workers.dev';
-const APP_VERSION = 34;
+const APP_VERSION = 35;
 
 const TRANSLATIONS = {
   it: {
@@ -89,6 +89,30 @@ const TRANSLATIONS = {
     cond_good: 'Buono',
     cond_needsreview: 'Da revisionare',
     cond_damaged: 'Danneggiato',
+    field_defect_type: 'Tipo difetto',
+    field_disposition: 'Disposizione',
+    defect_weld: 'Saldatura',
+    defect_dimensional: 'Dimensionale',
+    defect_visual: 'Visivo',
+    defect_nde: 'NDE',
+    defect_material: 'Materiale',
+    defect_other: 'Altro',
+    disp_accept: 'Accetta',
+    disp_repair: 'Ripara',
+    disp_reject: 'Scarta',
+    disp_concession: 'Deroga',
+    close_note_ph: 'Causa e azione correttiva (obbligatorio)',
+    cancel_btn: 'Annulla',
+    confirm_close_btn: 'Conferma chiusura',
+    err_close_note_required: 'Inserisci causa e azione correttiva prima di chiudere.',
+    timeline_title: 'Cronologia',
+    timeline_issued: 'Emesso da {who}',
+    timeline_edited: 'Modificato da {who}',
+    timeline_closed: 'Chiuso da {who}',
+    stats_avg_close: 'Giorni medi chiusura',
+    stats_aging: 'Aperti da +5gg',
+    stats_by_type: 'Per tipo difetto',
+    stats_by_disposition: 'Per disposizione',
     wa_title: 'Asset scansionato:',
     wa_condition: 'Condizione',
     wa_comments: 'Commenti',
@@ -182,6 +206,30 @@ const TRANSLATIONS = {
     cond_good: 'Good',
     cond_needsreview: 'Needs review',
     cond_damaged: 'Damaged',
+    field_defect_type: 'Defect type',
+    field_disposition: 'Disposition',
+    defect_weld: 'Weld',
+    defect_dimensional: 'Dimensional',
+    defect_visual: 'Visual',
+    defect_nde: 'NDE',
+    defect_material: 'Material',
+    defect_other: 'Other',
+    disp_accept: 'Accept',
+    disp_repair: 'Repair',
+    disp_reject: 'Reject',
+    disp_concession: 'Concession',
+    close_note_ph: 'Root cause and corrective action (required)',
+    cancel_btn: 'Cancel',
+    confirm_close_btn: 'Confirm closure',
+    err_close_note_required: 'Enter root cause and corrective action before closing.',
+    timeline_title: 'Timeline',
+    timeline_issued: 'Issued by {who}',
+    timeline_edited: 'Edited by {who}',
+    timeline_closed: 'Closed by {who}',
+    stats_avg_close: 'Avg. days to close',
+    stats_aging: 'Open for +5 days',
+    stats_by_type: 'By defect type',
+    stats_by_disposition: 'By disposition',
     wa_title: 'Scanned asset:',
     wa_condition: 'Condition',
     wa_comments: 'Comments',
@@ -196,7 +244,7 @@ const HELP_CONTENT = {
       <div class="help-p">App per registrare rapidamente lo stato di un tubo/asset durante l'ispezione: Item N°, Pipe N°, CS Heat, CRA Heat, Length, ITP Step e Condizione.</div>
     </div>
     <div class="card"><div class="card-header"><span class="section-title">Registrare un nuovo asset</span></div>
-      <div class="help-p">Tab "Nuovo asset" → inserisci il Pipe N° (l'Item N° si auto-compila se il tubo è univoco). Se il tubo è nei dati di produzione del giorno, si auto-compilano CS Heat, CRA Heat, Length, avanzamento % e ITP Step — puoi comunque correggere a mano. Scegli ITP Step e Condizione (obbligatori), commenti facoltativi, poi "Salva".</div>
+      <div class="help-p">Tab "Nuovo asset" → inserisci il Pipe N° (l'Item N° si auto-compila se il tubo è univoco — se lo stesso Pipe N° esiste su più Item compare un avviso e va inserito anche l'Item N°). Se il tubo è nei dati di produzione del giorno, si auto-compilano CS Heat, CRA Heat, Length, avanzamento % e ITP Step — puoi comunque correggere a mano. Scegli ITP Step e Condizione (obbligatori); se scegli "Da revisionare" o "Danneggiato" compaiono anche Tipo difetto (saldatura/dimensionale/visivo/NDE/materiale/altro) e Disposizione (accetta/ripara/scarta/deroga), facoltativi ma utili per le Statistiche. Commenti facoltativi, poi "Salva".</div>
     </div>
     <div class="card"><div class="card-header"><span class="section-title">Foto</span></div>
       <div class="help-p">Facoltativa, tocca "Aggiungi foto". Viene compressa in automatico e salvata nel repository dell'app. La vede qualunque ispettore loggato riaprendo la scheda dal Dataset — tocca per aprirla a schermo intero.</div>
@@ -204,11 +252,20 @@ const HELP_CONTENT = {
     <div class="card"><div class="card-header"><span class="section-title">Avviso automatico</span></div>
       <div class="help-p">Se salvi una scheda con condizione "Da revisionare" o "Danneggiato" parte in automatico un'email di avviso con i dettagli.</div>
     </div>
+    <div class="card"><div class="card-header"><span class="section-title">Gestione difetti: Aperto/Chiuso</span></div>
+      <div class="help-p">Ogni scheda "Da revisionare"/"Danneggiato" nasce con stato "Aperto". Nel dettaglio, "Segna come chiuso" chiede sempre causa e azione correttiva (obbligatorio) prima di confermare — resta scritta nella Cronologia della scheda insieme a chi/quando l'ha emessa, modificata e chiusa. Un difetto aperto da più giorni mostra un contatore rosso "● Ng" accanto al badge.</div>
+    </div>
+    <div class="card"><div class="card-header"><span class="section-title">Modifica</span></div>
+      <div class="help-p">Qualunque ispettore loggato (non solo l'admin) può correggere una scheda già salvata: apri il dettaglio → "Modifica" in alto a destra, cambia i campi necessari e "Salva". La foto esistente resta se non ne scegli una nuova.</div>
+    </div>
     <div class="card"><div class="card-header"><span class="section-title">WhatsApp</span></div>
       <div class="help-p">Il pulsante verde apre WhatsApp con il messaggio già pronto, sia durante l'inserimento che riaprendo la scheda.</div>
     </div>
     <div class="card"><div class="card-header"><span class="section-title">Dataset</span></div>
       <div class="help-p">La striscia colorata a sinistra indica la condizione: verde = ottimo, blu = buono, arancio = da revisionare, rosso = danneggiato. Cerca per Pipe N°, Item N°, CS Heat o CRA Heat. Solo l'admin può eliminare una scheda (cestino).</div>
+    </div>
+    <div class="card"><div class="card-header"><span class="section-title">Statistiche</span></div>
+      <div class="help-p">Pulsante 📊 nel Dataset: schede totali, difetti aperti, % chiusura, giorni medi di chiusura, quanti difetti restano aperti da oltre 5 giorni, un grafico settimanale (ultime 8 settimane) e la ripartizione per tipo difetto/disposizione. Sotto al grafico, l'elenco di tutti i difetti (aperti prima) — tocca una riga per aprirne il dettaglio.</div>
     </div>
     <div class="card"><div class="card-header"><span class="section-title">Lingua e tema</span></div>
       <div class="help-p">Pulsante "EN"/"IT" cambia lingua. Pulsante ☽/☀ forza il tema chiaro o scuro (di default segue il telefono).</div>
@@ -225,7 +282,7 @@ const HELP_CONTENT = {
       <div class="help-p">App to quickly log the status of a pipe/asset during inspection: Item No., Pipe No., CS Heat, CRA Heat, Length, ITP Step and Condition.</div>
     </div>
     <div class="card"><div class="card-header"><span class="section-title">Logging a new asset</span></div>
-      <div class="help-p">"New asset" tab → enter the Pipe No. (Item No. auto-fills if the pipe is unique). If the pipe is in today's production data, CS Heat/CRA Heat/Length/progress %/ITP Step auto-fill too — you can still edit any field by hand. Choose ITP Step and Condition (required), optional comments, then "Save".</div>
+      <div class="help-p">"New asset" tab → enter the Pipe No. (Item No. auto-fills if the pipe is unique — if the same Pipe No. exists on more than one Item, a hint appears asking to also enter the Item No.). If the pipe is in today's production data, CS Heat/CRA Heat/Length/progress %/ITP Step auto-fill too — you can still edit any field by hand. Choose ITP Step and Condition (required); picking "Needs review" or "Damaged" also reveals Defect type (weld/dimensional/visual/NDE/material/other) and Disposition (accept/repair/reject/concession), optional but useful for Statistics. Optional comments, then "Save".</div>
     </div>
     <div class="card"><div class="card-header"><span class="section-title">Photo</span></div>
       <div class="help-p">Optional, tap "Add photo". It's compressed automatically and saved to the app's repository. Any logged-in inspector can see it by reopening the record from the Dataset — tap to open full screen.</div>
@@ -233,11 +290,20 @@ const HELP_CONTENT = {
     <div class="card"><div class="card-header"><span class="section-title">Automatic alert</span></div>
       <div class="help-p">Saving a record with condition "Needs review" or "Damaged" automatically triggers an alert email with the details.</div>
     </div>
+    <div class="card"><div class="card-header"><span class="section-title">Defect management: Open/Closed</span></div>
+      <div class="help-p">Every "Needs review"/"Damaged" record starts as "Open". In the detail screen, "Mark as closed" always asks for root cause and corrective action (required) before confirming — it's kept in the record's Timeline together with who/when issued, edited and closed it. A defect open for several days shows a red "● Nd" counter next to the badge.</div>
+    </div>
+    <div class="card"><div class="card-header"><span class="section-title">Edit</span></div>
+      <div class="help-p">Any logged-in inspector (not just admin) can correct an already-saved record: open the detail screen → "Edit" top right, change what's needed, "Save". The existing photo stays unless you pick a new one.</div>
+    </div>
     <div class="card"><div class="card-header"><span class="section-title">WhatsApp</span></div>
       <div class="help-p">The green button opens WhatsApp with the message ready to send, both while entering data and when reopening a record.</div>
     </div>
     <div class="card"><div class="card-header"><span class="section-title">Dataset</span></div>
       <div class="help-p">The colored stripe on the left shows the condition: green = excellent, blue = good, orange = needs review, red = damaged. Search by Pipe No., Item No., CS Heat or CRA Heat. Only admins can delete a record (trash icon).</div>
+    </div>
+    <div class="card"><div class="card-header"><span class="section-title">Statistics</span></div>
+      <div class="help-p">📊 button in the Dataset: total records, open defects, % closed, average days to close, how many defects have been open for more than 5 days, an 8-week chart, and a breakdown by defect type/disposition. Below the chart, the full defects list (open ones first) — tap a row to open its detail.</div>
     </div>
     <div class="card"><div class="card-header"><span class="section-title">Language and theme</span></div>
       <div class="help-p">"EN"/"IT" button switches language. ☽/☀ button forces light or dark theme (follows the phone by default).</div>
@@ -263,7 +329,12 @@ const BACKEND_ERR_MAP = {
 
 const CONDITION_CODES = ['excellent', 'good', 'needs-review', 'damaged'];
 const ITP_STEPS_FALLBACK = ['Milling', 'Welding Base', 'Welding Clad', 'Hydro', 'UT', 'RT', 'PT', 'FI (Final Inspection)'];
+const DEFECT_TYPE_CODES = ['weld', 'dimensional', 'visual', 'nde', 'material', 'other'];
+const DISPOSITION_CODES = ['accept', 'repair', 'reject', 'concession'];
 const condKey = (code) => 'cond_' + String(code || '').replace(/-/g, '');
+const defectTypeLabel = (code) => code ? t('defect_' + code) : '';
+const dispositionLabel = (code) => code ? t('disp_' + code) : '';
+const isDefectCondition = (c) => c === 'needs-review' || c === 'damaged';
 
 const state = {
   screen: 'login',
@@ -272,7 +343,7 @@ const state = {
   records: [],
   selectedId: null,
   session: null,
-  meta: { itpSteps: [], conditions: [] },
+  meta: { itpSteps: [], conditions: [], defectTypes: [], dispositions: [] },
   lang: localStorage.getItem('qr_lang') || 'it',
   theme: localStorage.getItem('qr_theme') || 'auto',
   productionMap: new Map(),
@@ -430,7 +501,7 @@ function startManualEntry() {
 // ---------------- Confirm ----------------
 function openConfirm(parsed) {
   state.editingId = null;
-  state.draft = Object.assign({ itpStep: null, condition: null, comment: '' }, parsed);
+  state.draft = Object.assign({ itpStep: null, condition: null, comment: '', defectType: null, disposition: null }, parsed);
   state.draft._autoFields = new Set(); // campi attualmente auto-compilati, mai toccati a mano dall'utente
   el('f-itemNo').value = parsed.itemNo || '';
   el('f-pipeNo').value = parsed.pipeNo || '';
@@ -457,6 +528,7 @@ function openEditRecord(rec) {
     itemNo: rec.itemNo || '', pipeNo: rec.pipeNo || '', csHeat: rec.csHeat || '',
     craHeat: rec.craHeat || '', length: rec.length || '',
     itpStep: rec.itpStep || null, condition: rec.condition || null, comment: rec.comment || '',
+    defectType: rec.defectType || null, disposition: rec.disposition || null,
     _autoFields: new Set()
   };
   el('f-itemNo').value = rec.itemNo || '';
@@ -554,6 +626,30 @@ function renderChips() {
     b.addEventListener('click', () => { state.draft.condition = code; renderChips(); updateSaveState(); });
     condWrap.appendChild(b);
   });
+
+  // Tipo difetto/Disposizione: visibili solo per condizioni "difetto" (stile NCR).
+  const isDefect = isDefectCondition(state.draft.condition);
+  el('defect-fields').classList.toggle('hidden', !isDefect);
+  if (isDefect) {
+    const typeWrap = el('defect-type-chips'); typeWrap.innerHTML = '';
+    (state.meta.defectTypes && state.meta.defectTypes.length ? state.meta.defectTypes : DEFECT_TYPE_CODES).forEach(code => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'chip' + (state.draft.defectType === code ? ' selected itp' : '');
+      b.textContent = defectTypeLabel(code);
+      b.addEventListener('click', () => { state.draft.defectType = code; renderChips(); });
+      typeWrap.appendChild(b);
+    });
+    const dispWrap = el('disposition-chips'); dispWrap.innerHTML = '';
+    (state.meta.dispositions && state.meta.dispositions.length ? state.meta.dispositions : DISPOSITION_CODES).forEach(code => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'chip' + (state.draft.disposition === code ? ' selected itp' : '');
+      b.textContent = dispositionLabel(code);
+      b.addEventListener('click', () => { state.draft.disposition = code; renderChips(); });
+      dispWrap.appendChild(b);
+    });
+  }
 }
 
 function updateSaveState() {
@@ -828,6 +924,11 @@ function openDetail(id) {
   } else {
     el('d-photo-card').classList.add('hidden');
   }
+  el('d-defect-type-row').classList.toggle('hidden', !rec.defectType);
+  if (rec.defectType) el('d-defect-type').textContent = defectTypeLabel(rec.defectType);
+  el('d-disposition-row').classList.toggle('hidden', !rec.disposition);
+  if (rec.disposition) el('d-disposition').textContent = dispositionLabel(rec.disposition);
+  el('d-close-note-prompt').classList.add('hidden');
   if (isDefectCondition(rec.condition)) {
     const isOpen = rec.status !== 'closed';
     el('d-status-row').classList.remove('hidden');
@@ -835,22 +936,77 @@ function openDetail(id) {
     el('d-status-badge').className = 'badge badge-status-' + (isOpen ? 'open' : 'closed');
     el('d-status-toggle').textContent = t(isOpen ? 'status_close_btn' : 'status_reopen_btn');
     el('d-status-toggle').className = 'btn-status-toggle ' + (isOpen ? 'btn-status-close' : 'btn-status-reopen');
+    if (isOpen && rec.scannedAt) {
+      const days = Math.floor((Date.now() - new Date(rec.scannedAt).getTime()) / 86400000);
+      if (days >= 1) { el('d-aging').textContent = '● ' + days + 'g'; el('d-aging').classList.remove('hidden'); }
+      else el('d-aging').classList.add('hidden');
+    } else {
+      el('d-aging').classList.add('hidden');
+    }
   } else {
     el('d-status-row').classList.add('hidden');
   }
+  renderTimeline(rec);
   el('detail-edit-btn').classList.remove('hidden');
   showScreen('detail');
+}
+
+// Cronologia derivata dai campi di audit gia' presenti sul record (emissione, ultima
+// modifica, ultima chiusura) - non e' uno storico illimitato, solo l'ultimo evento di ognuno.
+function renderTimeline(rec) {
+  const entries = [];
+  if (rec.scannedAt) entries.push({ text: t('timeline_issued').replace('{who}', rec.scannedBy || '-'), when: rec.scannedAt });
+  if (rec.editedAt) entries.push({ text: t('timeline_edited').replace('{who}', rec.editedBy || '-'), when: rec.editedAt });
+  if (rec.closedAt) entries.push({ text: t('timeline_closed').replace('{who}', rec.closedBy || '-') + (rec.closureNote ? ': ' + rec.closureNote : ''), when: rec.closedAt });
+  const wrap = el('d-timeline');
+  if (!entries.length) { el('d-timeline-card').classList.add('hidden'); return; }
+  entries.sort((a, b) => a.when.localeCompare(b.when));
+  wrap.innerHTML = entries.map(e => `
+    <div class="tl-item">
+      <div class="tl-dot"></div>
+      <div class="tl-text">${escapeHtml(e.text)}<span>${new Date(e.when).toLocaleString(t('locale'))}</span></div>
+    </div>`).join('');
+  el('d-timeline-card').classList.remove('hidden');
 }
 
 el('detail-back').addEventListener('click', () => showScreen('dataset'));
 el('d-status-toggle').addEventListener('click', async () => {
   const rec = state.records.find(r => r.id === state.selectedId);
   if (!rec) return;
-  const newStatus = rec.status === 'closed' ? 'open' : 'closed';
-  el('d-status-toggle').disabled = true;
+  if (rec.status === 'closed') {
+    // riaprire non richiede nota: azione rapida
+    el('d-status-toggle').disabled = true;
+    try {
+      const { record } = await api('/api/records/' + encodeURIComponent(rec.id) + '/status', {
+        method: 'POST', body: JSON.stringify({ status: 'open' })
+      });
+      const idx = state.records.findIndex(r => r.id === rec.id);
+      if (idx >= 0) state.records[idx] = record;
+      openDetail(rec.id);
+      renderDatasetList();
+    } catch (err) {
+      alert(t('err_generic') + err.message);
+    } finally {
+      el('d-status-toggle').disabled = false;
+    }
+  } else {
+    // chiudere richiede causa + azione correttiva: mostra il campo invece di chiudere subito
+    el('d-close-note-input').value = '';
+    el('d-close-note-prompt').classList.remove('hidden');
+  }
+});
+el('d-close-note-cancel').addEventListener('click', () => {
+  el('d-close-note-prompt').classList.add('hidden');
+});
+el('d-close-note-confirm').addEventListener('click', async () => {
+  const rec = state.records.find(r => r.id === state.selectedId);
+  if (!rec) return;
+  const note = el('d-close-note-input').value.trim();
+  if (!note) { alert(t('err_close_note_required')); return; }
+  el('d-close-note-confirm').disabled = true;
   try {
     const { record } = await api('/api/records/' + encodeURIComponent(rec.id) + '/status', {
-      method: 'POST', body: JSON.stringify({ status: newStatus })
+      method: 'POST', body: JSON.stringify({ status: 'closed', closureNote: note })
     });
     const idx = state.records.findIndex(r => r.id === rec.id);
     if (idx >= 0) state.records[idx] = record;
@@ -859,7 +1015,7 @@ el('d-status-toggle').addEventListener('click', async () => {
   } catch (err) {
     alert(t('err_generic') + err.message);
   } finally {
-    el('d-status-toggle').disabled = false;
+    el('d-close-note-confirm').disabled = false;
   }
 });
 el('detail-edit-btn').addEventListener('click', () => {
@@ -921,8 +1077,6 @@ function computeWeeklyStats(records) {
   return weeks;
 }
 
-const isDefectCondition = (c) => c === 'needs-review' || c === 'damaged';
-
 function renderStats() {
   const total = state.records.length;
   const allDefects = state.records.filter(r => isDefectCondition(r.condition));
@@ -931,6 +1085,44 @@ function renderStats() {
   el('stats-total').textContent = total;
   el('stats-defects').textContent = openDefects.length;
   el('stats-defect-pct').textContent = allDefects.length ? Math.round((closedCount / allDefects.length) * 100) + '%' : '-';
+
+  const closedWithDates = allDefects.filter(r => r.status === 'closed' && r.closedAt && r.scannedAt);
+  if (closedWithDates.length) {
+    const avgDays = closedWithDates.reduce((sum, r) => sum + (new Date(r.closedAt) - new Date(r.scannedAt)) / 86400000, 0) / closedWithDates.length;
+    el('stats-avg-close').textContent = avgDays.toFixed(1).replace('.', ',');
+  } else {
+    el('stats-avg-close').textContent = '-';
+  }
+  const agingCount = openDefects.filter(r => r.scannedAt && (Date.now() - new Date(r.scannedAt).getTime()) / 86400000 >= 5).length;
+  el('stats-aging').textContent = agingCount;
+
+  const typeCounts = {};
+  DEFECT_TYPE_CODES.forEach(code => { typeCounts[code] = 0; });
+  allDefects.forEach(r => { if (r.defectType && typeCounts[r.defectType] !== undefined) typeCounts[r.defectType]++; });
+  const typeTotal = Object.values(typeCounts).reduce((a, b) => a + b, 0);
+  const typeCard = el('stats-defect-type-card');
+  if (!typeTotal) {
+    typeCard.classList.add('hidden');
+  } else {
+    typeCard.classList.remove('hidden');
+    el('stats-defect-type-list').innerHTML = DEFECT_TYPE_CODES.map(code =>
+      `<div class="row"><label>${escapeHtml(defectTypeLabel(code))}</label><span class="readonly">${typeCounts[code]}</span></div>`
+    ).join('');
+  }
+
+  const dispCounts = {};
+  DISPOSITION_CODES.forEach(code => { dispCounts[code] = 0; });
+  allDefects.forEach(r => { if (r.disposition && dispCounts[r.disposition] !== undefined) dispCounts[r.disposition]++; });
+  const dispTotal = Object.values(dispCounts).reduce((a, b) => a + b, 0);
+  const dispCard = el('stats-disposition-card');
+  if (!dispTotal) {
+    dispCard.classList.add('hidden');
+  } else {
+    dispCard.classList.remove('hidden');
+    el('stats-disposition-list').innerHTML = DISPOSITION_CODES.map(code =>
+      `<div class="stats-legend-item"><span>${escapeHtml(dispositionLabel(code))}: ${dispCounts[code]}</span></div>`
+    ).join('');
+  }
 
   const weeks = computeWeeklyStats(state.records);
   const maxTotal = Math.max(1, ...weeks.map(w => Object.values(w.counts).reduce((a, b) => a + b, 0)));
