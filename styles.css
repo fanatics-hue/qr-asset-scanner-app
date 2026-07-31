@@ -305,6 +305,15 @@ textarea.field { resize: vertical; font-family: inherit; }
 .status-row { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
 .badge-status-open { color: var(--red); background: var(--red-bg); }
 .badge-status-closed { color: var(--green); background: var(--green-bg); }
+.btn-status-toggle {
+  border: none; border-radius: 10px; padding: 6px 14px; font-size: 13px; font-weight: 700;
+  font-family: var(--font-body); cursor: pointer; transition: filter 0.12s ease, transform 0.08s ease;
+}
+.btn-status-toggle:hover:not(:disabled) { filter: brightness(1.08); }
+.btn-status-toggle:active:not(:disabled) { transform: translateY(1px); }
+.btn-status-toggle:disabled { opacity: 0.6; cursor: default; }
+.btn-status-toggle.btn-status-close { background: var(--green); color: #06280f; }
+.btn-status-toggle.btn-status-reopen { background: var(--orange); color: #2a1600; }
 .detail-title { font-family: var(--font-heading); font-size: 26px; font-weight: 700; margin: 4px 0 8px; letter-spacing: -0.01em; }
 
 /* ---------- Guida ---------- */

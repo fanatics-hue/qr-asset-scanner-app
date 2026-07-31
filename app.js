@@ -1,5 +1,5 @@
 const API_BASE = 'https://qr-scanner-api.fanatics.workers.dev';
-const APP_VERSION = 33;
+const APP_VERSION = 34;
 
 const TRANSLATIONS = {
   it: {
@@ -41,8 +41,8 @@ const TRANSLATIONS = {
     dataset_empty: 'Nessun asset ancora scansionato',
     tab_scan: 'Nuovo asset',
     tab_dataset_prefix: 'Dataset',
-    field_scannedBy: 'Scansionato da',
-    field_scannedOn: 'Scansionato il',
+    field_scannedBy: 'Emesso da',
+    field_scannedOn: 'Emesso il',
     theme_toggle_title: 'Tema chiaro/scuro',
     update_available: 'Nuova versione disponibile',
     update_now: 'Aggiorna',
@@ -134,8 +134,8 @@ const TRANSLATIONS = {
     dataset_empty: 'No assets scanned yet',
     tab_scan: 'New asset',
     tab_dataset_prefix: 'Dataset',
-    field_scannedBy: 'Scanned by',
-    field_scannedOn: 'Scanned on',
+    field_scannedBy: 'Issued by',
+    field_scannedOn: 'Issued on',
     theme_toggle_title: 'Light/dark theme',
     update_available: 'A new version is available',
     update_now: 'Update',
@@ -834,6 +834,7 @@ function openDetail(id) {
     el('d-status-badge').textContent = t(isOpen ? 'status_open' : 'status_closed');
     el('d-status-badge').className = 'badge badge-status-' + (isOpen ? 'open' : 'closed');
     el('d-status-toggle').textContent = t(isOpen ? 'status_close_btn' : 'status_reopen_btn');
+    el('d-status-toggle').className = 'btn-status-toggle ' + (isOpen ? 'btn-status-close' : 'btn-status-reopen');
   } else {
     el('d-status-row').classList.add('hidden');
   }
