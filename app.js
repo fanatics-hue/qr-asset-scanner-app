@@ -1,5 +1,5 @@
 const API_BASE = 'https://qr-scanner-api.fanatics.workers.dev';
-const APP_VERSION = 23;
+const APP_VERSION = 24;
 
 const TRANSLATIONS = {
   it: {
@@ -48,8 +48,9 @@ const TRANSLATIONS = {
     update_now: 'Aggiorna',
     confirm_section_photo: 'Foto (opzionale)',
     photo_add: 'Aggiungi foto',
-    photo_open: 'Apri foto originale',
+    photo_loading: 'Carico foto...',
     err_photo: 'Impossibile elaborare la foto, riprova.',
+    err_photo_load: 'Impossibile caricare la foto.',
     admin_title: 'Gestione ispettori',
     admin_name: 'Nome',
     admin_username_ph: 'es. mrossi',
@@ -121,8 +122,9 @@ const TRANSLATIONS = {
     update_now: 'Update',
     confirm_section_photo: 'Photo (optional)',
     photo_add: 'Add photo',
-    photo_open: 'Open original photo',
+    photo_loading: 'Loading photo...',
     err_photo: 'Could not process the photo, please try again.',
+    err_photo_load: 'Could not load the photo.',
     admin_title: 'Inspector management',
     admin_name: 'Name',
     admin_username_ph: 'e.g. jsmith',
@@ -493,7 +495,6 @@ function whatsappText(rec) {
   ];
   if (rec.comment) lines.push(`${t('wa_comments')}: ${rec.comment}`);
   lines.push(`${t('wa_date')}: ${rec.scannedAt ? new Date(rec.scannedAt).toLocaleString(t('locale')) : new Date().toLocaleString(t('locale'))}`);
-  if (rec.photoUrl) lines.push(`Foto: ${rec.photoUrl}`);
   return lines.join('\n');
 }
 
@@ -594,6 +595,31 @@ el('theme-toggle-dataset').addEventListener('click', toggleTheme);
 applyTheme();
 
 // ---------------- Detail ----------------
+// Foto caricata tramite l'API (autenticata con la sessione dell'ispettore), non con un
+// link diretto al repo GitHub: cosi' la vede qualunque ispettore loggato nell'app, non solo
+// chi ha un account GitHub con accesso al repo privato.
+let detailPhotoObjectUrl = null;
+async function loadDetailPhoto(id) {
+  if (detailPhotoObjectUrl) { URL.revokeObjectURL(detailPhotoObjectUrl); detailPhotoObjectUrl = null; }
+  el('d-photo-img').classList.add('hidden');
+  el('d-photo-status').textContent = t('photo_loading');
+  el('d-photo-status').classList.remove('hidden');
+  try {
+    const headers = {};
+    if (state.session && state.session.token) headers['Authorization'] = 'Bearer ' + state.session.token;
+    const resp = await fetch(API_BASE + '/api/records/' + encodeURIComponent(id) + '/photo', { headers });
+    if (!resp.ok) throw new Error('photo fetch failed');
+    const blob = await resp.blob();
+    detailPhotoObjectUrl = URL.createObjectURL(blob);
+    el('d-photo-img').src = detailPhotoObjectUrl;
+    el('d-photo-img').classList.remove('hidden');
+    el('d-photo-status').classList.add('hidden');
+  } catch (e) {
+    el('d-photo-status').textContent = t('err_photo_load');
+  }
+}
+el('d-photo-img').addEventListener('click', () => { if (detailPhotoObjectUrl) window.open(detailPhotoObjectUrl, '_blank'); });
+
 function openDetail(id) {
   const rec = state.records.find(r => r.id === id);
   if (!rec) return;
@@ -614,9 +640,9 @@ function openDetail(id) {
   } else {
     el('d-comment-card').classList.add('hidden');
   }
-  if (rec.photoUrl) {
+  if (rec.photoPath) {
     el('d-photo-card').classList.remove('hidden');
-    el('d-photo-link').href = rec.photoUrl;
+    loadDetailPhoto(rec.id);
   } else {
     el('d-photo-card').classList.add('hidden');
   }

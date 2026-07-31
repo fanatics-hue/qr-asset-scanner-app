@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=11">
+<link rel="stylesheet" href="styles.css?v=12">
 </head>
 <body>
 <div id="app">
@@ -139,10 +139,10 @@
     </div>
     <div class="card hidden" id="d-photo-card">
       <div class="card-header"><span class="section-title" data-i18n="confirm_section_photo">Foto (opzionale)</span></div>
-      <a id="d-photo-link" target="_blank" rel="noopener" class="photo-detail-link">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="28" height="28"><path d="M4 8a2 2 0 0 1 2-2h1.5l1-1.5h7l1 1.5H18a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8z"/><circle cx="12" cy="13" r="3.5"/></svg>
-        <span data-i18n="photo_open">Apri foto originale</span>
-      </a>
+      <div class="photo-detail-wrap">
+        <span id="d-photo-status" data-i18n="photo_loading">Carico foto...</span>
+        <img id="d-photo-img" class="hidden" alt="">
+      </div>
     </div>
   </section>
 
@@ -162,6 +162,6 @@
   </section>
 
 </div>
-<script src="app.js?v=23"></script>
+<script src="app.js?v=24"></script>
 </body>
 </html>
