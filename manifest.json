@@ -1,6 +1,6 @@
 {
-  "name": "QR Asset Scanner",
-  "short_name": "QR Scanner",
+  "name": "IQS Field Inspector",
+  "short_name": "Field Inspector",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#F2F2F7",
