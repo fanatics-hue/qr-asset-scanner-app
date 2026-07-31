@@ -1,5 +1,5 @@
 const API_BASE = 'https://qr-scanner-api.fanatics.workers.dev';
-const APP_VERSION = 28;
+const APP_VERSION = 29;
 
 const TRANSLATIONS = {
   it: {
@@ -56,6 +56,11 @@ const TRANSLATIONS = {
     confirm_title_edit: 'Modifica asset',
     photo_existing_note: 'Foto già presente — scegline una nuova solo se vuoi sostituirla.',
     pipe_ambiguous_hint: 'Questo Pipe N° esiste su più Item: inserisci anche l\'Item N° per l\'auto-compilazione.',
+    stats_title: 'Statistiche',
+    stats_total: 'Schede totali',
+    stats_defects: 'Difetti (da rev./danneggiato)',
+    stats_defect_pct: '% difetti',
+    stats_weekly_title: 'Rilievi per settimana',
     admin_title: 'Gestione ispettori',
     admin_name: 'Nome',
     admin_username_ph: 'es. mrossi',
@@ -135,6 +140,11 @@ const TRANSLATIONS = {
     confirm_title_edit: 'Edit asset',
     photo_existing_note: 'Photo already attached — pick a new one only to replace it.',
     pipe_ambiguous_hint: 'This Pipe No. exists on more than one Item: enter the Item No. too for auto-fill.',
+    stats_title: 'Statistics',
+    stats_total: 'Total records',
+    stats_defects: 'Defects (needs review/damaged)',
+    stats_defect_pct: '% defects',
+    stats_weekly_title: 'Findings per week',
     admin_title: 'Inspector management',
     admin_name: 'Name',
     admin_username_ph: 'e.g. jsmith',
@@ -259,7 +269,7 @@ const prodKey = (itemNo, pipeNo) => normProdNum(itemNo) + '-' + normProdNum(pipe
 const el = (id) => document.getElementById(id);
 const t = (key) => (TRANSLATIONS[state.lang] && TRANSLATIONS[state.lang][key]) || key;
 const condLabel = (code) => t(condKey(code));
-const screens = ['login', 'confirm', 'dataset', 'detail', 'admin', 'help'];
+const screens = ['login', 'confirm', 'dataset', 'detail', 'admin', 'help', 'stats'];
 
 function translateBackendError(msg) {
   const entry = BACKEND_ERR_MAP[msg];
@@ -823,6 +833,93 @@ el('help-btn').addEventListener('click', () => {
   showScreen('help');
 });
 el('help-back').addEventListener('click', () => showScreen('dataset'));
+
+// ---------------- Statistiche ----------------
+const STATS_WEEKS = 8;
+const CONDITION_COLORS = {
+  excellent: 'var(--green)', good: 'var(--blue-c)', 'needs-review': 'var(--orange)', damaged: 'var(--red)'
+};
+
+function mondayOf(date) {
+  const d = new Date(date);
+  const day = (d.getDay() + 6) % 7; // 0 = lunedi
+  d.setDate(d.getDate() - day);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+function computeWeeklyStats(records) {
+  const thisMonday = mondayOf(new Date());
+  const weeks = [];
+  for (let i = STATS_WEEKS - 1; i >= 0; i--) {
+    const monday = new Date(thisMonday);
+    monday.setDate(thisMonday.getDate() - i * 7);
+    weeks.push({ key: monday.toISOString().slice(0, 10), monday, counts: { excellent: 0, good: 0, 'needs-review': 0, damaged: 0 } });
+  }
+  const weekIndex = new Map(weeks.map(w => [w.key, w]));
+  records.forEach(r => {
+    if (!r.scannedAt) return;
+    const key = mondayOf(r.scannedAt).toISOString().slice(0, 10);
+    const w = weekIndex.get(key);
+    if (w && w.counts[r.condition] !== undefined) w.counts[r.condition]++;
+  });
+  return weeks;
+}
+
+function renderStats() {
+  const total = state.records.length;
+  const defects = state.records.filter(r => r.condition === 'needs-review' || r.condition === 'damaged').length;
+  el('stats-total').textContent = total;
+  el('stats-defects').textContent = defects;
+  el('stats-defect-pct').textContent = total ? Math.round((defects / total) * 100) + '%' : '0%';
+
+  const weeks = computeWeeklyStats(state.records);
+  const maxTotal = Math.max(1, ...weeks.map(w => Object.values(w.counts).reduce((a, b) => a + b, 0)));
+  const chart = el('stats-chart');
+  chart.innerHTML = '';
+  weeks.forEach(w => {
+    const weekTotal = Object.values(w.counts).reduce((a, b) => a + b, 0);
+    const col = document.createElement('div');
+    col.className = 'stats-bar-col';
+    const totalLabel = document.createElement('div');
+    totalLabel.className = 'stats-bar-total';
+    totalLabel.textContent = weekTotal || '';
+    const stack = document.createElement('div');
+    stack.className = 'stats-bar-stack';
+    stack.style.height = Math.max(4, Math.round((weekTotal / maxTotal) * 130)) + 'px';
+    ['excellent', 'good', 'needs-review', 'damaged'].forEach(code => {
+      const count = w.counts[code];
+      if (!count) return;
+      const seg = document.createElement('div');
+      seg.className = 'stats-bar-seg';
+      seg.style.background = CONDITION_COLORS[code];
+      seg.style.height = Math.round((count / weekTotal) * 100) + '%';
+      stack.appendChild(seg);
+    });
+    const label = document.createElement('div');
+    label.className = 'stats-bar-label';
+    label.textContent = w.monday.toLocaleDateString(t('locale'), { day: '2-digit', month: '2-digit' });
+    col.appendChild(totalLabel);
+    col.appendChild(stack);
+    col.appendChild(label);
+    chart.appendChild(col);
+  });
+
+  const legend = el('stats-legend');
+  legend.innerHTML = '';
+  ['excellent', 'good', 'needs-review', 'damaged'].forEach(code => {
+    const item = document.createElement('div');
+    item.className = 'stats-legend-item';
+    item.innerHTML = `<span class="stats-legend-dot" style="background:${CONDITION_COLORS[code]}"></span><span>${escapeHtml(condLabel(code))}</span>`;
+    legend.appendChild(item);
+  });
+}
+
+el('stats-btn').addEventListener('click', () => {
+  renderStats();
+  showScreen('stats');
+});
+el('stats-back').addEventListener('click', () => showScreen('dataset'));
 
 async function loadUsers() {
   try {

@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=15">
+<link rel="stylesheet" href="styles.css?v=16">
 </head>
 <body>
 <div id="app">
@@ -97,6 +97,7 @@
       </div>
       <div class="logo-chip" style="padding:0"><img src="assets/iqs-logo.jpg" alt="IQS" style="height:28px"></div>
       <div class="toggles">
+        <button id="stats-btn" class="admin-gear" data-i18n-title="stats_title" title="Statistiche">&#128202;</button>
         <button id="help-btn" class="admin-gear" data-i18n-title="help_title" title="Guida">?</button>
         <button id="admin-gear" class="admin-gear hidden" data-i18n-title="admin_title" title="Gestione ispettori">&#9881;</button>
       </div>
@@ -176,7 +177,32 @@
     <div class="help-scroll" id="help-content"></div>
   </section>
 
+  <!-- STATISTICHE -->
+  <section id="screen-stats" class="hidden">
+    <button id="stats-back" class="back-link">&lsaquo; <span data-i18n="dataset_title_short">Dataset</span></button>
+    <div class="large-title" style="padding-left:0" data-i18n="stats_title">Statistiche</div>
+    <div class="stats-summary">
+      <div class="stats-summary-card">
+        <div class="stats-summary-value" id="stats-total">0</div>
+        <div class="stats-summary-label" data-i18n="stats_total">Schede totali</div>
+      </div>
+      <div class="stats-summary-card">
+        <div class="stats-summary-value stats-value-defect" id="stats-defects">0</div>
+        <div class="stats-summary-label" data-i18n="stats_defects">Difetti (da rev./danneggiato)</div>
+      </div>
+      <div class="stats-summary-card">
+        <div class="stats-summary-value" id="stats-defect-pct">0%</div>
+        <div class="stats-summary-label" data-i18n="stats_defect_pct">% difetti</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><span class="section-title" data-i18n="stats_weekly_title">Rilievi per settimana</span></div>
+      <div class="stats-chart" id="stats-chart"></div>
+      <div class="stats-legend" id="stats-legend"></div>
+    </div>
+  </section>
+
 </div>
-<script src="app.js?v=28"></script>
+<script src="app.js?v=29"></script>
 </body>
 </html>
