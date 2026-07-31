@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=19">
+<link rel="stylesheet" href="styles.css?v=20">
 </head>
 <body>
 <div id="app">
@@ -161,6 +161,9 @@
       <div class="row hidden" id="d-disposition-row"><label data-i18n="field_disposition">Disposizione</label><span class="readonly" id="d-disposition"></span></div>
       <div class="row"><label data-i18n="field_scannedBy">Scansionato da</label><span class="readonly" id="d-scannedBy"></span></div>
       <div class="row"><label data-i18n="field_scannedOn">Scansionato il</label><span class="readonly" id="d-scannedAt"></span></div>
+      <div class="row hidden" id="d-closedBy-row"><label data-i18n="field_closedBy">Chiuso da</label><span class="readonly" id="d-closedBy"></span></div>
+      <div class="row hidden" id="d-closedAt-row"><label data-i18n="field_closedOn">Chiuso il</label><span class="readonly" id="d-closedAt"></span></div>
+      <div class="row hidden" id="d-closeNote-row"><label data-i18n="field_closeNote">Nota di chiusura</label><span class="readonly" id="d-closeNote"></span></div>
     </div>
     <div class="card hidden" id="d-timeline-card">
       <div class="card-header"><span class="section-title" data-i18n="timeline_title">Cronologia</span></div>
@@ -249,6 +252,6 @@
   </section>
 
 </div>
-<script src="app.js?v=35"></script>
+<script src="app.js?v=36"></script>
 </body>
 </html>

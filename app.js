@@ -1,5 +1,5 @@
 const API_BASE = 'https://qr-scanner-api.fanatics.workers.dev';
-const APP_VERSION = 35;
+const APP_VERSION = 36;
 
 const TRANSLATIONS = {
   it: {
@@ -43,8 +43,12 @@ const TRANSLATIONS = {
     tab_dataset_prefix: 'Dataset',
     field_scannedBy: 'Emesso da',
     field_scannedOn: 'Emesso il',
+    field_closedBy: 'Chiuso da',
+    field_closedOn: 'Chiuso il',
+    field_closeNote: 'Nota di chiusura',
     theme_toggle_title: 'Tema chiaro/scuro',
     update_available: 'Nuova versione disponibile',
+    update_required_desc: 'È stata pubblicata una versione piu\' recente. Per continuare a usare l\'app devi aggiornare.',
     update_now: 'Aggiorna',
     confirm_section_photo: 'Foto (opzionale)',
     photo_add: 'Aggiungi foto',
@@ -160,8 +164,12 @@ const TRANSLATIONS = {
     tab_dataset_prefix: 'Dataset',
     field_scannedBy: 'Issued by',
     field_scannedOn: 'Issued on',
+    field_closedBy: 'Closed by',
+    field_closedOn: 'Closed on',
+    field_closeNote: 'Closure note',
     theme_toggle_title: 'Light/dark theme',
     update_available: 'A new version is available',
+    update_required_desc: 'A newer version has been published. You must update to keep using the app.',
     update_now: 'Update',
     confirm_section_photo: 'Photo (optional)',
     photo_add: 'Add photo',
@@ -928,6 +936,15 @@ function openDetail(id) {
   if (rec.defectType) el('d-defect-type').textContent = defectTypeLabel(rec.defectType);
   el('d-disposition-row').classList.toggle('hidden', !rec.disposition);
   if (rec.disposition) el('d-disposition').textContent = dispositionLabel(rec.disposition);
+  const isClosed = rec.status === 'closed';
+  el('d-closedBy-row').classList.toggle('hidden', !isClosed);
+  el('d-closedAt-row').classList.toggle('hidden', !isClosed);
+  el('d-closeNote-row').classList.toggle('hidden', !isClosed);
+  if (isClosed) {
+    el('d-closedBy').textContent = rec.closedBy || '-';
+    el('d-closedAt').textContent = rec.closedAt ? new Date(rec.closedAt).toLocaleString(t('locale')) : '-';
+    el('d-closeNote').textContent = rec.closureNote || '-';
+  }
   el('d-close-note-prompt').classList.add('hidden');
   if (isDefectCondition(rec.condition)) {
     const isOpen = rec.status !== 'closed';
@@ -1287,15 +1304,22 @@ if (window.caches) {
 // ---------------- Controllo versione ----------------
 // GitHub Pages tiene index.html/css/js in cache lato server per ~10 min: invece di chiedere
 // all'utente di ricordarsi trucchi con ?t=, l'app stessa controlla se e' uscita una versione
-// piu' recente e propone un tasto per aggiornare al volo.
+// piu' recente. Overlay BLOCCANTE (non un banner ignorabile): niente tasto per chiuderlo,
+// l'unica azione possibile e' "Aggiorna" - cosi' nessun ispettore resta su una versione
+// vecchia (es. senza l'ultimo controllo di validazione) senza accorgersene.
 function showUpdateBanner() {
-  if (el('update-banner')) return;
+  if (el('update-overlay')) return;
   const b = document.createElement('div');
-  b.id = 'update-banner';
-  b.className = 'update-banner';
-  b.innerHTML = `<span>${escapeHtml(t('update_available'))}</span><button id="update-banner-btn">${escapeHtml(t('update_now'))}</button>`;
+  b.id = 'update-overlay';
+  b.className = 'update-overlay';
+  b.innerHTML = `<div class="update-overlay-card">
+    <div class="update-icon">⬆️</div>
+    <h3>${escapeHtml(t('update_available'))}</h3>
+    <p>${escapeHtml(t('update_required_desc'))}</p>
+    <button id="update-overlay-btn">${escapeHtml(t('update_now'))}</button>
+  </div>`;
   document.body.appendChild(b);
-  el('update-banner-btn').addEventListener('click', () => {
+  el('update-overlay-btn').addEventListener('click', () => {
     location.href = location.pathname + '?t=' + Date.now();
   });
 }
@@ -1304,7 +1328,7 @@ async function checkForUpdate() {
     const res = await fetch('version.json?_=' + Date.now(), { cache: 'no-store' });
     const data = await res.json();
     if (data.version && data.version > APP_VERSION) showUpdateBanner();
-  } catch (e) { /* offline o rete assente: nessun banner, non e' un errore da mostrare */ }
+  } catch (e) { /* offline o rete assente: nessun blocco, non e' un errore da mostrare */ }
 }
 checkForUpdate();
 setInterval(checkForUpdate, 5 * 60 * 1000);

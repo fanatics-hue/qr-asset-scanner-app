@@ -376,24 +376,27 @@ textarea.field { resize: vertical; font-family: inherit; }
 #screen-login .theme-toggle { position: absolute; top: 14px; right: 64px; }
 .top-strip .toggles { display: flex; gap: 8px; }
 
-.update-banner {
-  position: fixed; left: 50%; transform: translateX(-50%);
-  bottom: calc(76px + env(safe-area-inset-bottom));
-  z-index: 50;
-  display: flex; align-items: center; gap: 12px;
-  background: var(--blue); color: #fff;
-  padding: 10px 10px 10px 16px; border-radius: 12px;
-  font-size: 13px; font-weight: 500;
-  box-shadow: var(--shadow-card-hover);
-  max-width: calc(100% - 32px);
+.update-overlay {
+  position: fixed; inset: 0; z-index: 999;
+  background: rgba(0,16,50,0.72);
+  display: flex; align-items: center; justify-content: center;
+  padding: 24px;
 }
-.update-banner button {
-  background: rgba(255,255,255,0.2); color: #fff; border: none;
-  border-radius: 8px; padding: 6px 12px; font-size: 13px; font-weight: 600;
-  font-family: var(--font-body); cursor: pointer; white-space: nowrap;
-  transition: background 0.12s ease;
+.update-overlay-card {
+  background: var(--bg-card); color: var(--text-primary);
+  border-radius: 16px; padding: 28px 24px; max-width: 340px; width: 100%;
+  text-align: center; box-shadow: var(--shadow-card-hover);
 }
-.update-banner button:hover { background: rgba(255,255,255,0.32); }
+.update-overlay-card .update-icon { font-size: 34px; margin-bottom: 10px; }
+.update-overlay-card h3 { margin: 0 0 8px; font-size: 17px; font-weight: 700; }
+.update-overlay-card p { margin: 0 0 20px; font-size: 13.5px; color: var(--text-secondary); line-height: 1.5; }
+.update-overlay-card button {
+  background: var(--blue); color: #fff; border: none;
+  border-radius: 10px; padding: 12px 20px; font-size: 14.5px; font-weight: 600;
+  font-family: var(--font-body); cursor: pointer; width: 100%;
+  transition: opacity 0.12s ease;
+}
+.update-overlay-card button:hover { opacity: 0.88; }
 
 /* ---------- Foto ---------- */
 .photo-upload-row { padding: 10px 14px 14px; }
