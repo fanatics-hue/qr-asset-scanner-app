@@ -1,5 +1,5 @@
 const API_BASE = 'https://qr-scanner-api.fanatics.workers.dev';
-const APP_VERSION = 22;
+const APP_VERSION = 23;
 
 const TRANSLATIONS = {
   it: {
@@ -46,6 +46,10 @@ const TRANSLATIONS = {
     theme_toggle_title: 'Tema chiaro/scuro',
     update_available: 'Nuova versione disponibile',
     update_now: 'Aggiorna',
+    confirm_section_photo: 'Foto (opzionale)',
+    photo_add: 'Aggiungi foto',
+    photo_open: 'Apri foto originale',
+    err_photo: 'Impossibile elaborare la foto, riprova.',
     admin_title: 'Gestione ispettori',
     admin_name: 'Nome',
     admin_username_ph: 'es. mrossi',
@@ -115,6 +119,10 @@ const TRANSLATIONS = {
     theme_toggle_title: 'Light/dark theme',
     update_available: 'A new version is available',
     update_now: 'Update',
+    confirm_section_photo: 'Photo (optional)',
+    photo_add: 'Add photo',
+    photo_open: 'Open original photo',
+    err_photo: 'Could not process the photo, please try again.',
     admin_title: 'Inspector management',
     admin_name: 'Name',
     admin_username_ph: 'e.g. jsmith',
@@ -320,10 +328,58 @@ function openConfirm(parsed) {
   el('f-scannedAt').textContent = new Date().toLocaleString(t('locale'));
   el('f-comment').value = '';
   el('prod-progress-row').classList.add('hidden');
+  resetPhotoField();
   renderChips();
   updateSaveState();
   showScreen('confirm');
 }
+
+// ---------------- Foto ----------------
+// Compressa lato client (max 1600px, JPEG 72%) prima dell'invio: le foto da fotocamera
+// pesano diversi MB, inutile spedirle intere su rete di cantiere solo per un allegato.
+function resetPhotoField() {
+  if (state.draft) { state.draft.photoBase64 = null; state.draft.photoName = null; }
+  el('f-photo').value = '';
+  el('photo-preview-wrap').classList.add('hidden');
+  el('photo-pick-btn').classList.remove('hidden');
+}
+
+function compressImage(file) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      const maxDim = 1600;
+      let { width, height } = img;
+      if (width > maxDim || height > maxDim) {
+        if (width > height) { height = Math.round(height * maxDim / width); width = maxDim; }
+        else { width = Math.round(width * maxDim / height); height = maxDim; }
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = width; canvas.height = height;
+      canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+      URL.revokeObjectURL(url);
+      resolve(canvas.toDataURL('image/jpeg', 0.72));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('img load failed')); };
+    img.src = url;
+  });
+}
+
+el('photo-pick-btn').addEventListener('click', () => el('f-photo').click());
+el('f-photo').addEventListener('change', async () => {
+  const file = el('f-photo').files[0];
+  if (!file) return;
+  try {
+    const dataUrl = await compressImage(file);
+    state.draft.photoBase64 = dataUrl.split(',')[1];
+    state.draft.photoName = (state.draft.pipeNo || 'asset') + '-' + Date.now() + '.jpg';
+    el('photo-preview').src = dataUrl;
+    el('photo-preview-wrap').classList.remove('hidden');
+    el('photo-pick-btn').classList.add('hidden');
+  } catch (e) { alert(t('err_photo')); }
+});
+el('photo-remove-btn').addEventListener('click', resetPhotoField);
 
 function renderChips() {
   const itpWrap = el('itp-chips'); itpWrap.innerHTML = '';
@@ -437,6 +493,7 @@ function whatsappText(rec) {
   ];
   if (rec.comment) lines.push(`${t('wa_comments')}: ${rec.comment}`);
   lines.push(`${t('wa_date')}: ${rec.scannedAt ? new Date(rec.scannedAt).toLocaleString(t('locale')) : new Date().toLocaleString(t('locale'))}`);
+  if (rec.photoUrl) lines.push(`Foto: ${rec.photoUrl}`);
   return lines.join('\n');
 }
 
@@ -556,6 +613,12 @@ function openDetail(id) {
     el('d-comment').textContent = rec.comment;
   } else {
     el('d-comment-card').classList.add('hidden');
+  }
+  if (rec.photoUrl) {
+    el('d-photo-card').classList.remove('hidden');
+    el('d-photo-link').href = rec.photoUrl;
+  } else {
+    el('d-photo-card').classList.add('hidden');
   }
   showScreen('detail');
 }

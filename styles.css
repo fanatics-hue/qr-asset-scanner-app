@@ -336,3 +336,24 @@ textarea.field { resize: vertical; font-family: inherit; }
   transition: background 0.12s ease;
 }
 .update-banner button:hover { background: rgba(255,255,255,0.32); }
+
+/* ---------- Foto ---------- */
+.photo-upload-row { padding: 10px 14px 14px; }
+.photo-pick-btn {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  border: 1px dashed var(--border); background: var(--bg-input); color: var(--text-secondary);
+  border-radius: 12px; height: 44px; width: 100%; font-size: 14px; font-family: var(--font-body);
+  cursor: pointer; transition: border-color 0.12s ease, color 0.12s ease;
+}
+.photo-pick-btn:hover { border-color: var(--blue); color: var(--blue); }
+.photo-pick-btn svg { width: 18px; height: 18px; }
+.photo-preview-wrap { position: relative; display: inline-block; }
+.photo-preview-wrap img { max-width: 100%; max-height: 220px; border-radius: 10px; border: 1px solid var(--border); display: block; }
+.photo-remove-btn {
+  position: absolute; top: -8px; right: -8px; width: 26px; height: 26px; border-radius: 50%;
+  background: var(--red); color: #fff; border: 2px solid var(--bg-card); font-size: 16px; line-height: 1; cursor: pointer;
+}
+.photo-detail-link {
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+  padding: 20px 14px; text-decoration: none; color: var(--blue); font-size: 14px; font-weight: 600;
+}

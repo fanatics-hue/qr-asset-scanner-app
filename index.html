@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=10">
+<link rel="stylesheet" href="styles.css?v=11">
 </head>
 <body>
 <div id="app">
@@ -56,6 +56,21 @@
         <svg viewBox="0 0 32 32"><path d="M16 3C9 3 3.3 8.7 3.3 15.7c0 2.4.6 4.6 1.8 6.6L3 29l6.9-2c1.9 1 4 1.6 6.1 1.6 7 0 12.7-5.7 12.7-12.7S23 3 16 3zm0 23.2c-1.9 0-3.7-.5-5.3-1.5l-.4-.2-4.1 1.2 1.2-4-.2-.4c-1.1-1.7-1.6-3.6-1.6-5.6 0-5.8 4.7-10.5 10.5-10.5s10.4 4.7 10.4 10.5S21.8 26.2 16 26.2zm5.7-7.8c-.3-.2-1.8-.9-2.1-1s-.5-.2-.7.2-.8 1-.9 1.1-.3.2-.6 0a8.3 8.3 0 0 1-4-3.5c-.3-.5.3-.5.8-1.6.1-.2.1-.4 0-.5s-.7-1.7-1-2.3c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4s-1 1-1 2.4 1 2.8 1.2 3 2 3 4.7 4.3c2.8 1.2 2.8.8 3.3.8s1.7-.7 1.9-1.4.2-1.2.2-1.3-.2-.2-.5-.3z"/></svg>
         <span data-i18n="whatsapp_share">Condividi su WhatsApp</span>
       </button>
+
+      <div class="card">
+        <div class="card-header"><span class="section-title" data-i18n="confirm_section_photo">Foto (opzionale)</span></div>
+        <div class="photo-upload-row">
+          <input type="file" id="f-photo" accept="image/*" capture="environment" class="hidden">
+          <button id="photo-pick-btn" class="photo-pick-btn" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 8a2 2 0 0 1 2-2h1.5l1-1.5h7l1 1.5H18a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8z"/><circle cx="12" cy="13" r="3.5"/></svg>
+            <span data-i18n="photo_add">Aggiungi foto</span>
+          </button>
+          <div id="photo-preview-wrap" class="photo-preview-wrap hidden">
+            <img id="photo-preview" alt="">
+            <button id="photo-remove-btn" class="photo-remove-btn" type="button">&times;</button>
+          </div>
+        </div>
+      </div>
 
       <div class="card">
         <div class="card-header"><span class="section-title" data-i18n="confirm_section_todo">Da completare</span></div>
@@ -122,6 +137,13 @@
       <div class="card-header"><span class="section-title" data-i18n="field_comments">Commenti</span></div>
       <div class="row" style="border-top:none" id="d-comment"></div>
     </div>
+    <div class="card hidden" id="d-photo-card">
+      <div class="card-header"><span class="section-title" data-i18n="confirm_section_photo">Foto (opzionale)</span></div>
+      <a id="d-photo-link" target="_blank" rel="noopener" class="photo-detail-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="28" height="28"><path d="M4 8a2 2 0 0 1 2-2h1.5l1-1.5h7l1 1.5H18a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8z"/><circle cx="12" cy="13" r="3.5"/></svg>
+        <span data-i18n="photo_open">Apri foto originale</span>
+      </a>
+    </div>
   </section>
 
   <!-- ADMIN -->
@@ -140,6 +162,6 @@
   </section>
 
 </div>
-<script src="app.js?v=22"></script>
+<script src="app.js?v=23"></script>
 </body>
 </html>
