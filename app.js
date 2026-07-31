@@ -1,5 +1,5 @@
 const API_BASE = 'https://qr-scanner-api.fanatics.workers.dev';
-const APP_VERSION = 26;
+const APP_VERSION = 27;
 
 const TRANSLATIONS = {
   it: {
@@ -453,7 +453,12 @@ function renderChips() {
     b.type = 'button';
     b.className = 'chip itp' + (state.draft.itpStep === step ? ' selected itp' : '');
     b.textContent = step;
-    b.addEventListener('click', () => { state.draft.itpStep = step; renderChips(); updateSaveState(); });
+    b.addEventListener('click', () => {
+      state.draft.itpStep = step;
+      state.draft._autoFields.delete('itpStep'); // scelta manuale: non va piu' sovrascritta dall'auto-fill
+      renderChips();
+      updateSaveState();
+    });
     itpWrap.appendChild(b);
   });
   const condWrap = el('cond-chips'); condWrap.innerHTML = '';
@@ -503,11 +508,27 @@ function tryAutoFillFromProduction() {
   if (!match) { el('prod-progress-row').classList.add('hidden'); return; }
   const canOverwrite = (id, key) => !el(id).value.trim() || state.draft._autoFields.has(key);
   if (!itemNo && match.itemNo) { el('f-itemNo').value = match.itemNo; state.draft.itemNo = match.itemNo; }
-  if (canOverwrite('f-csHeat', 'csHeat') && match.csHeat) setAutoField('f-csHeat', 'csHeat', match.csHeat);
-  if (canOverwrite('f-craHeat', 'craHeat') && match.craHeat) setAutoField('f-craHeat', 'craHeat', match.craHeat);
-  if (canOverwrite('f-length', 'length') && match.length) setAutoField('f-length', 'length', match.length);
-  if (!state.draft.itpStep && match.currentStep) {
-    state.draft.itpStep = match.currentStep;
+  // Se il nuovo tubo non ha un valore per questo campo, svuotalo invece di lasciare
+  // quello (sbagliato) del tubo scansionato prima - vale solo per campi auto-compilati,
+  // mai per una correzione manuale dell'ispettore.
+  ['csHeat', 'craHeat', 'length'].forEach(key => {
+    const id = 'f-' + key;
+    if (!canOverwrite(id, key)) return;
+    if (match[key]) setAutoField(id, key, match[key]);
+    else setAutoField(id, key, '');
+  });
+  // Stessa logica "auto vs manuale" dei campi sopra: se l'ITP Step in vista era solo
+  // auto-suggerito (mai scelto a mano), si aggiorna cambiando tubo; se l'ispettore lo
+  // ha scelto lui, resta protetto.
+  const itpAutoOk = !state.draft.itpStep || state.draft._autoFields.has('itpStep');
+  if (itpAutoOk) {
+    if (match.currentStep) {
+      state.draft.itpStep = match.currentStep;
+      state.draft._autoFields.add('itpStep');
+    } else if (state.draft._autoFields.has('itpStep')) {
+      state.draft.itpStep = null;
+      state.draft._autoFields.delete('itpStep');
+    }
     renderChips();
     updateSaveState();
   }
