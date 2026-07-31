@@ -1,5 +1,5 @@
 const API_BASE = 'https://qr-scanner-api.fanatics.workers.dev';
-const APP_VERSION = 32;
+const APP_VERSION = 33;
 
 const TRANSLATIONS = {
   it: {
@@ -63,6 +63,13 @@ const TRANSLATIONS = {
     stats_weekly_title: 'Rilievi per settimana',
     stats_defects_list_title: 'Elenco difetti',
     stats_no_defects: 'Nessun difetto registrato',
+    stats_defects_open: 'Difetti aperti',
+    stats_closure_pct: '% chiusura',
+    status_open: 'Aperto',
+    status_closed: 'Chiuso',
+    status_close_btn: 'Segna come chiuso',
+    status_reopen_btn: 'Riapri',
+    status_closed_by: 'Chiuso da {who} il {when}',
     admin_title: 'Gestione ispettori',
     admin_name: 'Nome',
     admin_username_ph: 'es. mrossi',
@@ -149,6 +156,13 @@ const TRANSLATIONS = {
     stats_weekly_title: 'Findings per week',
     stats_defects_list_title: 'Defects list',
     stats_no_defects: 'No defects logged',
+    stats_defects_open: 'Open defects',
+    stats_closure_pct: '% closed',
+    status_open: 'Open',
+    status_closed: 'Closed',
+    status_close_btn: 'Mark as closed',
+    status_reopen_btn: 'Reopen',
+    status_closed_by: 'Closed by {who} on {when}',
     admin_title: 'Inspector management',
     admin_name: 'Name',
     admin_username_ph: 'e.g. jsmith',
@@ -814,11 +828,39 @@ function openDetail(id) {
   } else {
     el('d-photo-card').classList.add('hidden');
   }
+  if (isDefectCondition(rec.condition)) {
+    const isOpen = rec.status !== 'closed';
+    el('d-status-row').classList.remove('hidden');
+    el('d-status-badge').textContent = t(isOpen ? 'status_open' : 'status_closed');
+    el('d-status-badge').className = 'badge badge-status-' + (isOpen ? 'open' : 'closed');
+    el('d-status-toggle').textContent = t(isOpen ? 'status_close_btn' : 'status_reopen_btn');
+  } else {
+    el('d-status-row').classList.add('hidden');
+  }
   el('detail-edit-btn').classList.remove('hidden');
   showScreen('detail');
 }
 
 el('detail-back').addEventListener('click', () => showScreen('dataset'));
+el('d-status-toggle').addEventListener('click', async () => {
+  const rec = state.records.find(r => r.id === state.selectedId);
+  if (!rec) return;
+  const newStatus = rec.status === 'closed' ? 'open' : 'closed';
+  el('d-status-toggle').disabled = true;
+  try {
+    const { record } = await api('/api/records/' + encodeURIComponent(rec.id) + '/status', {
+      method: 'POST', body: JSON.stringify({ status: newStatus })
+    });
+    const idx = state.records.findIndex(r => r.id === rec.id);
+    if (idx >= 0) state.records[idx] = record;
+    openDetail(rec.id);
+    renderDatasetList();
+  } catch (err) {
+    alert(t('err_generic') + err.message);
+  } finally {
+    el('d-status-toggle').disabled = false;
+  }
+});
 el('detail-edit-btn').addEventListener('click', () => {
   const rec = state.records.find(r => r.id === state.selectedId);
   if (rec) openEditRecord(rec);
@@ -878,12 +920,16 @@ function computeWeeklyStats(records) {
   return weeks;
 }
 
+const isDefectCondition = (c) => c === 'needs-review' || c === 'damaged';
+
 function renderStats() {
   const total = state.records.length;
-  const defects = state.records.filter(r => r.condition === 'needs-review' || r.condition === 'damaged').length;
+  const allDefects = state.records.filter(r => isDefectCondition(r.condition));
+  const openDefects = allDefects.filter(r => r.status !== 'closed');
+  const closedCount = allDefects.length - openDefects.length;
   el('stats-total').textContent = total;
-  el('stats-defects').textContent = defects;
-  el('stats-defect-pct').textContent = total ? Math.round((defects / total) * 100) + '%' : '0%';
+  el('stats-defects').textContent = openDefects.length;
+  el('stats-defect-pct').textContent = allDefects.length ? Math.round((closedCount / allDefects.length) * 100) + '%' : '-';
 
   const weeks = computeWeeklyStats(state.records);
   const maxTotal = Math.max(1, ...weeks.map(w => Object.values(w.counts).reduce((a, b) => a + b, 0)));
@@ -928,8 +974,12 @@ function renderStats() {
   });
 
   const defectRecords = state.records
-    .filter(r => r.condition === 'needs-review' || r.condition === 'damaged')
-    .sort((a, b) => (b.scannedAt || '').localeCompare(a.scannedAt || ''));
+    .filter(r => isDefectCondition(r.condition))
+    .sort((a, b) => {
+      const aOpen = a.status !== 'closed', bOpen = b.status !== 'closed';
+      if (aOpen !== bOpen) return aOpen ? -1 : 1; // aperti prima
+      return (b.scannedAt || '').localeCompare(a.scannedAt || '');
+    });
   const listWrap = el('stats-defects-list');
   listWrap.innerHTML = '';
   if (!defectRecords.length) {
@@ -939,6 +989,7 @@ function renderStats() {
     card.className = 'list-card';
     defectRecords.forEach(r => {
       const row = document.createElement('div');
+      const isOpen = r.status !== 'closed';
       row.className = 'list-row row-' + r.condition;
       row.setAttribute('role', 'button');
       row.setAttribute('tabindex', '0');
@@ -949,6 +1000,7 @@ function renderStats() {
           <span class="meta">${escapeHtml(r.itemNo || '-')} · ${escapeHtml(r.itpStep || '-')} · ${dateStr}</span>
         </div>
         <div class="right">
+          <span class="badge badge-status-${isOpen ? 'open' : 'closed'}">${escapeHtml(t(isOpen ? 'status_open' : 'status_closed'))}</span>
           <span class="badge badge-${r.condition}">${escapeHtml(condLabel(r.condition))}</span>
           <span class="chevron">&rsaquo;</span>
         </div>`;

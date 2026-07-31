@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=16">
+<link rel="stylesheet" href="styles.css?v=17">
 </head>
 <body>
 <div id="app">
@@ -128,6 +128,10 @@
     <div class="logo-chip"><img src="assets/iqs-logo.jpg" alt="IQS"></div>
     <div class="detail-title" id="d-pipeNo">-</div>
     <span class="badge" id="d-badge"></span>
+    <div class="status-row hidden" id="d-status-row">
+      <span class="badge" id="d-status-badge"></span>
+      <button id="d-status-toggle" class="link-btn"></button>
+    </div>
     <div style="height:16px"></div>
     <button id="whatsapp-detail-btn" class="whatsapp-btn">
       <svg viewBox="0 0 32 32"><path d="M16 3C9 3 3.3 8.7 3.3 15.7c0 2.4.6 4.6 1.8 6.6L3 29l6.9-2c1.9 1 4 1.6 6.1 1.6 7 0 12.7-5.7 12.7-12.7S23 3 16 3zm0 23.2c-1.9 0-3.7-.5-5.3-1.5l-.4-.2-4.1 1.2 1.2-4-.2-.4c-1.1-1.7-1.6-3.6-1.6-5.6 0-5.8 4.7-10.5 10.5-10.5s10.4 4.7 10.4 10.5S21.8 26.2 16 26.2zm5.7-7.8c-.3-.2-1.8-.9-2.1-1s-.5-.2-.7.2-.8 1-.9 1.1-.3.2-.6 0a8.3 8.3 0 0 1-4-3.5c-.3-.5.3-.5.8-1.6.1-.2.1-.4 0-.5s-.7-1.7-1-2.3c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4s-1 1-1 2.4 1 2.8 1.2 3 2 3 4.7 4.3c2.8 1.2 2.8.8 3.3.8s1.7-.7 1.9-1.4.2-1.2.2-1.3-.2-.2-.5-.3z"/></svg>
@@ -188,11 +192,11 @@
       </div>
       <div class="stats-summary-card">
         <div class="stats-summary-value stats-value-defect" id="stats-defects">0</div>
-        <div class="stats-summary-label" data-i18n="stats_defects">Difetti (da rev./danneggiato)</div>
+        <div class="stats-summary-label" data-i18n="stats_defects_open">Difetti aperti</div>
       </div>
       <div class="stats-summary-card">
         <div class="stats-summary-value" id="stats-defect-pct">0%</div>
-        <div class="stats-summary-label" data-i18n="stats_defect_pct">% difetti</div>
+        <div class="stats-summary-label" data-i18n="stats_closure_pct">% chiusura</div>
       </div>
     </div>
     <div class="card">
@@ -207,6 +211,6 @@
   </section>
 
 </div>
-<script src="app.js?v=32"></script>
+<script src="app.js?v=33"></script>
 </body>
 </html>
