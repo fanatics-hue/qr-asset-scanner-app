@@ -1,5 +1,5 @@
 const API_BASE = 'https://qr-scanner-api.fanatics.workers.dev';
-const APP_VERSION = 30;
+const APP_VERSION = 31;
 
 const TRANSLATIONS = {
   it: {
@@ -840,6 +840,14 @@ const CONDITION_COLORS = {
   excellent: 'var(--green)', good: 'var(--blue-c)', 'needs-review': 'var(--orange)', damaged: 'var(--red)'
 };
 
+function isoWeekNumber(date) {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  const week = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+  return { week, year: d.getUTCFullYear() };
+}
+
 function mondayOf(date) {
   const d = new Date(date);
   const day = (d.getDay() + 6) % 7; // 0 = lunedi
@@ -898,7 +906,8 @@ function renderStats() {
     });
     const label = document.createElement('div');
     label.className = 'stats-bar-label';
-    label.textContent = w.monday.toLocaleDateString(t('locale'), { day: '2-digit', month: '2-digit' });
+    const iso = isoWeekNumber(w.monday);
+    label.textContent = iso.week + '/' + iso.year;
     col.appendChild(totalLabel);
     col.appendChild(stack);
     col.appendChild(label);
