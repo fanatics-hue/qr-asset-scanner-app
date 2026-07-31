@@ -1,5 +1,5 @@
 const API_BASE = 'https://qr-scanner-api.fanatics.workers.dev';
-const APP_VERSION = 29;
+const APP_VERSION = 30;
 
 const TRANSLATIONS = {
   it: {
@@ -810,7 +810,7 @@ function openDetail(id) {
   } else {
     el('d-photo-card').classList.add('hidden');
   }
-  el('detail-edit-btn').classList.toggle('hidden', !(state.session && state.session.role === 'admin'));
+  el('detail-edit-btn').classList.remove('hidden');
   showScreen('detail');
 }
 
