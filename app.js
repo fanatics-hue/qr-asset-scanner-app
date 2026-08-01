@@ -1,5 +1,5 @@
 const API_BASE = 'https://qr-scanner-api.fanatics.workers.dev';
-const APP_VERSION = 46;
+const APP_VERSION = 47;
 
 const TRANSLATIONS = {
   it: {
@@ -1777,9 +1777,17 @@ function renderOrderStatusFromCumulativeFunnel() {
     funnelWrap.appendChild(row);
   });
 }
-el('order-status-btn').addEventListener('click', () => {
+el('order-status-btn').addEventListener('click', async () => {
+  // Mostra subito i dati gia' in memoria (niente schermata vuota in attesa della rete),
+  // poi li rinfresca dal server - a differenza del resto dell'app, questa schermata deve
+  // riflettere l'ultima sincronizzazione anche se qualcun altro l'ha fatta nel frattempo,
+  // non solo quella caricata al login.
   renderOrderStatus();
   showScreen('order-status');
+  try {
+    await Promise.all([loadRecords(), loadProductionData()]);
+  } catch (e) { /* rete assente: restano visibili gli ultimi dati caricati */ }
+  if (state.screen === 'order-status') renderOrderStatus();
 });
 el('order-status-back').addEventListener('click', () => showScreen('dataset'));
 
