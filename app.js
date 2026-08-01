@@ -1,5 +1,5 @@
 const API_BASE = 'https://qr-scanner-api.fanatics.workers.dev';
-const APP_VERSION = 45;
+const APP_VERSION = 46;
 
 const TRANSLATIONS = {
   it: {
@@ -343,7 +343,7 @@ const HELP_CONTENT = {
       <div class="help-p">La striscia colorata a sinistra indica la condizione: verde = ottimo, blu = buono, arancio = da revisionare, rosso = danneggiato. Cerca per Pipe N°, Item N°, CS Heat o CRA Heat. Solo l'admin può eliminare una scheda (cestino).</div>
     </div>
     <div class="card"><div class="card-header"><span class="section-title">Stato Ordine</span></div>
-      <div class="help-p">Pulsante 🚨 nel Dataset: mostra l'imbuto di produzione per ITP Step (quanti tubi hanno raggiunto ogni step, dai dati di produzione sincronizzati) ed evidenzia da solo il collo di bottiglia — lo step con il calo più forte rispetto al precedente. Mostra anche i difetti aperti raggruppati per step. Se non è mai stata sincronizzata la produzione per l'ordine attivo, la sezione resta vuota finché non lo fai.</div>
+      <div class="help-p">Pulsante 🚨 nel Dataset: mostra l'avanzamento dell'Item ancora in lavorazione (dal foglio "Riepilogo per Fase" del file Excel di produzione). In alto: Item N°, riferimento PO, scadenza contrattuale e giorni residui. Per ogni fase: completati/totale, pezzi rimanenti, data prevista e scarto in giorni vs scadenza contrattuale, con badge OK (verde, in anticipo/puntuale), RITARDO (rosso, previsione oltre la scadenza) o N/D (grigio, dato insufficiente). Il "collo di bottiglia" in cima è la fase con più pezzi ancora da fare. Mostra anche i difetti aperti per step e, in fondo, la nota che spiega come viene calcolata la previsione. Se la produzione non è mai stata sincronizzata la sezione resta vuota; se manca il foglio "Riepilogo per Fase" nel file Excel, l'app mostra in automatico un imbuto più semplice su tutti i tubi tracciati.</div>
     </div>
     <div class="card"><div class="card-header"><span class="section-title">Statistiche</span></div>
       <div class="help-p">Pulsante 📊 nel Dataset: schede totali, difetti aperti, % chiusura, giorni medi di chiusura, quanti difetti restano aperti da oltre 5 giorni, un grafico settimanale (ultime 8 settimane) e la ripartizione per tipo difetto/disposizione. Sotto al grafico, l'elenco di tutti i difetti (aperti prima) — tocca una riga per aprirne il dettaglio.</div>
@@ -390,7 +390,7 @@ const HELP_CONTENT = {
       <div class="help-p">The colored stripe on the left shows the condition: green = excellent, blue = good, orange = needs review, red = damaged. Search by Pipe No., Item No., CS Heat or CRA Heat. Only admins can delete a record (trash icon).</div>
     </div>
     <div class="card"><div class="card-header"><span class="section-title">Order Status</span></div>
-      <div class="help-p">🚨 button in the Dataset: shows the production funnel by ITP Step (how many pipes reached each step, from synced production data) and highlights the bottleneck on its own — the step with the biggest drop versus the previous one. Also shows open defects grouped by step. If production data has never been synced for the active order, this stays empty until you do.</div>
+      <div class="help-p">🚨 button in the Dataset: shows progress for the Item still in production (from the "Riepilogo per Fase" sheet of the production Excel file). At the top: Item No., PO reference, contractual due date and days remaining. For each phase: completed/total, pipes remaining, forecast date and deviation in days vs the contractual due date, with an OK (green, ahead/on time), DELAY (red, forecast past the due date) or N/A (grey, not enough data) badge. The "bottleneck" at the top is the phase with the most pipes still to go. Also shows open defects by step and, at the bottom, the note explaining how the forecast is calculated. If production data has never been synced this stays empty; if the "Riepilogo per Fase" sheet isn't in the Excel file, the app automatically falls back to a simpler funnel across all tracked pipes.</div>
     </div>
     <div class="card"><div class="card-header"><span class="section-title">Statistics</span></div>
       <div class="help-p">📊 button in the Dataset: total records, open defects, % closed, average days to close, how many defects have been open for more than 5 days, an 8-week chart, and a breakdown by defect type/disposition. Below the chart, the full defects list (open ones first) — tap a row to open its detail.</div>
