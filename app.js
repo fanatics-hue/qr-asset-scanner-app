@@ -1,5 +1,5 @@
 const API_BASE = 'https://qr-scanner-api.fanatics.workers.dev';
-const APP_VERSION = 47;
+const APP_VERSION = 48;
 
 const TRANSLATIONS = {
   it: {
@@ -111,6 +111,9 @@ const TRANSLATIONS = {
     cancel_btn: 'Annulla',
     confirm_close_btn: 'Conferma chiusura',
     err_close_note_required: 'Inserisci causa e azione correttiva prima di chiudere.',
+    retest_confirm_label: 'Disposizione: Ripara. Confermo che il tubo è stato ri-collaudato dopo la riparazione e trovato conforme.',
+    err_retest_required: 'Conferma il ri-collaudo prima di chiudere.',
+    retest_tag: 'Ri-collaudato',
     timeline_title: 'Cronologia',
     timeline_issued: 'Emesso da {who}',
     timeline_edited: 'Modificato da {who}',
@@ -264,6 +267,9 @@ const TRANSLATIONS = {
     cancel_btn: 'Cancel',
     confirm_close_btn: 'Confirm closure',
     err_close_note_required: 'Enter root cause and corrective action before closing.',
+    retest_confirm_label: 'Disposition: Repair. I confirm the pipe was retested after the repair and found conforming.',
+    err_retest_required: 'Confirm the retest before closing.',
+    retest_tag: 'Retested',
     timeline_title: 'Timeline',
     timeline_issued: 'Issued by {who}',
     timeline_edited: 'Edited by {who}',
@@ -1361,14 +1367,17 @@ function renderTimeline(rec) {
   const entries = [];
   if (rec.scannedAt) entries.push({ text: t('timeline_issued').replace('{who}', rec.scannedBy || '-'), when: rec.scannedAt });
   if (rec.editedAt) entries.push({ text: t('timeline_edited').replace('{who}', rec.editedBy || '-'), when: rec.editedAt });
-  if (rec.closedAt) entries.push({ text: t('timeline_closed').replace('{who}', rec.closedBy || '-') + (rec.closureNote ? ': ' + rec.closureNote : ''), when: rec.closedAt });
+  if (rec.closedAt) {
+    let closedText = t('timeline_closed').replace('{who}', rec.closedBy || '-') + (rec.closureNote ? ': ' + rec.closureNote : '');
+    entries.push({ text: closedText, when: rec.closedAt, retestTag: !!rec.retestConfirmed });
+  }
   const wrap = el('d-timeline');
   if (!entries.length) { el('d-timeline-card').classList.add('hidden'); return; }
   entries.sort((a, b) => a.when.localeCompare(b.when));
   wrap.innerHTML = entries.map(e => `
     <div class="tl-item">
       <div class="tl-dot"></div>
-      <div class="tl-text">${escapeHtml(e.text)}<span>${new Date(e.when).toLocaleString(t('locale'))}</span></div>
+      <div class="tl-text">${escapeHtml(e.text)}<span>${new Date(e.when).toLocaleString(t('locale'))}</span>${e.retestTag ? `<span class="retest-tag">${escapeHtml(t('retest_tag'))}</span>` : ''}</div>
     </div>`).join('');
   el('d-timeline-card').classList.remove('hidden');
 }
@@ -1396,6 +1405,11 @@ el('d-status-toggle').addEventListener('click', async () => {
   } else {
     // chiudere richiede causa + azione correttiva: mostra il campo invece di chiudere subito
     el('d-close-note-input').value = '';
+    // Disposizione "ripara": in piu' chiede conferma esplicita che il tubo e' stato
+    // ri-collaudato dopo la riparazione, non solo scritto come intenzione nella nota.
+    const needsRetest = rec.disposition === 'repair';
+    el('d-retest-check').classList.toggle('hidden', !needsRetest);
+    el('d-retest-checkbox').checked = false;
     el('d-close-note-prompt').classList.remove('hidden');
   }
 });
@@ -1407,10 +1421,13 @@ el('d-close-note-confirm').addEventListener('click', async () => {
   if (!rec) return;
   const note = el('d-close-note-input').value.trim();
   if (!note) { alert(t('err_close_note_required')); return; }
+  const needsRetest = rec.disposition === 'repair';
+  const retested = el('d-retest-checkbox').checked;
+  if (needsRetest && !retested) { alert(t('err_retest_required')); return; }
   el('d-close-note-confirm').disabled = true;
   try {
     const { record } = await api('/api/records/' + encodeURIComponent(rec.id) + '/status', {
-      method: 'POST', body: JSON.stringify({ status: 'closed', closureNote: note })
+      method: 'POST', body: JSON.stringify({ status: 'closed', closureNote: note, retested: needsRetest ? true : undefined })
     });
     const idx = state.records.findIndex(r => r.id === rec.id);
     if (idx >= 0) state.records[idx] = record;

@@ -331,6 +331,10 @@ textarea.field { resize: vertical; font-family: inherit; }
 .aging-text { font-size: 11px; color: var(--red); font-weight: 700; }
 .close-note-prompt { margin: 0 16px 14px; padding: 12px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 12px; }
 .close-note-prompt textarea { margin-bottom: 8px; }
+.retest-check { display: flex; align-items: flex-start; gap: 9px; padding: 10px 11px; border-radius: 10px; background: var(--orange-bg); border: 1px solid var(--orange); margin-bottom: 10px; }
+.retest-check input { margin-top: 2px; flex: none; width: 16px; height: 16px; accent-color: var(--orange); }
+.retest-check label { font-size: 12px; color: var(--text-primary); line-height: 1.45; }
+.retest-tag { display: inline-block; margin-top: 4px; font-size: 10px; font-weight: 700; color: var(--orange); background: var(--orange-bg); padding: 2px 7px; border-radius: 6px; }
 .close-note-actions { display: flex; justify-content: flex-end; gap: 14px; align-items: center; }
 .timeline { padding: 6px 14px 14px; }
 .tl-item { display: flex; gap: 10px; padding: 8px 0; border-top: 1px solid var(--border-light); }

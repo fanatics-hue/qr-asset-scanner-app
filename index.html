@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=26">
+<link rel="stylesheet" href="styles.css?v=27">
 </head>
 <body>
 <div id="app">
@@ -153,6 +153,10 @@
     </div>
     <div class="close-note-prompt hidden" id="d-close-note-prompt">
       <textarea id="d-close-note-input" class="field" rows="2" data-i18n-ph="close_note_ph"></textarea>
+      <div class="retest-check hidden" id="d-retest-check">
+        <input type="checkbox" id="d-retest-checkbox">
+        <label for="d-retest-checkbox" data-i18n="retest_confirm_label">Disposizione: Ripara. Confermo che il tubo è stato ri-collaudato dopo la riparazione e trovato conforme.</label>
+      </div>
       <div class="close-note-actions">
         <button id="d-close-note-cancel" class="link-btn" data-i18n="cancel_btn">Annulla</button>
         <button id="d-close-note-confirm" class="btn-status-toggle btn-status-close" data-i18n="confirm_close_btn">Conferma chiusura</button>
@@ -326,6 +330,6 @@
   </div>
 </div>
 
-<script src="app.js?v=47"></script>
+<script src="app.js?v=48"></script>
 </body>
 </html>
