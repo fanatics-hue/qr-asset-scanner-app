@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=20">
+<link rel="stylesheet" href="styles.css?v=21">
 </head>
 <body>
 <div id="app">
@@ -47,6 +47,7 @@
           <span class="readonly" id="f-progress"></span>
         </div>
         <div class="ambiguous-hint hidden" id="pipe-ambiguous-hint" data-i18n="pipe_ambiguous_hint">Questo Pipe N° esiste su più Item: inserisci anche l'Item N° per l'auto-compilazione.</div>
+        <div class="dup-scan-hint hidden" id="dup-scan-hint"></div>
         <div class="row"><label>CS Heat</label><input id="f-csHeat" type="text"></div>
         <div class="row"><label>CRA Heat</label><input id="f-craHeat" type="text"></div>
         <div class="row"><label>Length</label><input id="f-length" type="text"></div>
@@ -103,11 +104,17 @@
       </div>
       <div class="logo-chip" style="padding:0"><img src="assets/iqs-logo.jpg" alt="IQS" style="height:28px"></div>
       <div class="toggles">
+        <button id="order-status-btn" class="admin-gear" data-i18n-title="order_status_title" title="Stato Ordine">&#128678;</button>
         <button id="stats-btn" class="admin-gear" data-i18n-title="stats_title" title="Statistiche">&#128202;</button>
         <button id="help-btn" class="admin-gear" data-i18n-title="help_title" title="Guida">?</button>
         <button id="admin-gear" class="admin-gear hidden" data-i18n-title="admin_title" title="Gestione ispettori">&#9881;</button>
       </div>
     </div>
+    <button id="order-pill" class="order-pill" type="button">
+      <span class="order-pill-lbl" data-i18n="order_pill_label">Progetto</span>
+      <span id="order-pill-name">-</span>
+      <span class="order-pill-icon">▾</span>
+    </button>
     <div class="large-title" data-i18n="dataset_title">Dataset asset</div>
     <div class="search-wrap">
       <input id="search-input" class="field" type="text" data-i18n-ph="search_ph">
@@ -251,7 +258,63 @@
     </div>
   </section>
 
+  <!-- STATO ORDINE -->
+  <section id="screen-order-status" class="hidden">
+    <button id="order-status-back" class="back-link">&lsaquo; <span data-i18n="dataset_title_short">Dataset</span></button>
+    <div class="large-title" style="padding-left:0" data-i18n="order_status_title">Stato Ordine</div>
+
+    <div class="card bottleneck-card hidden" id="os-bottleneck-card">
+      <div class="oh-label" data-i18n="os_bottleneck_label">Collo di bottiglia rilevato</div>
+      <div class="oh-value" id="os-bottleneck-step">-</div>
+      <div class="oh-sub" id="os-bottleneck-sub"></div>
+    </div>
+
+    <div class="stats-summary">
+      <div class="stats-summary-card">
+        <div class="stats-summary-value" id="os-total">0</div>
+        <div class="stats-summary-label" data-i18n="os_total">Tubi tracciati</div>
+      </div>
+      <div class="stats-summary-card">
+        <div class="stats-summary-value" id="os-complete-pct">0%</div>
+        <div class="stats-summary-label" data-i18n="os_complete_pct">Completati (ultimo step)</div>
+      </div>
+      <div class="stats-summary-card">
+        <div class="stats-summary-value stats-value-defect" id="os-open-defects">0</div>
+        <div class="stats-summary-label" data-i18n="stats_defects_open">Difetti aperti</div>
+      </div>
+    </div>
+
+    <div class="card" id="os-funnel-card">
+      <div class="card-header"><span class="section-title" data-i18n="os_funnel_title">Imbuto produzione</span></div>
+      <div class="funnel" id="os-funnel"></div>
+    </div>
+
+    <div class="card hidden" id="os-no-data-card">
+      <div class="card-header"><span class="section-title" data-i18n="os_no_data_title">Nessun dato di produzione</span></div>
+      <div class="row" style="border-top:none"><span class="readonly" style="font-weight:400" data-i18n="os_no_data_desc">Sincronizza i dati di produzione per questo ordine per vedere l'imbuto.</span></div>
+    </div>
+
+    <div class="card hidden" id="os-defects-step-card">
+      <div class="card-header"><span class="section-title" data-i18n="os_defects_by_step">Difetti aperti per step</span></div>
+      <div id="os-defects-step-list"></div>
+    </div>
+  </section>
+
 </div>
-<script src="app.js?v=37"></script>
+
+<!-- Selettore ordine -->
+<div id="order-sheet" class="sheet-overlay hidden">
+  <div class="sheet-card">
+    <div class="sheet-title" data-i18n="order_sheet_title">Progetto</div>
+    <div id="order-list" class="order-list"></div>
+    <div id="order-new-row" class="order-new-row hidden">
+      <input id="order-new-input" class="field" type="text" data-i18n-ph="order_new_ph">
+      <button id="order-new-btn" type="button" data-i18n="order_new_btn">+ Nuovo ordine</button>
+    </div>
+    <button id="order-sheet-close" class="link-btn" data-i18n="cancel_btn">Annulla</button>
+  </div>
+</div>
+
+<script src="app.js?v=38"></script>
 </body>
 </html>

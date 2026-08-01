@@ -1,5 +1,5 @@
 const API_BASE = 'https://qr-scanner-api.fanatics.workers.dev';
-const APP_VERSION = 37;
+const APP_VERSION = 38;
 
 const TRANSLATIONS = {
   it: {
@@ -117,6 +117,20 @@ const TRANSLATIONS = {
     stats_aging: 'Aperti da +5gg',
     stats_by_type: 'Per tipo difetto',
     stats_by_disposition: 'Per disposizione',
+    order_pill_label: 'Progetto',
+    order_sheet_title: 'Progetto',
+    order_new_ph: 'Nome nuovo ordine',
+    order_new_btn: '+ Nuovo ordine',
+    order_status_title: 'Stato Ordine',
+    os_total: 'Tubi tracciati',
+    os_complete_pct: 'Completati (ultimo step)',
+    os_funnel_title: 'Imbuto produzione',
+    os_no_data_title: 'Nessun dato di produzione',
+    os_no_data_desc: 'Sincronizza i dati di produzione per questo ordine per vedere l\'imbuto.',
+    os_defects_by_step: 'Difetti aperti per step',
+    os_bottleneck_label: 'Collo di bottiglia rilevato',
+    os_bottleneck_sub: '{n} tubi in coda rispetto allo step precedente (su {total} tracciati)',
+    dup_scan_hint: 'ATTENZIONE: Pipe N° già scansionato oggi alle {time} da {by}.',
     wa_title: 'Asset scansionato:',
     wa_condition: 'Condizione',
     wa_comments: 'Commenti',
@@ -238,6 +252,20 @@ const TRANSLATIONS = {
     stats_aging: 'Open for +5 days',
     stats_by_type: 'By defect type',
     stats_by_disposition: 'By disposition',
+    order_pill_label: 'Project',
+    order_sheet_title: 'Project',
+    order_new_ph: 'New order name',
+    order_new_btn: '+ New order',
+    order_status_title: 'Order Status',
+    os_total: 'Pipes tracked',
+    os_complete_pct: 'Completed (last step)',
+    os_funnel_title: 'Production funnel',
+    os_no_data_title: 'No production data',
+    os_no_data_desc: 'Sync production data for this order to see the funnel.',
+    os_defects_by_step: 'Open defects by step',
+    os_bottleneck_label: 'Bottleneck detected',
+    os_bottleneck_sub: '{n} pipes queued vs the previous step (of {total} tracked)',
+    dup_scan_hint: 'WARNING: Pipe No. already scanned today at {time} by {by}.',
     wa_title: 'Scanned asset:',
     wa_condition: 'Condition',
     wa_comments: 'Comments',
@@ -354,10 +382,13 @@ const state = {
   meta: { itpSteps: [], conditions: [], defectTypes: [], dispositions: [] },
   lang: localStorage.getItem('qr_lang') || 'it',
   theme: localStorage.getItem('qr_theme') || 'auto',
+  productionRecords: [],
   productionMap: new Map(),
   productionByPipe: new Map(),
   ambiguousPipes: new Set(),
-  editingId: null
+  editingId: null,
+  orders: [],
+  currentOrderId: localStorage.getItem('qr_order_id') || 'default'
 };
 
 const normProdNum = (v) => { const n = parseInt(String(v || '').trim(), 10); return isNaN(n) ? String(v || '').trim() : String(n); };
@@ -366,7 +397,7 @@ const prodKey = (itemNo, pipeNo) => normProdNum(itemNo) + '-' + normProdNum(pipe
 const el = (id) => document.getElementById(id);
 const t = (key) => (TRANSLATIONS[state.lang] && TRANSLATIONS[state.lang][key]) || key;
 const condLabel = (code) => t(condKey(code));
-const screens = ['login', 'confirm', 'dataset', 'detail', 'admin', 'help', 'stats'];
+const screens = ['login', 'confirm', 'dataset', 'detail', 'admin', 'help', 'stats', 'order-status'];
 
 function translateBackendError(msg) {
   const entry = BACKEND_ERR_MAP[msg];
@@ -417,6 +448,8 @@ function setLang(lang) {
   if (state.screen === 'dataset') renderDatasetList();
   if (state.screen === 'detail' && state.selectedId) openDetail(state.selectedId);
   if (state.screen === 'admin') loadUsers();
+  if (state.screen === 'stats') renderStats();
+  if (state.screen === 'order-status') renderOrderStatus();
 }
 
 function showScreen(name) {
@@ -431,6 +464,7 @@ function showScreen(name) {
 async function api(path, opts = {}) {
   const headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers || {});
   if (state.session && state.session.token) headers['Authorization'] = 'Bearer ' + state.session.token;
+  if (state.currentOrderId) headers['X-Order-Id'] = state.currentOrderId;
   const resp = await fetch(API_BASE + path, Object.assign({}, opts, { headers }));
   const data = await resp.json().catch(() => ({}));
   if (!resp.ok) throw new Error(translateBackendError(data.error) || ('Error ' + resp.status));
@@ -467,14 +501,122 @@ async function afterLogin() {
   try {
     state.meta = await api('/api/meta');
   } catch (e) { state.meta = { itpSteps: [], conditions: CONDITION_CODES }; }
+  await loadOrders(); // prima degli altri: records/production-data dipendono dall'header X-Order-Id
   await loadRecords();
   loadProductionData(); // in background, non blocca l'ingresso in dataset
   showScreen('dataset');
 }
 
+// ---------------- Ordini (multi-progetto) ----------------
+// Un solo ordine "attivo" alla volta, condiviso da tutti gli ispettori (non selezione per
+// utente): chi lo cambia lo cambia per tutti, come un vero cambio di cantiere/commessa.
+async function loadOrders() {
+  try {
+    const data = await api('/api/orders');
+    state.orders = data.orders || [];
+    if (!state.orders.find(o => o.id === state.currentOrderId)) {
+      state.currentOrderId = state.orders[0] ? state.orders[0].id : 'default';
+      localStorage.setItem('qr_order_id', state.currentOrderId);
+    }
+  } catch (e) {
+    state.orders = [{ id: state.currentOrderId, name: 'Order 45650 / COMP3B' }];
+  }
+  renderOrderPill();
+}
+
+function currentOrderName() {
+  const o = state.orders.find(o => o.id === state.currentOrderId);
+  return o ? o.name : '-';
+}
+
+function renderOrderPill() {
+  if (el('order-pill-name')) el('order-pill-name').textContent = currentOrderName();
+}
+
+function renderOrderSheet() {
+  const wrap = el('order-list');
+  wrap.innerHTML = '';
+  const isAdmin = state.session && state.session.role === 'admin';
+  state.orders.forEach(o => {
+    const row = document.createElement('div');
+    row.className = 'order-row' + (o.id === state.currentOrderId ? ' active' : '');
+    buildOrderRow(row, o, isAdmin);
+    wrap.appendChild(row);
+  });
+  el('order-new-row').classList.toggle('hidden', !isAdmin);
+  el('order-new-input').value = '';
+}
+
+function buildOrderRow(row, o, isAdmin) {
+  row.innerHTML = '';
+  const nameSpan = document.createElement('span');
+  nameSpan.className = 'order-row-name';
+  nameSpan.textContent = o.name;
+  nameSpan.addEventListener('click', () => switchOrder(o.id));
+  row.appendChild(nameSpan);
+  if (isAdmin) {
+    const editBtn = document.createElement('button');
+    editBtn.className = 'order-row-edit';
+    editBtn.type = 'button';
+    editBtn.textContent = '✎';
+    editBtn.addEventListener('click', (e) => { e.stopPropagation(); startRenameOrder(o, row, isAdmin); });
+    row.appendChild(editBtn);
+  }
+}
+
+function startRenameOrder(o, row) {
+  row.innerHTML = '';
+  const input = document.createElement('input');
+  input.className = 'field'; input.value = o.name;
+  input.addEventListener('click', (e) => e.stopPropagation());
+  const saveBtn = document.createElement('button');
+  saveBtn.type = 'button';
+  saveBtn.className = 'order-row-save';
+  saveBtn.textContent = t('confirm_save');
+  saveBtn.addEventListener('click', async (e) => {
+    e.stopPropagation();
+    const name = input.value.trim();
+    if (!name) return;
+    try {
+      await api('/api/admin/orders/' + encodeURIComponent(o.id), { method: 'PUT', body: JSON.stringify({ name }) });
+      await loadOrders();
+      renderOrderSheet();
+    } catch (err) { alert(t('err_generic') + err.message); }
+  });
+  row.appendChild(input);
+  row.appendChild(saveBtn);
+}
+
+async function switchOrder(orderId) {
+  el('order-sheet').classList.add('hidden');
+  if (orderId === state.currentOrderId) return;
+  state.currentOrderId = orderId;
+  localStorage.setItem('qr_order_id', orderId);
+  renderOrderPill();
+  await loadRecords();
+  loadProductionData();
+}
+
+el('order-pill').addEventListener('click', () => {
+  renderOrderSheet();
+  el('order-sheet').classList.remove('hidden');
+});
+el('order-sheet-close').addEventListener('click', () => el('order-sheet').classList.add('hidden'));
+el('order-sheet').addEventListener('click', (e) => { if (e.target.id === 'order-sheet') el('order-sheet').classList.add('hidden'); });
+el('order-new-btn').addEventListener('click', async () => {
+  const name = el('order-new-input').value.trim();
+  if (!name) return;
+  try {
+    const data = await api('/api/admin/orders', { method: 'POST', body: JSON.stringify({ name }) });
+    state.orders = data.orders || state.orders;
+    renderOrderSheet();
+  } catch (err) { alert(t('err_generic') + err.message); }
+});
+
 async function loadProductionData() {
   try {
     const data = await api('/api/production-data');
+    state.productionRecords = data.records || [];
     state.productionMap = new Map();
     state.productionByPipe = new Map();
     state.ambiguousPipes = new Set(); // Pipe N. che compaiono su piu' Item diversi
@@ -496,7 +638,7 @@ async function loadProductionData() {
         state.ambiguousPipes.add(pipeKey);
       }
     });
-  } catch (e) { /* nessun dato di produzione disponibile, l'inserimento resta manuale */ }
+  } catch (e) { state.productionRecords = []; /* nessun dato di produzione disponibile, l'inserimento resta manuale */ }
 }
 
 // ---------------- Nuovo asset ----------------
@@ -520,6 +662,7 @@ function openConfirm(parsed) {
   el('f-comment').value = '';
   el('prod-progress-row').classList.add('hidden');
   el('pipe-ambiguous-hint').classList.add('hidden');
+  el('dup-scan-hint').classList.add('hidden');
   resetPhotoField();
   el('photo-existing-note').classList.add('hidden');
   el('confirm-title').textContent = t('confirm_title');
@@ -548,6 +691,7 @@ function openEditRecord(rec) {
   el('f-comment').value = rec.comment || '';
   el('prod-progress-row').classList.add('hidden');
   el('pipe-ambiguous-hint').classList.add('hidden');
+  el('dup-scan-hint').classList.add('hidden');
   resetPhotoField();
   el('photo-existing-note').classList.toggle('hidden', !rec.photoPath);
   el('confirm-title').textContent = t('confirm_title_edit');
@@ -686,9 +830,30 @@ function setAutoField(id, key, value) {
   state.draft[key] = value;
   state.draft._autoFields.add(key);
 }
+// Se lo stesso Pipe N. risulta gia' scansionato oggi (per l'ordine corrente), avvisa subito
+// invece di scoprirlo solo dopo, guardando il Dataset - non blocca il salvataggio: un secondo
+// scan puo' essere legittimo (es. difetto trovato dopo), ma l'ispettore deve saperlo.
+function checkDuplicateScan() {
+  const hint = el('dup-scan-hint');
+  const pipeNo = el('f-pipeNo').value.trim();
+  if (!pipeNo) { hint.classList.add('hidden'); return; }
+  const normPipe = normProdNum(pipeNo);
+  const todayStr = new Date().toDateString();
+  const dup = state.records.find(r =>
+    r.id !== state.editingId &&
+    normProdNum(r.pipeNo) === normPipe &&
+    r.scannedAt && new Date(r.scannedAt).toDateString() === todayStr
+  );
+  if (!dup) { hint.classList.add('hidden'); return; }
+  const time = dup.scannedAt ? new Date(dup.scannedAt).toLocaleTimeString(t('locale'), { hour: '2-digit', minute: '2-digit' }) : '-';
+  hint.textContent = t('dup_scan_hint').replace('{time}', time).replace('{by}', dup.scannedBy || '-');
+  hint.classList.remove('hidden');
+}
+
 function tryAutoFillFromProduction() {
   const itemNo = el('f-itemNo').value.trim();
   const pipeNo = el('f-pipeNo').value.trim();
+  checkDuplicateScan();
   if (!pipeNo) {
     el('prod-progress-row').classList.add('hidden');
     el('pipe-ambiguous-hint').classList.add('hidden');
@@ -1227,6 +1392,85 @@ el('stats-btn').addEventListener('click', () => {
   showScreen('stats');
 });
 el('stats-back').addEventListener('click', () => showScreen('dataset'));
+
+// ---------------- Stato Ordine ----------------
+// Non e' un'altra vista sui difetti (quella e' Statistiche): risponde a "dove sta rallentando
+// l'ordine adesso", incrociando i dati di produzione (a che ITP Step e' ogni tubo) con i
+// difetti aperti scansionati - l'imbuto e' cumulativo: quanti tubi hanno RAGGIUNTO almeno
+// quello step, cosi' il calo piu' forte tra due step consecutivi segnala da solo il collo
+// di bottiglia, senza bisogno di soglie configurate a mano.
+function renderOrderStatus() {
+  const steps = (state.meta.itpSteps && state.meta.itpSteps.length) ? state.meta.itpSteps : ITP_STEPS_FALLBACK;
+  const prod = state.productionRecords || [];
+  const total = prod.length;
+  el('os-total').textContent = total;
+
+  const openDefects = state.records.filter(r => isDefectCondition(r.condition) && r.status !== 'closed');
+  el('os-open-defects').textContent = openDefects.length;
+
+  const noData = total === 0;
+  el('os-no-data-card').classList.toggle('hidden', !noData);
+  el('os-funnel-card').classList.toggle('hidden', noData);
+  if (noData) {
+    el('os-complete-pct').textContent = '-';
+    el('os-bottleneck-card').classList.add('hidden');
+    el('os-defects-step-card').classList.add('hidden');
+    return;
+  }
+
+  const stepCounts = steps.map((step, idx) => {
+    const stepNum = idx + 1;
+    const count = prod.filter(r => (r.currentStepNum || 0) >= stepNum).length;
+    return { step, stepNum, count };
+  });
+
+  const lastCount = stepCounts[stepCounts.length - 1].count;
+  el('os-complete-pct').textContent = Math.round((lastCount / total) * 100) + '%';
+
+  let bottleneck = null, maxDrop = 0;
+  for (let i = 1; i < stepCounts.length; i++) {
+    const drop = stepCounts[i - 1].count - stepCounts[i].count;
+    if (drop > maxDrop) { maxDrop = drop; bottleneck = stepCounts[i]; }
+  }
+  if (bottleneck && maxDrop > 0) {
+    el('os-bottleneck-card').classList.remove('hidden');
+    el('os-bottleneck-step').textContent = bottleneck.step;
+    el('os-bottleneck-sub').textContent = t('os_bottleneck_sub').replace('{n}', maxDrop).replace('{total}', total);
+  } else {
+    el('os-bottleneck-card').classList.add('hidden');
+  }
+
+  const funnelWrap = el('os-funnel');
+  funnelWrap.innerHTML = '';
+  stepCounts.forEach(sc => {
+    const pct = total ? Math.round((sc.count / total) * 100) : 0;
+    const isBottleneck = !!(bottleneck && sc.step === bottleneck.step);
+    const row = document.createElement('div');
+    row.className = 'funnel-row' + (isBottleneck ? ' is-bottleneck' : '');
+    row.innerHTML = `
+      <div class="funnel-head"><span class="step">${escapeHtml(sc.step)}</span><span class="count">${sc.count}</span></div>
+      <div class="funnel-track"><div class="funnel-fill${isBottleneck ? ' bottleneck' : ''}" style="width:${pct}%"></div></div>`;
+    funnelWrap.appendChild(row);
+  });
+
+  const byStep = {};
+  openDefects.forEach(r => { const key = r.itpStep || '-'; byStep[key] = (byStep[key] || 0) + 1; });
+  const stepDefectEntries = Object.entries(byStep).sort((a, b) => b[1] - a[1]);
+  const stepCard = el('os-defects-step-card');
+  if (!stepDefectEntries.length) {
+    stepCard.classList.add('hidden');
+  } else {
+    stepCard.classList.remove('hidden');
+    el('os-defects-step-list').innerHTML = stepDefectEntries.map(([step, count]) =>
+      `<div class="row"><label>${escapeHtml(step)}</label><span class="readonly">${count}</span></div>`
+    ).join('');
+  }
+}
+el('order-status-btn').addEventListener('click', () => {
+  renderOrderStatus();
+  showScreen('order-status');
+});
+el('order-status-back').addEventListener('click', () => showScreen('dataset'));
 
 async function loadUsers() {
   try {
