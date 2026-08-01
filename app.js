@@ -1,5 +1,5 @@
 const API_BASE = 'https://qr-scanner-api.fanatics.workers.dev';
-const APP_VERSION = 48;
+const APP_VERSION = 49;
 
 const TRANSLATIONS = {
   it: {
@@ -337,7 +337,7 @@ const HELP_CONTENT = {
       <div class="help-p">Se salvi una scheda con condizione "Da revisionare" o "Danneggiato" parte in automatico un'email di avviso con i dettagli.</div>
     </div>
     <div class="card"><div class="card-header"><span class="section-title">Gestione difetti: Aperto/Chiuso</span></div>
-      <div class="help-p">Ogni scheda "Da revisionare"/"Danneggiato" nasce con stato "Aperto". Nel dettaglio, "Segna come chiuso" chiede sempre causa e azione correttiva (obbligatorio) prima di confermare — resta scritta nella Cronologia della scheda insieme a chi/quando l'ha emessa, modificata e chiusa. Un difetto aperto da più giorni mostra un contatore rosso "● Ng" accanto al badge.</div>
+      <div class="help-p">Ogni scheda "Da revisionare"/"Danneggiato" nasce con stato "Aperto". Nel dettaglio, "Segna come chiuso" chiede sempre causa e azione correttiva (obbligatorio) prima di confermare — resta scritta nella Cronologia della scheda insieme a chi/quando l'ha emessa, modificata e chiusa. Se la Disposizione è "Ripara", compare anche una casella obbligatoria da spuntare per confermare che il tubo è stato ri-collaudato dopo la riparazione e trovato conforme — senza spuntarla non si può chiudere; per le altre disposizioni non cambia nulla. Un difetto aperto da più giorni mostra un contatore rosso "● Ng" accanto al badge.</div>
     </div>
     <div class="card"><div class="card-header"><span class="section-title">Modifica</span></div>
       <div class="help-p">Qualunque ispettore loggato (non solo l'admin) può correggere una scheda già salvata: apri il dettaglio → "Modifica" in alto a destra, cambia i campi necessari e "Salva". La foto esistente resta se non ne scegli una nuova.</div>
@@ -384,7 +384,7 @@ const HELP_CONTENT = {
       <div class="help-p">Saving a record with condition "Needs review" or "Damaged" automatically triggers an alert email with the details.</div>
     </div>
     <div class="card"><div class="card-header"><span class="section-title">Defect management: Open/Closed</span></div>
-      <div class="help-p">Every "Needs review"/"Damaged" record starts as "Open". In the detail screen, "Mark as closed" always asks for root cause and corrective action (required) before confirming — it's kept in the record's Timeline together with who/when issued, edited and closed it. A defect open for several days shows a red "● Nd" counter next to the badge.</div>
+      <div class="help-p">Every "Needs review"/"Damaged" record starts as "Open". In the detail screen, "Mark as closed" always asks for root cause and corrective action (required) before confirming — it's kept in the record's Timeline together with who/when issued, edited and closed it. If the Disposition is "Repair", an extra required checkbox appears confirming the pipe was retested after the repair and found conforming — you can't close without checking it; other dispositions are unaffected. A defect open for several days shows a red "● Nd" counter next to the badge.</div>
     </div>
     <div class="card"><div class="card-header"><span class="section-title">Edit</span></div>
       <div class="help-p">Any logged-in inspector (not just admin) can correct an already-saved record: open the detail screen → "Edit" top right, change what's needed, "Save". The existing photo stays unless you pick a new one.</div>
