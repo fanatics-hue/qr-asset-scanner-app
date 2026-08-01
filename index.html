@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=21">
+<link rel="stylesheet" href="styles.css?v=22">
 </head>
 <body>
 <div id="app">
@@ -102,7 +102,10 @@
         <button id="lang-toggle-dataset" class="lang-toggle">EN</button>
         <button id="theme-toggle-dataset" class="theme-toggle" data-i18n-title="theme_toggle_title" title="Tema chiaro/scuro">&#9789;</button>
       </div>
-      <div class="logo-chip" style="padding:0"><img src="assets/iqs-logo.jpg" alt="IQS" style="height:28px"></div>
+      <button id="order-pill" class="order-pill-inline" type="button" data-i18n-title="order_pill_label" title="Progetto">
+        <span id="order-pill-name">-</span>
+        <span class="order-pill-icon">▾</span>
+      </button>
       <div class="toggles">
         <button id="order-status-btn" class="admin-gear" data-i18n-title="order_status_title" title="Stato Ordine">&#128678;</button>
         <button id="stats-btn" class="admin-gear" data-i18n-title="stats_title" title="Statistiche">&#128202;</button>
@@ -110,11 +113,6 @@
         <button id="admin-gear" class="admin-gear hidden" data-i18n-title="admin_title" title="Gestione ispettori">&#9881;</button>
       </div>
     </div>
-    <button id="order-pill" class="order-pill" type="button">
-      <span class="order-pill-lbl" data-i18n="order_pill_label">Progetto</span>
-      <span id="order-pill-name">-</span>
-      <span class="order-pill-icon">▾</span>
-    </button>
     <div class="large-title" data-i18n="dataset_title">Dataset asset</div>
     <div class="search-wrap">
       <input id="search-input" class="field" type="text" data-i18n-ph="search_ph">
@@ -315,6 +313,6 @@
   </div>
 </div>
 
-<script src="app.js?v=39"></script>
+<script src="app.js?v=40"></script>
 </body>
 </html>

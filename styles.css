@@ -426,15 +426,18 @@ textarea.field { resize: vertical; font-family: inherit; }
 .dup-scan-hint { padding: 8px 14px; font-size: 12px; font-weight: 600; color: var(--red); background: var(--red-bg); }
 
 /* ---------- Selettore ordine ---------- */
-.order-pill {
-  display: flex; align-items: center; gap: 6px; margin: 0 16px 10px;
-  background: var(--bg-input); border: 1px solid var(--border); border-radius: 10px;
-  padding: 7px 12px; font-family: var(--font-body); cursor: pointer; width: calc(100% - 32px);
-  text-align: left;
+/* Chip nella riga di icone in alto (non una riga a se', per non finire a ridosso
+   della barra di ricerca subito sotto - vedi feedback Rino 01.08.2026). */
+.order-pill-inline {
+  display: flex; align-items: center; gap: 4px; flex: 1; min-width: 0; margin: 0 8px;
+  background: var(--bg-input); border: 1px solid var(--border); border-radius: 8px;
+  padding: 5px 10px; font-family: var(--font-body); cursor: pointer; justify-content: center;
 }
-.order-pill-lbl { font-size: 10px; text-transform: uppercase; letter-spacing: .04em; color: var(--text-tertiary); font-weight: 600; }
-.order-pill span:not(.order-pill-lbl):not(.order-pill-icon) { font-size: 13.5px; font-weight: 700; color: var(--text-primary); flex: 1; }
-.order-pill-icon { color: var(--text-tertiary); font-size: 11px; }
+.order-pill-inline #order-pill-name {
+  font-size: 12.5px; font-weight: 700; color: var(--text-primary);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.order-pill-icon { color: var(--text-tertiary); font-size: 10px; flex: none; }
 
 .sheet-overlay {
   position: fixed; inset: 0; z-index: 500;
