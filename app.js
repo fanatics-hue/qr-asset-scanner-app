@@ -1,5 +1,5 @@
 const API_BASE = 'https://qr-scanner-api.fanatics.workers.dev';
-const APP_VERSION = 41;
+const APP_VERSION = 42;
 
 const TRANSLATIONS = {
   it: {
@@ -295,6 +295,9 @@ const HELP_CONTENT = {
     <div class="card"><div class="card-header"><span class="section-title">Registrare un nuovo asset</span></div>
       <div class="help-p">Tab "Nuovo asset" → inserisci il Pipe N° (l'Item N° si auto-compila se il tubo è univoco — se lo stesso Pipe N° esiste su più Item compare un avviso e va inserito anche l'Item N°). Se il tubo è nei dati di produzione del giorno, si auto-compilano CS Heat, CRA Heat, Length, avanzamento % e ITP Step — puoi comunque correggere a mano. Se lo stesso Pipe N° risulta già scansionato oggi, compare un avviso rosso con l'ora e chi l'ha fatto (non blocca il salvataggio, è solo un avviso). Scegli ITP Step e Condizione (obbligatori); se scegli "Da revisionare" o "Danneggiato" compaiono anche Tipo difetto (saldatura/dimensionale/visivo/NDE/materiale/altro) e Disposizione (accetta/ripara/scarta/deroga), facoltativi ma utili per le Statistiche. Commenti facoltativi, poi "Salva".</div>
     </div>
+    <div class="card"><div class="card-header"><span class="section-title">Senza rete in impianto</span></div>
+      <div class="help-p">Se salvi un nuovo asset senza connessione, la scheda non va persa: resta salvata sul telefono con un badge "In coda" nel Dataset e viene inviata da sola appena torna la rete. Mentre c'è qualcosa in attesa compare una striscia in alto con il conteggio — sparisce da sola a sincronizzazione completata. Una scheda "In coda" non si può ancora aprire/modificare, va aspettato l'invio.</div>
+    </div>
     <div class="card"><div class="card-header"><span class="section-title">Foto</span></div>
       <div class="help-p">Facoltativa, tocca "Aggiungi foto". Viene compressa in automatico e salvata nel repository dell'app. La vede qualunque ispettore loggato riaprendo la scheda dal Dataset — tocca per aprirla a schermo intero.</div>
     </div>
@@ -338,6 +341,9 @@ const HELP_CONTENT = {
     </div>
     <div class="card"><div class="card-header"><span class="section-title">Logging a new asset</span></div>
       <div class="help-p">"New asset" tab → enter the Pipe No. (Item No. auto-fills if the pipe is unique — if the same Pipe No. exists on more than one Item, a hint appears asking to also enter the Item No.). If the pipe is in today's production data, CS Heat/CRA Heat/Length/progress %/ITP Step auto-fill too — you can still edit any field by hand. If the same Pipe No. was already scanned today, a red warning shows the time and who did it (it doesn't block saving, it's just a heads-up). Choose ITP Step and Condition (required); picking "Needs review" or "Damaged" also reveals Defect type (weld/dimensional/visual/NDE/material/other) and Disposition (accept/repair/reject/concession), optional but useful for Statistics. Optional comments, then "Save".</div>
+    </div>
+    <div class="card"><div class="card-header"><span class="section-title">No signal on site</span></div>
+      <div class="help-p">If you save a new asset with no connection, the record isn't lost: it stays saved on the phone with a "Queued" badge in the Dataset and gets sent on its own once the network is back. While something is waiting, a strip appears at the top with the count — it disappears on its own once synced. A "Queued" record can't be opened/edited yet, you need to wait for it to be sent.</div>
     </div>
     <div class="card"><div class="card-header"><span class="section-title">Photo</span></div>
       <div class="help-p">Optional, tap "Add photo". It's compressed automatically and saved to the app's repository. Any logged-in inspector can see it by reopening the record from the Dataset — tap to open full screen.</div>
