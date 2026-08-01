@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=23">
+<link rel="stylesheet" href="styles.css?v=24">
 </head>
 <body>
 <div id="app">
@@ -262,6 +262,11 @@
     <button id="order-status-back" class="back-link">&lsaquo; <span data-i18n="dataset_title_short">Dataset</span></button>
     <div class="large-title" style="padding-left:0" data-i18n="order_status_title">Stato Ordine</div>
 
+    <div class="card os-item-header hidden" id="os-item-header">
+      <div class="os-item-row"><span class="os-item-name" id="os-item-name">-</span><span class="os-item-days"><span id="os-item-days-value">-</span><span class="l" data-i18n="os_days_remaining">Giorni residui</span></span></div>
+      <div class="os-item-sub" id="os-item-sub"></div>
+    </div>
+
     <div class="card bottleneck-card hidden" id="os-bottleneck-card">
       <div class="oh-label" data-i18n="os_bottleneck_label">Collo di bottiglia rilevato</div>
       <div class="oh-value" id="os-bottleneck-step">-</div>
@@ -284,8 +289,9 @@
     </div>
 
     <div class="card" id="os-funnel-card">
-      <div class="card-header"><span class="section-title" data-i18n="os_funnel_title">Imbuto produzione</span></div>
+      <div class="card-header"><span class="section-title" id="os-funnel-title" data-i18n="os_funnel_title">Imbuto produzione</span></div>
       <div class="funnel" id="os-funnel"></div>
+      <div class="os-methodology-note hidden" id="os-methodology-note"></div>
     </div>
 
     <div class="card hidden" id="os-no-data-card">
@@ -314,6 +320,6 @@
   </div>
 </div>
 
-<script src="app.js?v=42"></script>
+<script src="app.js?v=43"></script>
 </body>
 </html>

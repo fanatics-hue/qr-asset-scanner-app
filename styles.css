@@ -499,3 +499,30 @@ textarea.field { resize: vertical; font-family: inherit; }
 @keyframes sync-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
 
 .badge-queued { color: var(--orange); background: var(--orange-bg); }
+
+/* ---------- Stato Ordine: avanzamento per fase (Item singolo, da "Riepilogo per Fase") ---------- */
+.os-item-header { padding: 12px 14px; }
+.os-item-row { display: flex; justify-content: space-between; align-items: center; }
+.os-item-name { font-size: 14px; font-weight: 800; color: var(--text-primary); }
+.os-item-days { text-align: right; }
+.os-item-days #os-item-days-value { display: block; font-size: 17px; font-weight: 800; color: var(--green); }
+.os-item-days .l { display: block; font-size: 9px; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: .04em; }
+.os-item-sub { font-size: 11px; color: var(--text-tertiary); margin-top: 4px; }
+
+.os-phase-card { margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid var(--border-light); }
+.os-phase-card:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
+.os-phase-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.os-phase-name { font-size: 13px; font-weight: 700; color: var(--text-primary); }
+.os-phase-status { font-size: 9px; font-weight: 800; padding: 3px 7px; border-radius: 6px; }
+.os-phase-status.ok { background: var(--green-bg, rgba(34,197,94,0.16)); color: var(--green, #22C55E); }
+.os-phase-status.delay { background: var(--red-bg); color: var(--red); }
+.os-phase-status.na { background: var(--bg-input); color: var(--text-tertiary); }
+.os-phase-track { height: 7px; background: var(--bg-input); border-radius: 4px; overflow: hidden; margin-bottom: 6px; }
+.os-phase-fill { height: 100%; border-radius: 4px; background: var(--blue); }
+.os-phase-fill.hl { background: linear-gradient(90deg, var(--orange), #FCD34D); }
+.os-phase-nums { display: flex; justify-content: space-between; font-size: 10.5px; color: var(--text-secondary); margin-bottom: 4px; }
+.os-phase-nums b { color: var(--text-primary); font-variant-numeric: tabular-nums; }
+.os-phase-foot { display: flex; justify-content: space-between; font-size: 10px; color: var(--text-tertiary); }
+.os-phase-foot .dev.ok { color: var(--green); font-weight: 700; }
+.os-phase-foot .dev.delay { color: var(--red); font-weight: 700; }
+.os-methodology-note { padding: 10px 14px 12px; font-size: 10.5px; line-height: 1.5; color: var(--text-tertiary); font-style: italic; border-top: 1px solid var(--border-light); margin-top: 4px; }

@@ -1,5 +1,5 @@
 const API_BASE = 'https://qr-scanner-api.fanatics.workers.dev';
-const APP_VERSION = 42;
+const APP_VERSION = 43;
 
 const TRANSLATIONS = {
   it: {
@@ -130,6 +130,17 @@ const TRANSLATIONS = {
     os_defects_by_step: 'Difetti aperti per step',
     os_bottleneck_label: 'Collo di bottiglia rilevato',
     os_bottleneck_sub: '{n} tubi in coda rispetto allo step precedente (su {total} tracciati)',
+    os_item_label: 'Item {item}',
+    os_item_sub: '{po} · scadenza {date}',
+    os_days_remaining: 'Giorni residui',
+    os_funnel_title_phase: 'Avanzamento per fase',
+    os_forecast_label: 'Previsto',
+    os_days_vs_po: 'gg vs PO',
+    os_remaining_word: 'rimanenti',
+    os_remaining_at_phase: '{n} rimanenti',
+    os_status_ok: 'OK',
+    os_status_delay: 'RITARDO',
+    os_status_na: 'N/D',
     dup_scan_hint: 'ATTENZIONE: Pipe N° già scansionato oggi alle {time} da {by}.',
     sync_offline_text: 'Offline — {n} scan in attesa di invio',
     sync_syncing_text: 'Invio in corso — {done} di {total}',
@@ -270,6 +281,17 @@ const TRANSLATIONS = {
     os_defects_by_step: 'Open defects by step',
     os_bottleneck_label: 'Bottleneck detected',
     os_bottleneck_sub: '{n} pipes queued vs the previous step (of {total} tracked)',
+    os_item_label: 'Item {item}',
+    os_item_sub: '{po} · due {date}',
+    os_days_remaining: 'Days remaining',
+    os_funnel_title_phase: 'Progress by phase',
+    os_forecast_label: 'Forecast',
+    os_days_vs_po: 'd vs PO',
+    os_remaining_word: 'remaining',
+    os_remaining_at_phase: '{n} remaining',
+    os_status_ok: 'OK',
+    os_status_delay: 'DELAY',
+    os_status_na: 'N/A',
     dup_scan_hint: 'WARNING: Pipe No. already scanned today at {time} by {by}.',
     sync_offline_text: 'Offline — {n} scan waiting to be sent',
     sync_syncing_text: 'Sending — {done} of {total}',
@@ -411,6 +433,7 @@ const state = {
   lang: localStorage.getItem('qr_lang') || 'it',
   theme: localStorage.getItem('qr_theme') || 'auto',
   productionRecords: [],
+  phaseForecast: null,
   productionMap: new Map(),
   productionByPipe: new Map(),
   ambiguousPipes: new Set(),
@@ -647,6 +670,7 @@ async function loadProductionData() {
   try {
     const data = await api('/api/production-data');
     state.productionRecords = data.records || [];
+    state.phaseForecast = data.phaseForecast || null;
     state.productionMap = new Map();
     state.productionByPipe = new Map();
     state.ambiguousPipes = new Set(); // Pipe N. che compaiono su piu' Item diversi
@@ -668,7 +692,7 @@ async function loadProductionData() {
         state.ambiguousPipes.add(pipeKey);
       }
     });
-  } catch (e) { state.productionRecords = []; /* nessun dato di produzione disponibile, l'inserimento resta manuale */ }
+  } catch (e) { state.productionRecords = []; state.phaseForecast = null; /* nessun dato di produzione disponibile, l'inserimento resta manuale */ }
 }
 
 // ---------------- Coda offline ----------------
@@ -1591,14 +1615,117 @@ el('stats-back').addEventListener('click', () => showScreen('dataset'));
 // difetti aperti scansionati - l'imbuto e' cumulativo: quanti tubi hanno RAGGIUNTO almeno
 // quello step, cosi' il calo piu' forte tra due step consecutivi segnala da solo il collo
 // di bottiglia, senza bisogno di soglie configurate a mano.
+// 'YYYY-MM-DD' -> Date locale (evita lo shift di un giorno che darebbe new Date(stringa)
+// interpretando la stringa come UTC mezzanotte).
+function parseISODate(s) {
+  if (!s) return null;
+  const [y, m, d] = s.split('-').map(Number);
+  return new Date(y, m - 1, d);
+}
+
 function renderOrderStatus() {
+  const openDefects = state.records.filter(r => isDefectCondition(r.condition) && r.status !== 'closed');
+  el('os-open-defects').textContent = openDefects.length;
+  renderOrderStatusDefectsByStep(openDefects);
+
+  const pf = state.phaseForecast;
+  if (pf && pf.phases && pf.phases.length) {
+    renderOrderStatusFromPhaseForecast(pf);
+  } else {
+    renderOrderStatusFromCumulativeFunnel();
+  }
+}
+
+function renderOrderStatusDefectsByStep(openDefects) {
+  const byStep = {};
+  openDefects.forEach(r => { const key = r.itpStep || '-'; byStep[key] = (byStep[key] || 0) + 1; });
+  const stepDefectEntries = Object.entries(byStep).sort((a, b) => b[1] - a[1]);
+  const stepCard = el('os-defects-step-card');
+  if (!stepDefectEntries.length) {
+    stepCard.classList.add('hidden');
+  } else {
+    stepCard.classList.remove('hidden');
+    el('os-defects-step-list').innerHTML = stepDefectEntries.map(([step, count]) =>
+      `<div class="row"><label>${escapeHtml(step)}</label><span class="readonly">${count}</span></div>`
+    ).join('');
+  }
+}
+
+// Fonte preferita quando disponibile (sincronizzata da gui_produzione.py leggendo il foglio
+// "Riepilogo per Fase" - gia' filtrato sul solo Item ancora in lavorazione, con data prevista
+// e scarto vs contratto per fase): niente piu' somma su TUTTI gli Item mai tracciati, che
+// mischiava lotti chiusi da tempo e falsava sia i totali sia il "collo di bottiglia".
+function renderOrderStatusFromPhaseForecast(pf) {
+  el('os-no-data-card').classList.add('hidden');
+  el('os-funnel-card').classList.remove('hidden');
+
+  el('os-item-header').classList.remove('hidden');
+  el('os-item-name').textContent = t('os_item_label').replace('{item}', pf.itemNo || '-');
+  el('os-item-days-value').textContent = (pf.daysRemaining !== null && pf.daysRemaining !== undefined) ? pf.daysRemaining : '-';
+  const contractualStr = pf.contractualDate ? parseISODate(pf.contractualDate).toLocaleDateString(t('locale')) : '-';
+  el('os-item-sub').textContent = t('os_item_sub').replace('{po}', pf.referencePO || '-').replace('{date}', contractualStr);
+
+  const first = pf.phases[0];
+  const last = pf.phases[pf.phases.length - 1];
+  const total = first.totalPipes || 0;
+  el('os-total').textContent = total;
+  el('os-complete-pct').textContent = total ? Math.round((last.completed / total) * 100) + '%' : '-';
+
+  // "Collo di bottiglia" qui = la fase con piu' pezzi ancora da fare, non piu' il calo
+  // cumulativo tra step: con un solo Item, quel calo semplicemente segue l'ordine delle
+  // fasi (ognuna ha sempre >= pezzi rimanenti della precedente) e non dice nulla di utile.
+  let maxRemainingPhase = pf.phases[0];
+  pf.phases.forEach(p => { if ((p.remaining || 0) > (maxRemainingPhase.remaining || 0)) maxRemainingPhase = p; });
+  if (maxRemainingPhase && maxRemainingPhase.remaining > 0) {
+    el('os-bottleneck-card').classList.remove('hidden');
+    el('os-bottleneck-step').textContent = maxRemainingPhase.phase;
+    el('os-bottleneck-sub').textContent = t('os_remaining_at_phase').replace('{n}', maxRemainingPhase.remaining);
+  } else {
+    el('os-bottleneck-card').classList.add('hidden');
+  }
+
+  el('os-funnel-title').textContent = t('os_funnel_title_phase');
+  const wrap = el('os-funnel');
+  wrap.innerHTML = '';
+  pf.phases.forEach(p => {
+    const pct = p.totalPipes ? Math.round((p.completed / p.totalPipes) * 100) : 0;
+    const statusCode = p.status === 'OK' ? 'ok' : (p.status === 'DELAY' ? 'delay' : 'na');
+    const statusLabel = statusCode === 'ok' ? t('os_status_ok') : (statusCode === 'delay' ? t('os_status_delay') : t('os_status_na'));
+    const forecastStr = p.forecastDate ? parseISODate(p.forecastDate).toLocaleDateString(t('locale')) : '-';
+    const devText = (typeof p.deviationDays === 'number')
+      ? (p.deviationDays > 0 ? '+' + p.deviationDays : p.deviationDays) + t('os_days_vs_po')
+      : t('os_status_na');
+    const isMax = maxRemainingPhase && p.phase === maxRemainingPhase.phase;
+    const card = document.createElement('div');
+    card.className = 'os-phase-card';
+    card.innerHTML = `
+      <div class="os-phase-top"><span class="os-phase-name">${escapeHtml(p.phase)}</span><span class="os-phase-status ${statusCode}">${escapeHtml(statusLabel)}</span></div>
+      <div class="os-phase-track"><div class="os-phase-fill${isMax ? ' hl' : ''}" style="width:${pct}%"></div></div>
+      <div class="os-phase-nums"><span><b>${p.completed}</b> / ${p.totalPipes}</span><span>${p.remaining} ${t('os_remaining_word')}</span></div>
+      <div class="os-phase-foot"><span>${t('os_forecast_label')} ${forecastStr}</span><span class="dev ${statusCode === 'delay' ? 'delay' : 'ok'}">${devText}</span></div>`;
+    wrap.appendChild(card);
+  });
+
+  const noteEl = el('os-methodology-note');
+  if (pf.methodologyNote) {
+    noteEl.textContent = pf.methodologyNote;
+    noteEl.classList.remove('hidden');
+  } else {
+    noteEl.classList.add('hidden');
+  }
+}
+
+// Fallback generico (nessun 'Riepilogo per Fase' sincronizzato per l'ordine attivo, o
+// struttura Excel diversa da COMP3B): imbuto cumulativo sull'INTERO state.productionRecords.
+function renderOrderStatusFromCumulativeFunnel() {
+  el('os-item-header').classList.add('hidden');
+  el('os-methodology-note').classList.add('hidden');
+  el('os-funnel-title').textContent = t('os_funnel_title');
+
   const steps = (state.meta.itpSteps && state.meta.itpSteps.length) ? state.meta.itpSteps : ITP_STEPS_FALLBACK;
   const prod = state.productionRecords || [];
   const total = prod.length;
   el('os-total').textContent = total;
-
-  const openDefects = state.records.filter(r => isDefectCondition(r.condition) && r.status !== 'closed');
-  el('os-open-defects').textContent = openDefects.length;
 
   const noData = total === 0;
   el('os-no-data-card').classList.toggle('hidden', !noData);
@@ -1606,7 +1733,6 @@ function renderOrderStatus() {
   if (noData) {
     el('os-complete-pct').textContent = '-';
     el('os-bottleneck-card').classList.add('hidden');
-    el('os-defects-step-card').classList.add('hidden');
     return;
   }
 
@@ -1644,19 +1770,6 @@ function renderOrderStatus() {
       <div class="funnel-track"><div class="funnel-fill${isBottleneck ? ' bottleneck' : ''}" style="width:${pct}%"></div></div>`;
     funnelWrap.appendChild(row);
   });
-
-  const byStep = {};
-  openDefects.forEach(r => { const key = r.itpStep || '-'; byStep[key] = (byStep[key] || 0) + 1; });
-  const stepDefectEntries = Object.entries(byStep).sort((a, b) => b[1] - a[1]);
-  const stepCard = el('os-defects-step-card');
-  if (!stepDefectEntries.length) {
-    stepCard.classList.add('hidden');
-  } else {
-    stepCard.classList.remove('hidden');
-    el('os-defects-step-list').innerHTML = stepDefectEntries.map(([step, count]) =>
-      `<div class="row"><label>${escapeHtml(step)}</label><span class="readonly">${count}</span></div>`
-    ).join('');
-  }
 }
 el('order-status-btn').addEventListener('click', () => {
   renderOrderStatus();
