@@ -1,5 +1,5 @@
 const API_BASE = 'https://qr-scanner-api.fanatics.workers.dev';
-const APP_VERSION = 38;
+const APP_VERSION = 39;
 
 const TRANSLATIONS = {
   it: {
@@ -279,8 +279,11 @@ const HELP_CONTENT = {
     <div class="card"><div class="card-header"><span class="section-title">Cos'è</span></div>
       <div class="help-p">App per registrare rapidamente lo stato di un tubo/asset durante l'ispezione: Item N°, Pipe N°, CS Heat, CRA Heat, Length, ITP Step e Condizione.</div>
     </div>
+    <div class="card"><div class="card-header"><span class="section-title">Progetto / Ordine</span></div>
+      <div class="help-p">In alto nel Dataset c'è un riquadro con il nome del progetto attivo (es. "Order 45650 / COMP3B"). Toccalo per cambiare ordine se ne esiste più di uno: è lo stesso per tutti gli ispettori, come cambiare cantiere. Solo l'admin può rinominare un ordine (matita) o crearne uno nuovo ("+ Nuovo ordine").</div>
+    </div>
     <div class="card"><div class="card-header"><span class="section-title">Registrare un nuovo asset</span></div>
-      <div class="help-p">Tab "Nuovo asset" → inserisci il Pipe N° (l'Item N° si auto-compila se il tubo è univoco — se lo stesso Pipe N° esiste su più Item compare un avviso e va inserito anche l'Item N°). Se il tubo è nei dati di produzione del giorno, si auto-compilano CS Heat, CRA Heat, Length, avanzamento % e ITP Step — puoi comunque correggere a mano. Scegli ITP Step e Condizione (obbligatori); se scegli "Da revisionare" o "Danneggiato" compaiono anche Tipo difetto (saldatura/dimensionale/visivo/NDE/materiale/altro) e Disposizione (accetta/ripara/scarta/deroga), facoltativi ma utili per le Statistiche. Commenti facoltativi, poi "Salva".</div>
+      <div class="help-p">Tab "Nuovo asset" → inserisci il Pipe N° (l'Item N° si auto-compila se il tubo è univoco — se lo stesso Pipe N° esiste su più Item compare un avviso e va inserito anche l'Item N°). Se il tubo è nei dati di produzione del giorno, si auto-compilano CS Heat, CRA Heat, Length, avanzamento % e ITP Step — puoi comunque correggere a mano. Se lo stesso Pipe N° risulta già scansionato oggi, compare un avviso rosso con l'ora e chi l'ha fatto (non blocca il salvataggio, è solo un avviso). Scegli ITP Step e Condizione (obbligatori); se scegli "Da revisionare" o "Danneggiato" compaiono anche Tipo difetto (saldatura/dimensionale/visivo/NDE/materiale/altro) e Disposizione (accetta/ripara/scarta/deroga), facoltativi ma utili per le Statistiche. Commenti facoltativi, poi "Salva".</div>
     </div>
     <div class="card"><div class="card-header"><span class="section-title">Foto</span></div>
       <div class="help-p">Facoltativa, tocca "Aggiungi foto". Viene compressa in automatico e salvata nel repository dell'app. La vede qualunque ispettore loggato riaprendo la scheda dal Dataset — tocca per aprirla a schermo intero.</div>
@@ -300,6 +303,9 @@ const HELP_CONTENT = {
     <div class="card"><div class="card-header"><span class="section-title">Dataset</span></div>
       <div class="help-p">La striscia colorata a sinistra indica la condizione: verde = ottimo, blu = buono, arancio = da revisionare, rosso = danneggiato. Cerca per Pipe N°, Item N°, CS Heat o CRA Heat. Solo l'admin può eliminare una scheda (cestino).</div>
     </div>
+    <div class="card"><div class="card-header"><span class="section-title">Stato Ordine</span></div>
+      <div class="help-p">Pulsante 🚨 nel Dataset: mostra l'imbuto di produzione per ITP Step (quanti tubi hanno raggiunto ogni step, dai dati di produzione sincronizzati) ed evidenzia da solo il collo di bottiglia — lo step con il calo più forte rispetto al precedente. Mostra anche i difetti aperti raggruppati per step. Se non è mai stata sincronizzata la produzione per l'ordine attivo, la sezione resta vuota finché non lo fai.</div>
+    </div>
     <div class="card"><div class="card-header"><span class="section-title">Statistiche</span></div>
       <div class="help-p">Pulsante 📊 nel Dataset: schede totali, difetti aperti, % chiusura, giorni medi di chiusura, quanti difetti restano aperti da oltre 5 giorni, un grafico settimanale (ultime 8 settimane) e la ripartizione per tipo difetto/disposizione. Sotto al grafico, l'elenco di tutti i difetti (aperti prima) — tocca una riga per aprirne il dettaglio.</div>
     </div>
@@ -317,8 +323,11 @@ const HELP_CONTENT = {
     <div class="card"><div class="card-header"><span class="section-title">What it is</span></div>
       <div class="help-p">App to quickly log the status of a pipe/asset during inspection: Item No., Pipe No., CS Heat, CRA Heat, Length, ITP Step and Condition.</div>
     </div>
+    <div class="card"><div class="card-header"><span class="section-title">Project / Order</span></div>
+      <div class="help-p">A pill at the top of the Dataset shows the active project (e.g. "Order 45650 / COMP3B"). Tap it to switch orders if more than one exists: it's shared by all inspectors, like switching site. Only admins can rename an order (pencil) or create a new one ("+ New order").</div>
+    </div>
     <div class="card"><div class="card-header"><span class="section-title">Logging a new asset</span></div>
-      <div class="help-p">"New asset" tab → enter the Pipe No. (Item No. auto-fills if the pipe is unique — if the same Pipe No. exists on more than one Item, a hint appears asking to also enter the Item No.). If the pipe is in today's production data, CS Heat/CRA Heat/Length/progress %/ITP Step auto-fill too — you can still edit any field by hand. Choose ITP Step and Condition (required); picking "Needs review" or "Damaged" also reveals Defect type (weld/dimensional/visual/NDE/material/other) and Disposition (accept/repair/reject/concession), optional but useful for Statistics. Optional comments, then "Save".</div>
+      <div class="help-p">"New asset" tab → enter the Pipe No. (Item No. auto-fills if the pipe is unique — if the same Pipe No. exists on more than one Item, a hint appears asking to also enter the Item No.). If the pipe is in today's production data, CS Heat/CRA Heat/Length/progress %/ITP Step auto-fill too — you can still edit any field by hand. If the same Pipe No. was already scanned today, a red warning shows the time and who did it (it doesn't block saving, it's just a heads-up). Choose ITP Step and Condition (required); picking "Needs review" or "Damaged" also reveals Defect type (weld/dimensional/visual/NDE/material/other) and Disposition (accept/repair/reject/concession), optional but useful for Statistics. Optional comments, then "Save".</div>
     </div>
     <div class="card"><div class="card-header"><span class="section-title">Photo</span></div>
       <div class="help-p">Optional, tap "Add photo". It's compressed automatically and saved to the app's repository. Any logged-in inspector can see it by reopening the record from the Dataset — tap to open full screen.</div>
@@ -337,6 +346,9 @@ const HELP_CONTENT = {
     </div>
     <div class="card"><div class="card-header"><span class="section-title">Dataset</span></div>
       <div class="help-p">The colored stripe on the left shows the condition: green = excellent, blue = good, orange = needs review, red = damaged. Search by Pipe No., Item No., CS Heat or CRA Heat. Only admins can delete a record (trash icon).</div>
+    </div>
+    <div class="card"><div class="card-header"><span class="section-title">Order Status</span></div>
+      <div class="help-p">🚨 button in the Dataset: shows the production funnel by ITP Step (how many pipes reached each step, from synced production data) and highlights the bottleneck on its own — the step with the biggest drop versus the previous one. Also shows open defects grouped by step. If production data has never been synced for the active order, this stays empty until you do.</div>
     </div>
     <div class="card"><div class="card-header"><span class="section-title">Statistics</span></div>
       <div class="help-p">📊 button in the Dataset: total records, open defects, % closed, average days to close, how many defects have been open for more than 5 days, an 8-week chart, and a breakdown by defect type/disposition. Below the chart, the full defects list (open ones first) — tap a row to open its detail.</div>
