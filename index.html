@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=25">
+<link rel="stylesheet" href="styles.css?v=26">
 </head>
 <body>
 <div id="app">
@@ -114,7 +114,13 @@
       </div>
     </div>
     <div id="sync-banner" class="sync-banner hidden"><span class="sync-dot"></span><span id="sync-banner-text"></span></div>
-    <div class="large-title" data-i18n="dataset_title">Dataset asset</div>
+    <div class="dataset-title-row">
+      <div class="dataset-title-ic">&#9638;</div>
+      <div class="dataset-title-txt">
+        <span data-i18n="dataset_title">Equipment Master Data</span>
+        <span class="dataset-title-sub" id="dataset-title-count"></span>
+      </div>
+    </div>
     <div class="search-wrap">
       <input id="search-input" class="field" type="text" data-i18n-ph="search_ph">
     </div>
@@ -320,6 +326,6 @@
   </div>
 </div>
 
-<script src="app.js?v=44"></script>
+<script src="app.js?v=45"></script>
 </body>
 </html>

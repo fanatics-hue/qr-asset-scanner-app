@@ -1,5 +1,5 @@
 const API_BASE = 'https://qr-scanner-api.fanatics.workers.dev';
-const APP_VERSION = 44;
+const APP_VERSION = 45;
 
 const TRANSLATIONS = {
   it: {
@@ -37,6 +37,8 @@ const TRANSLATIONS = {
     confirm_section_todo: 'Da completare',
     dataset_title: 'Equipment Master Data',
     dataset_title_short: 'Dataset',
+    dataset_title_count: '{n} schede registrate',
+    dataset_title_count_one: '{n} scheda registrata',
     search_ph: 'Cerca per Pipe N°, Item N°...',
     dataset_empty: 'Nessun asset ancora scansionato',
     tab_scan: 'Nuovo asset',
@@ -188,6 +190,8 @@ const TRANSLATIONS = {
     confirm_section_todo: 'To complete',
     dataset_title: 'Equipment Master Data',
     dataset_title_short: 'Dataset',
+    dataset_title_count: '{n} records tracked',
+    dataset_title_count_one: '{n} record tracked',
     search_ph: 'Search by Pipe No., Item No...',
     dataset_empty: 'No assets scanned yet',
     tab_scan: 'New asset',
@@ -463,6 +467,7 @@ function applyTranslations() {
   const other = state.lang === 'it' ? 'EN' : 'IT';
   ['lang-toggle-login', 'lang-toggle-dataset'].forEach(id => { if (el(id)) el(id).textContent = other; });
   el('tab-dataset-label').textContent = `${t('tab_dataset_prefix')} (${state.records.length})`;
+  el('dataset-title-count').textContent = t(state.records.length === 1 ? 'dataset_title_count_one' : 'dataset_title_count').replace('{n}', state.records.length);
 }
 
 const darkMediaQuery = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
@@ -1190,6 +1195,7 @@ function renderDatasetList() {
            (r.craHeat || '').toLowerCase().includes(q);
   });
   el('tab-dataset-label').textContent = `${t('tab_dataset_prefix')} (${state.records.length})`;
+  el('dataset-title-count').textContent = t(state.records.length === 1 ? 'dataset_title_count_one' : 'dataset_title_count').replace('{n}', state.records.length);
   if (!filtered.length) {
     list.innerHTML = `<div class="empty-state">${escapeHtml(t('dataset_empty'))}</div>`;
     updateSyncBanner();
