@@ -330,6 +330,12 @@ textarea.field { resize: vertical; font-family: inherit; }
 #screen-help { flex: 1; padding: 0 16px 24px; overflow-y: auto; min-height: 0; }
 .help-scroll .help-p { padding: 0 14px 14px; font-size: 14px; line-height: 1.5; color: var(--text-secondary); }
 
+/* ---------- Stato Ordine ---------- */
+/* Senza questa regola la schermata non scorre affatto oltre l'altezza del telefono
+   (contenuta dentro #app che ha overflow:hidden) - stesso pattern delle altre schermate
+   a pagina intera (Dettaglio/Guida/Statistiche/Admin), dimenticato quando creata. */
+#screen-order-status { flex: 1; padding: 0 16px 24px; overflow-y: auto; min-height: 0; }
+
 /* ---------- Statistiche ---------- */
 #screen-stats { flex: 1; padding: 0 16px 24px; overflow-y: auto; min-height: 0; }
 .stats-summary { display: flex; gap: 10px; margin-bottom: 16px; }
