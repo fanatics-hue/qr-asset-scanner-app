@@ -1,5 +1,5 @@
 const API_BASE = 'https://qr-scanner-api.fanatics.workers.dev';
-const APP_VERSION = 40;
+const APP_VERSION = 41;
 
 const TRANSLATIONS = {
   it: {
@@ -131,6 +131,11 @@ const TRANSLATIONS = {
     os_bottleneck_label: 'Collo di bottiglia rilevato',
     os_bottleneck_sub: '{n} tubi in coda rispetto allo step precedente (su {total} tracciati)',
     dup_scan_hint: 'ATTENZIONE: Pipe N° già scansionato oggi alle {time} da {by}.',
+    sync_offline_text: 'Offline — {n} scan in attesa di invio',
+    sync_syncing_text: 'Invio in corso — {done} di {total}',
+    status_queued: 'In coda',
+    err_queued_no_detail: 'Scheda non ancora inviata: apribile dopo la sincronizzazione.',
+    saved_offline_note: 'Nessuna rete: salvato in locale, verrà inviato appena torna la connessione.',
     wa_title: 'Asset scansionato:',
     wa_condition: 'Condizione',
     wa_comments: 'Commenti',
@@ -266,6 +271,11 @@ const TRANSLATIONS = {
     os_bottleneck_label: 'Bottleneck detected',
     os_bottleneck_sub: '{n} pipes queued vs the previous step (of {total} tracked)',
     dup_scan_hint: 'WARNING: Pipe No. already scanned today at {time} by {by}.',
+    sync_offline_text: 'Offline — {n} scan waiting to be sent',
+    sync_syncing_text: 'Sending — {done} of {total}',
+    status_queued: 'Queued',
+    err_queued_no_detail: 'Not sent yet: openable after it syncs.',
+    saved_offline_note: 'No network: saved locally, will be sent once the connection is back.',
     wa_title: 'Scanned asset:',
     wa_condition: 'Condition',
     wa_comments: 'Comments',
@@ -517,6 +527,8 @@ async function afterLogin() {
   await loadRecords();
   loadProductionData(); // in background, non blocca l'ingresso in dataset
   showScreen('dataset');
+  syncPendingQueue(); // scan rimasti in coda da una sessione precedente offline
+  updateSyncBanner();
 }
 
 // ---------------- Ordini (multi-progetto) ----------------
@@ -652,6 +664,138 @@ async function loadProductionData() {
     });
   } catch (e) { state.productionRecords = []; /* nessun dato di produzione disponibile, l'inserimento resta manuale */ }
 }
+
+// ---------------- Coda offline ----------------
+// Se il salvataggio di un NUOVO scan fallisce per assenza di rete (non per un errore del
+// server), invece di far perdere il lavoro all'ispettore lo si tiene in locale (IndexedDB,
+// non Service Worker - niente caching delle pagine, cosi' non si riapre il problema gia'
+// risolto con l'overlay di aggiornamento obbligatorio) e si reinvia da solo appena torna
+// la connessione. Solo per i NUOVI scan (POST): modificare un record gia' salvato mentre
+// si e' offline resta un caso raro, si torna a mostrare l'errore e si riprova a mano.
+const IDB_NAME = 'iqs_offline_queue';
+const IDB_STORE = 'pending';
+
+function idbOpen() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(IDB_NAME, 1);
+    req.onupgradeneeded = () => {
+      req.result.createObjectStore(IDB_STORE, { keyPath: 'localId' });
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+async function idbAddPending(item) {
+  const db = await idbOpen();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(IDB_STORE, 'readwrite');
+    tx.objectStore(IDB_STORE).put(item);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+async function idbGetAllPending() {
+  const db = await idbOpen();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(IDB_STORE, 'readonly');
+    const req = tx.objectStore(IDB_STORE).getAll();
+    req.onsuccess = () => resolve(req.result || []);
+    req.onerror = () => reject(req.error);
+  });
+}
+async function idbDeletePending(localId) {
+  const db = await idbOpen();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(IDB_STORE, 'readwrite');
+    tx.objectStore(IDB_STORE).delete(localId);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+state.syncing = false;
+
+function updateSyncBanner(progress) {
+  const banner = el('sync-banner');
+  const offline = !navigator.onLine;
+  const pendingCount = state.records.filter(r => r._pending).length;
+  if (state.syncing && progress) {
+    banner.className = 'sync-banner syncing';
+    el('sync-banner-text').textContent = t('sync_syncing_text').replace('{done}', progress.done).replace('{total}', progress.total);
+    banner.classList.remove('hidden');
+  } else if (offline && pendingCount > 0) {
+    banner.className = 'sync-banner';
+    el('sync-banner-text').textContent = t('sync_offline_text').replace('{n}', pendingCount);
+    banner.classList.remove('hidden');
+  } else {
+    banner.classList.add('hidden');
+  }
+}
+
+// Costruisce la scheda "finta" da mostrare subito nel Dataset mentre e' ancora in coda,
+// con gli stessi campi che avrebbe restituito il server - cosi' l'ispettore la vede subito,
+// non solo dopo l'invio riuscito.
+function buildPendingRecord(localId, data, orderId) {
+  const scannedAt = new Date().toISOString();
+  return {
+    id: 'pending-' + localId,
+    _pending: true,
+    orderId,
+    itemNo: data.itemNo || '', pipeNo: data.pipeNo, csHeat: data.csHeat || '',
+    craHeat: data.craHeat || '', length: data.length || '', itpStep: data.itpStep,
+    condition: data.condition, comment: data.comment || '',
+    photoUrl: '', photoPath: '',
+    status: isDefectCondition(data.condition) ? 'open' : '',
+    defectType: isDefectCondition(data.condition) ? (data.defectType || '') : '',
+    disposition: isDefectCondition(data.condition) ? (data.disposition || '') : '',
+    closureNote: '', closedAt: '', closedBy: '',
+    scannedAt, scannedBy: state.session ? (state.session.name || state.session.username) : ''
+  };
+}
+
+async function queueRecordOffline(data) {
+  const localId = 'q' + Date.now() + Math.random().toString(36).slice(2, 8);
+  await idbAddPending({ localId, data, orderId: state.currentOrderId, createdAt: Date.now() });
+  const pendingRecord = buildPendingRecord(localId, data, state.currentOrderId);
+  state.records.unshift(pendingRecord);
+  renderDatasetList();
+  updateSyncBanner();
+  return pendingRecord;
+}
+
+async function syncPendingQueue() {
+  if (state.syncing) return;
+  let items;
+  try { items = await idbGetAllPending(); } catch (e) { return; }
+  items = items.filter(it => it.orderId === state.currentOrderId).sort((a, b) => a.createdAt - b.createdAt);
+  if (!items.length) return;
+  state.syncing = true;
+  let done = 0;
+  updateSyncBanner({ done, total: items.length });
+  for (const item of items) {
+    if (!navigator.onLine) break;
+    try {
+      const headers = { 'Content-Type': 'application/json', 'X-Order-Id': item.orderId };
+      if (state.session && state.session.token) headers['Authorization'] = 'Bearer ' + state.session.token;
+      const resp = await fetch(API_BASE + '/api/records', { method: 'POST', headers, body: JSON.stringify(item.data) });
+      const respData = await resp.json().catch(() => ({}));
+      if (!resp.ok) { await idbDeletePending(item.localId); /* rifiutato dal server: non ha senso riprovarlo all'infinito */ continue; }
+      await idbDeletePending(item.localId);
+      const idx = state.records.findIndex(r => r.id === 'pending-' + item.localId);
+      if (idx >= 0) state.records[idx] = respData.record; else state.records.unshift(respData.record);
+      done++;
+      updateSyncBanner({ done, total: items.length });
+      renderDatasetList();
+    } catch (e) {
+      break; // ancora offline o rete instabile: si ferma, ci si riprova al prossimo 'online'
+    }
+  }
+  state.syncing = false;
+  updateSyncBanner();
+}
+
+window.addEventListener('online', () => { syncPendingQueue(); updateSyncBanner(); });
+window.addEventListener('offline', () => updateSyncBanner());
 
 // ---------------- Nuovo asset ----------------
 // I dati identificativi (Item N°/Pipe N°) sono stampati in chiaro sull'etichetta accanto al QR:
@@ -930,11 +1074,24 @@ el('confirm-save').addEventListener('click', async () => {
       const idx = state.records.findIndex(r => r.id === state.editingId);
       if (idx >= 0) state.records[idx] = record; else state.records.unshift(record);
       state.editingId = null;
+      renderDatasetList();
     } else {
-      const { record } = await api('/api/records', { method: 'POST', body: JSON.stringify(state.draft) });
-      state.records.unshift(record);
+      try {
+        const { record } = await api('/api/records', { method: 'POST', body: JSON.stringify(state.draft) });
+        state.records.unshift(record);
+        renderDatasetList();
+      } catch (err) {
+        // errore di rete (offline/rete instabile) su un NUOVO scan: si mette in coda invece
+        // di far perdere il rilievo all'ispettore. Un errore del server (es. campi mancanti)
+        // resta invece un errore vero, va corretto e reinviato.
+        if (err instanceof TypeError) {
+          await queueRecordOffline(state.draft);
+          alert(t('saved_offline_note'));
+        } else {
+          throw err;
+        }
+      }
     }
-    renderDatasetList();
     state.draft = null;
     showScreen('dataset');
   } catch (err) {
@@ -980,6 +1137,15 @@ async function loadRecords() {
   } catch (err) {
     state.records = [];
   }
+  // loadRecords() sostituisce l'intero array dal server: senza questo, uno scan appena
+  // messo in coda offline sparirebbe dalla vista al primo refresh/cambio ordine prima
+  // ancora di essere sincronizzato davvero.
+  try {
+    const pending = (await idbGetAllPending())
+      .filter(it => it.orderId === state.currentOrderId)
+      .sort((a, b) => a.createdAt - b.createdAt);
+    pending.forEach(it => state.records.unshift(buildPendingRecord(it.localId, it.data, it.orderId)));
+  } catch (e) { /* IndexedDB non disponibile: nessuna coda da recuperare */ }
   renderDatasetList();
 }
 
@@ -996,6 +1162,7 @@ function renderDatasetList() {
   el('tab-dataset-label').textContent = `${t('tab_dataset_prefix')} (${state.records.length})`;
   if (!filtered.length) {
     list.innerHTML = `<div class="empty-state">${escapeHtml(t('dataset_empty'))}</div>`;
+    updateSyncBanner();
     return;
   }
   const card = document.createElement('div');
@@ -1013,13 +1180,19 @@ function renderDatasetList() {
         <span class="meta">${escapeHtml(r.itemNo || '-')} · ${escapeHtml(r.itpStep || '-')} · ${dateStr}</span>
       </div>
       <div class="right">
-        <span class="badge badge-${r.condition}">${escapeHtml(condLabel(r.condition))}</span>
-        ${isAdmin ? `<button class="delete-row-btn" data-id="${escapeHtml(r.id)}" title="${escapeHtml(t('remove'))}">&#128465;</button>` : ''}
+        ${r._pending
+          ? `<span class="badge badge-queued">${escapeHtml(t('status_queued'))}</span>`
+          : `<span class="badge badge-${r.condition}">${escapeHtml(condLabel(r.condition))}</span>`}
+        ${isAdmin && !r._pending ? `<button class="delete-row-btn" data-id="${escapeHtml(r.id)}" title="${escapeHtml(t('remove'))}">&#128465;</button>` : ''}
         <span class="chevron">&rsaquo;</span>
       </div>`;
-    row.addEventListener('click', () => openDetail(r.id));
-    row.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openDetail(r.id); } });
-    if (isAdmin) {
+    if (r._pending) {
+      row.addEventListener('click', () => alert(t('err_queued_no_detail')));
+    } else {
+      row.addEventListener('click', () => openDetail(r.id));
+      row.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openDetail(r.id); } });
+    }
+    if (isAdmin && !r._pending) {
       row.querySelector('.delete-row-btn').addEventListener('click', async (e) => {
         e.stopPropagation();
         const id = e.currentTarget.dataset.id;
@@ -1035,6 +1208,7 @@ function renderDatasetList() {
   });
   list.innerHTML = '';
   list.appendChild(card);
+  updateSyncBanner();
 }
 
 function escapeHtml(s) {
