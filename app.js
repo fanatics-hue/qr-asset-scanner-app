@@ -1,5 +1,5 @@
 const API_BASE = 'https://qr-scanner-api.fanatics.workers.dev';
-const APP_VERSION = 53;
+const APP_VERSION = 54;
 
 const TRANSLATIONS = {
   it: {
@@ -1261,7 +1261,10 @@ function renderDatasetList() {
            (r.craHeat || '').toLowerCase().includes(q);
   });
   el('tab-dataset-label').textContent = `${t('tab_dataset_prefix')} (${state.records.length})`;
-  el('dataset-title-count').textContent = t(state.records.length === 1 ? 'dataset_title_count_one' : 'dataset_title_count').replace('{n}', state.records.length);
+  // Il sottotitolo sotto il titolo riflette quello che si vede davvero nell'elenco sotto
+  // (filtro Solo difetti + ricerca), non il totale assoluto - altrimenti "Solo difetti"
+  // mostrava comunque il numero di TUTTI gli asset, non solo quelli filtrati.
+  el('dataset-title-count').textContent = t(filtered.length === 1 ? 'dataset_title_count_one' : 'dataset_title_count').replace('{n}', filtered.length);
   if (!filtered.length) {
     list.innerHTML = `<div class="empty-state">${escapeHtml(t('dataset_empty'))}</div>`;
     updateSyncBanner();
