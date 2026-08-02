@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=28">
+<link rel="stylesheet" href="styles.css?v=29">
 </head>
 <body>
 <div id="app">
@@ -123,6 +123,10 @@
     </div>
     <div class="search-wrap">
       <input id="search-input" class="field" type="text" data-i18n-ph="search_ph">
+    </div>
+    <div class="filter-row">
+      <button class="filter-chip active" id="filter-all" data-i18n="filter_all" type="button">Tutti</button>
+      <button class="filter-chip" id="filter-defects" data-i18n="filter_defects_only" type="button">Solo difetti</button>
     </div>
     <div class="dataset-list" id="dataset-list"></div>
     <nav class="tab-bar">
@@ -264,10 +268,6 @@
       <div class="stats-chart" id="stats-chart"></div>
       <div class="stats-legend" id="stats-legend"></div>
     </div>
-    <div class="card">
-      <div class="card-header"><span class="section-title" data-i18n="stats_defects_list_title">Elenco difetti</span></div>
-      <div id="stats-defects-list"></div>
-    </div>
   </section>
 
   <!-- STATO ORDINE -->
@@ -333,6 +333,6 @@
   </div>
 </div>
 
-<script src="app.js?v=50"></script>
+<script src="app.js?v=51"></script>
 </body>
 </html>

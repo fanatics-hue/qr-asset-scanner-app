@@ -1,5 +1,5 @@
 const API_BASE = 'https://qr-scanner-api.fanatics.workers.dev';
-const APP_VERSION = 50;
+const APP_VERSION = 51;
 
 const TRANSLATIONS = {
   it: {
@@ -153,6 +153,8 @@ const TRANSLATIONS = {
     err_queued_no_detail: 'Scheda non ancora inviata: apribile dopo la sincronizzazione.',
     saved_offline_note: 'Nessuna rete: salvato in locale, verrà inviato appena torna la connessione.',
     badge_new: 'Nuovo',
+    filter_all: 'Tutti',
+    filter_defects_only: 'Solo difetti',
     wa_title: 'Asset scansionato:',
     wa_condition: 'Condizione',
     wa_comments: 'Commenti',
@@ -310,6 +312,8 @@ const TRANSLATIONS = {
     err_queued_no_detail: 'Not sent yet: openable after it syncs.',
     saved_offline_note: 'No network: saved locally, will be sent once the connection is back.',
     badge_new: 'New',
+    filter_all: 'All',
+    filter_defects_only: 'Defects only',
     wa_title: 'Scanned asset:',
     wa_condition: 'Condition',
     wa_comments: 'Comments',
@@ -332,6 +336,9 @@ const HELP_CONTENT = {
     <div class="card"><div class="card-header"><span class="section-title">Senza rete in impianto</span></div>
       <div class="help-p">Se salvi un nuovo asset senza connessione, la scheda non va persa: resta salvata sul telefono con un badge "In coda" nel Dataset e viene inviata da sola appena torna la rete. Mentre c'è qualcosa in attesa compare una striscia in alto con il conteggio — sparisce da sola a sincronizzazione completata. Una scheda "In coda" non si può ancora aprire/modificare, va aspettato l'invio.</div>
     </div>
+    <div class="card"><div class="card-header"><span class="section-title">Avviso nuovi asset dai colleghi</span></div>
+      <div class="help-p">Mentre hai l'app aperta, un controllo periodico segnala con un breve bip e un pallino rosso sul tab Dataset quando un collega dello stesso progetto registra un nuovo asset — mai per i tuoi stessi scan. Il pallino sparisce aprendo il Dataset, dove la scheda nuova lampeggia con un'etichetta "Nuovo" per qualche secondo. Non è una notifica push vera: funziona solo mentre l'app è effettivamente aperta, non a telefono chiuso.</div>
+    </div>
     <div class="card"><div class="card-header"><span class="section-title">Foto</span></div>
       <div class="help-p">Facoltativa, tocca "Aggiungi foto". Viene compressa in automatico e salvata nel repository dell'app. La vede qualunque ispettore loggato riaprendo la scheda dal Dataset — tocca per aprirla a schermo intero.</div>
     </div>
@@ -348,13 +355,13 @@ const HELP_CONTENT = {
       <div class="help-p">Il pulsante verde apre WhatsApp con il messaggio già pronto, sia durante l'inserimento che riaprendo la scheda.</div>
     </div>
     <div class="card"><div class="card-header"><span class="section-title">Dataset</span></div>
-      <div class="help-p">La striscia colorata a sinistra indica la condizione: verde = ottimo, blu = buono, arancio = da revisionare, rosso = danneggiato. Cerca per Pipe N°, Item N°, CS Heat o CRA Heat. Solo l'admin può eliminare una scheda (cestino).</div>
+      <div class="help-p">La striscia colorata a sinistra indica la condizione: verde = ottimo, blu = buono, arancio = da revisionare, rosso = danneggiato. Cerca per Pipe N°, Item N°, CS Heat o CRA Heat, oppure usa il filtro "Tutti / Solo difetti" per vedere solo le schede Da revisionare/Danneggiate. Solo l'admin può eliminare una scheda (cestino).</div>
     </div>
     <div class="card"><div class="card-header"><span class="section-title">Stato Ordine</span></div>
       <div class="help-p">Pulsante 🚨 nel Dataset: mostra l'avanzamento dell'Item ancora in lavorazione (dal foglio "Riepilogo per Fase" del file Excel di produzione). In alto: Item N°, riferimento PO, scadenza contrattuale e giorni residui. Per ogni fase: completati/totale, pezzi rimanenti, data prevista e scarto in giorni vs scadenza contrattuale, con badge OK (verde, in anticipo/puntuale), RITARDO (rosso, previsione oltre la scadenza) o N/D (grigio, dato insufficiente). Il "collo di bottiglia" in cima è la fase con più pezzi ancora da fare. Mostra anche i difetti aperti per step e, in fondo, la nota che spiega come viene calcolata la previsione. Se la produzione non è mai stata sincronizzata la sezione resta vuota; se manca il foglio "Riepilogo per Fase" nel file Excel, l'app mostra in automatico un imbuto più semplice su tutti i tubi tracciati.</div>
     </div>
     <div class="card"><div class="card-header"><span class="section-title">Statistiche</span></div>
-      <div class="help-p">Pulsante 📊 nel Dataset: schede totali, difetti aperti, % chiusura, giorni medi di chiusura, quanti difetti restano aperti da oltre 5 giorni, un grafico settimanale (ultime 8 settimane) e la ripartizione per tipo difetto/disposizione. Sotto al grafico, l'elenco di tutti i difetti (aperti prima) — tocca una riga per aprirne il dettaglio.</div>
+      <div class="help-p">Pulsante 📊 nel Dataset: schede totali, difetti aperti, % chiusura, giorni medi di chiusura, quanti difetti restano aperti da oltre 5 giorni, un grafico settimanale (ultime 8 settimane) e la ripartizione per tipo difetto/disposizione. Per vedere i singoli difetti uno per uno, usa il filtro "Solo difetti" nel Dataset invece di cercarli qui.</div>
     </div>
     <div class="card"><div class="card-header"><span class="section-title">Lingua e tema</span></div>
       <div class="help-p">Pulsante "EN"/"IT" cambia lingua. Pulsante ☽/☀ forza il tema chiaro o scuro (di default segue il telefono).</div>
@@ -379,6 +386,9 @@ const HELP_CONTENT = {
     <div class="card"><div class="card-header"><span class="section-title">No signal on site</span></div>
       <div class="help-p">If you save a new asset with no connection, the record isn't lost: it stays saved on the phone with a "Queued" badge in the Dataset and gets sent on its own once the network is back. While something is waiting, a strip appears at the top with the count — it disappears on its own once synced. A "Queued" record can't be opened/edited yet, you need to wait for it to be sent.</div>
     </div>
+    <div class="card"><div class="card-header"><span class="section-title">New asset alert from teammates</span></div>
+      <div class="help-p">While you have the app open, a periodic check plays a short beep and shows a red dot on the Dataset tab whenever a teammate on the same project logs a new asset — never for your own scans. The dot disappears when you open the Dataset, where the new record flashes with a "New" label for a few seconds. This isn't a real push notification: it only works while the app is actually open, not with the phone locked.</div>
+    </div>
     <div class="card"><div class="card-header"><span class="section-title">Photo</span></div>
       <div class="help-p">Optional, tap "Add photo". It's compressed automatically and saved to the app's repository. Any logged-in inspector can see it by reopening the record from the Dataset — tap to open full screen.</div>
     </div>
@@ -395,13 +405,13 @@ const HELP_CONTENT = {
       <div class="help-p">The green button opens WhatsApp with the message ready to send, both while entering data and when reopening a record.</div>
     </div>
     <div class="card"><div class="card-header"><span class="section-title">Dataset</span></div>
-      <div class="help-p">The colored stripe on the left shows the condition: green = excellent, blue = good, orange = needs review, red = damaged. Search by Pipe No., Item No., CS Heat or CRA Heat. Only admins can delete a record (trash icon).</div>
+      <div class="help-p">The colored stripe on the left shows the condition: green = excellent, blue = good, orange = needs review, red = damaged. Search by Pipe No., Item No., CS Heat or CRA Heat, or use the "All / Defects only" filter to see just the Needs review/Damaged records. Only admins can delete a record (trash icon).</div>
     </div>
     <div class="card"><div class="card-header"><span class="section-title">Order Status</span></div>
       <div class="help-p">🚨 button in the Dataset: shows progress for the Item still in production (from the "Riepilogo per Fase" sheet of the production Excel file). At the top: Item No., PO reference, contractual due date and days remaining. For each phase: completed/total, pipes remaining, forecast date and deviation in days vs the contractual due date, with an OK (green, ahead/on time), DELAY (red, forecast past the due date) or N/A (grey, not enough data) badge. The "bottleneck" at the top is the phase with the most pipes still to go. Also shows open defects by step and, at the bottom, the note explaining how the forecast is calculated. If production data has never been synced this stays empty; if the "Riepilogo per Fase" sheet isn't in the Excel file, the app automatically falls back to a simpler funnel across all tracked pipes.</div>
     </div>
     <div class="card"><div class="card-header"><span class="section-title">Statistics</span></div>
-      <div class="help-p">📊 button in the Dataset: total records, open defects, % closed, average days to close, how many defects have been open for more than 5 days, an 8-week chart, and a breakdown by defect type/disposition. Below the chart, the full defects list (open ones first) — tap a row to open its detail.</div>
+      <div class="help-p">📊 button in the Dataset: total records, open defects, % closed, average days to close, how many defects have been open for more than 5 days, an 8-week chart, and a breakdown by defect type/disposition. To browse individual defects, use the "Defects only" filter in the Dataset instead of looking for them here.</div>
     </div>
     <div class="card"><div class="card-header"><span class="section-title">Language and theme</span></div>
       <div class="help-p">"EN"/"IT" button switches language. ☽/☀ button forces light or dark theme (follows the phone by default).</div>
@@ -453,7 +463,8 @@ const state = {
   orders: [],
   currentOrderId: localStorage.getItem('qr_order_id') || 'default',
   justArrivedIds: new Set(),
-  audioCtx: null
+  audioCtx: null,
+  datasetFilter: 'all'
 };
 
 const normProdNum = (v) => { const n = parseInt(String(v || '').trim(), 10); return isNaN(n) ? String(v || '').trim() : String(n); };
@@ -1271,6 +1282,7 @@ function renderDatasetList() {
   const q = (el('search-input').value || '').toLowerCase().trim();
   const list = el('dataset-list');
   const filtered = state.records.filter(r => {
+    if (state.datasetFilter === 'defects' && !isDefectCondition(r.condition)) return false;
     if (!q) return true;
     return (r.pipeNo || '').toLowerCase().includes(q) ||
            (r.itemNo || '').toLowerCase().includes(q) ||
@@ -1337,6 +1349,18 @@ function escapeHtml(s) {
 }
 
 el('search-input').addEventListener('input', renderDatasetList);
+el('filter-all').addEventListener('click', () => {
+  state.datasetFilter = 'all';
+  el('filter-all').classList.add('active');
+  el('filter-defects').classList.remove('active');
+  renderDatasetList();
+});
+el('filter-defects').addEventListener('click', () => {
+  state.datasetFilter = 'defects';
+  el('filter-defects').classList.add('active');
+  el('filter-all').classList.remove('active');
+  renderDatasetList();
+});
 
 document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -1670,43 +1694,9 @@ function renderStats() {
     legend.appendChild(item);
   });
 
-  const defectRecords = state.records
-    .filter(r => isDefectCondition(r.condition))
-    .sort((a, b) => {
-      const aOpen = a.status !== 'closed', bOpen = b.status !== 'closed';
-      if (aOpen !== bOpen) return aOpen ? -1 : 1; // aperti prima
-      return (b.scannedAt || '').localeCompare(a.scannedAt || '');
-    });
-  const listWrap = el('stats-defects-list');
-  listWrap.innerHTML = '';
-  if (!defectRecords.length) {
-    listWrap.innerHTML = `<div class="empty-state">${escapeHtml(t('stats_no_defects'))}</div>`;
-  } else {
-    const card = document.createElement('div');
-    card.className = 'list-card';
-    defectRecords.forEach(r => {
-      const row = document.createElement('div');
-      const isOpen = r.status !== 'closed';
-      row.className = 'list-row row-' + r.condition;
-      row.setAttribute('role', 'button');
-      row.setAttribute('tabindex', '0');
-      const dateStr = r.scannedAt ? new Date(r.scannedAt).toLocaleDateString(t('locale')) : '';
-      row.innerHTML = `
-        <div class="info">
-          <span class="pipe">${escapeHtml(r.pipeNo || '-')}</span>
-          <span class="meta">${escapeHtml(r.itemNo || '-')} · ${escapeHtml(r.itpStep || '-')} · ${dateStr}</span>
-        </div>
-        <div class="right">
-          <span class="badge badge-status-${isOpen ? 'open' : 'closed'}">${escapeHtml(t(isOpen ? 'status_open' : 'status_closed'))}</span>
-          <span class="badge badge-${r.condition}">${escapeHtml(condLabel(r.condition))}</span>
-          <span class="chevron">&rsaquo;</span>
-        </div>`;
-      row.addEventListener('click', () => openDetail(r.id));
-      row.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openDetail(r.id); } });
-      card.appendChild(row);
-    });
-    listWrap.appendChild(card);
-  }
+  // L'elenco righe-per-riga dei difetti e' stato tolto da qui (era una copia quasi identica
+  // di Equipment Master Data, stessa lista/stesso tap-per-aprire) - per vedere i difetti uno
+  // per uno ora si usa il filtro "Solo difetti" nel Dataset, non serve piu' duplicarli qui.
 }
 
 el('stats-btn').addEventListener('click', () => {

@@ -259,6 +259,13 @@ textarea.field { resize: vertical; font-family: inherit; }
 .dataset-title-sub { font-size: 11px; color: var(--text-tertiary); margin-top: 1px; }
 
 .search-wrap { padding: 0 16px 12px; }
+.filter-row { display: flex; gap: 8px; padding: 0 16px 12px; }
+.filter-chip {
+  font-size: 12px; font-weight: 600; padding: 6px 14px; border-radius: 16px;
+  background: var(--bg-input); color: var(--text-secondary); border: 1px solid var(--border);
+  font-family: var(--font-body); cursor: pointer;
+}
+.filter-chip.active { background: var(--blue); color: #fff; border-color: var(--blue); }
 .dataset-list { flex: 1; overflow-y: auto; padding: 0 16px 90px; }
 .list-card {
   background: linear-gradient(180deg, var(--bg-card-top) 0%, var(--bg-card-bottom) 100%);
