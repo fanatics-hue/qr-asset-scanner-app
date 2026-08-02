@@ -10,21 +10,24 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=33">
+<link rel="stylesheet" href="styles.css?v=34">
 </head>
 <body>
 <div id="app">
 
   <!-- LOGIN -->
   <section id="screen-login">
+    <div class="login-hero"><img src="assets/login-hero.jpg" alt=""></div>
     <button id="lang-toggle-login" class="lang-toggle">EN</button>
     <button id="theme-toggle-login" class="theme-toggle" data-i18n-title="theme_toggle_title" title="Tema chiaro/scuro">&#9789;</button>
-    <a class="logo-chip" href="https://fanatics-hue.github.io/iqs-profile/" target="_blank" rel="noopener"><img src="assets/iqs-logo.jpg" alt="IQS"></a>
-    <h1>IQS Field Inspector</h1>
-    <input id="login-username" class="field" type="text" data-i18n-ph="login_username_ph" autocomplete="username">
-    <input id="login-password" class="field" type="password" data-i18n-ph="login_password_ph" autocomplete="current-password">
-    <button id="login-btn" class="btn-primary" data-i18n="login_btn">Entra</button>
-    <div id="login-error" class="error-text"></div>
+    <div class="login-body">
+      <a class="logo-chip" href="https://fanatics-hue.github.io/iqs-profile/" target="_blank" rel="noopener"><img src="assets/iqs-logo.jpg" alt="IQS"></a>
+      <h1>IQS Field Inspector</h1>
+      <input id="login-username" class="field" type="text" data-i18n-ph="login_username_ph" autocomplete="username">
+      <input id="login-password" class="field" type="password" data-i18n-ph="login_password_ph" autocomplete="current-password">
+      <button id="login-btn" class="btn-primary" data-i18n="login_btn">Entra</button>
+      <div id="login-error" class="error-text"></div>
+    </div>
     <div class="login-footer">
       <div class="login-footer-name">IQS S.r.l.<br>WORLDWIDE INSPECTION COMPANY</div>
       <div class="login-footer-group">
@@ -372,6 +375,6 @@
   </div>
 </div>
 
-<script src="app.js?v=58"></script>
+<script src="app.js?v=59"></script>
 </body>
 </html>
