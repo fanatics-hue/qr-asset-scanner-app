@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=30">
+<link rel="stylesheet" href="styles.css?v=31">
 </head>
 <body>
 <div id="app">
@@ -130,16 +130,17 @@
     </div>
     <div class="dataset-list" id="dataset-list"></div>
     <nav class="tab-bar">
-      <button class="tab-btn" data-tab="scan">
+      <button class="tab-cap" data-tab="scan" type="button">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         <span data-i18n="tab_scan">Nuovo asset</span>
       </button>
-      <button class="tab-btn active" data-tab="dataset">
+      <button class="tab-cap active" data-tab="dataset" type="button">
         <span class="tab-icon-wrap">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
           <span class="tab-ring hidden" id="tab-dataset-ring"></span>
         </span>
-        <span id="tab-dataset-label">Dataset (0)</span>
+        <span data-i18n="tab_dataset_prefix">Dataset</span>
+        <span class="n" id="tab-dataset-count">0</span>
       </button>
     </nav>
   </section>
@@ -333,6 +334,6 @@
   </div>
 </div>
 
-<script src="app.js?v=54"></script>
+<script src="app.js?v=55"></script>
 </body>
 </html>

@@ -1,5 +1,5 @@
 const API_BASE = 'https://qr-scanner-api.fanatics.workers.dev';
-const APP_VERSION = 54;
+const APP_VERSION = 55;
 
 const TRANSLATIONS = {
   it: {
@@ -458,7 +458,7 @@ function applyTranslations() {
   document.querySelectorAll('[data-i18n-title]').forEach(elx => { elx.title = t(elx.dataset.i18nTitle); });
   const other = state.lang === 'it' ? 'EN' : 'IT';
   ['lang-toggle-login', 'lang-toggle-dataset'].forEach(id => { if (el(id)) el(id).textContent = other; });
-  el('tab-dataset-label').textContent = `${t('tab_dataset_prefix')} (${state.records.length})`;
+  el('tab-dataset-count').textContent = state.records.length;
   el('dataset-title-count').textContent = t(state.records.length === 1 ? 'dataset_title_count_one' : 'dataset_title_count').replace('{n}', state.records.length);
 }
 
@@ -503,7 +503,7 @@ function setLang(lang) {
 function showScreen(name) {
   state.screen = name;
   screens.forEach(s => el('screen-' + s).classList.toggle('hidden', s !== name));
-  document.querySelectorAll('.tab-btn').forEach(b => {
+  document.querySelectorAll('.tab-cap').forEach(b => {
     b.classList.toggle('active', b.dataset.tab === name);
   });
 }
@@ -1260,10 +1260,10 @@ function renderDatasetList() {
            (r.csHeat || '').toLowerCase().includes(q) ||
            (r.craHeat || '').toLowerCase().includes(q);
   });
-  el('tab-dataset-label').textContent = `${t('tab_dataset_prefix')} (${state.records.length})`;
-  // Il sottotitolo sotto il titolo riflette quello che si vede davvero nell'elenco sotto
+  // Numero sul tab e sottotitolo riflettono quello che si vede davvero nell'elenco sotto
   // (filtro Solo difetti + ricerca), non il totale assoluto - altrimenti "Solo difetti"
   // mostrava comunque il numero di TUTTI gli asset, non solo quelli filtrati.
+  el('tab-dataset-count').textContent = filtered.length;
   el('dataset-title-count').textContent = t(filtered.length === 1 ? 'dataset_title_count_one' : 'dataset_title_count').replace('{n}', filtered.length);
   if (!filtered.length) {
     list.innerHTML = `<div class="empty-state">${escapeHtml(t('dataset_empty'))}</div>`;
@@ -1336,7 +1336,7 @@ el('filter-defects').addEventListener('click', () => {
   renderDatasetList();
 });
 
-document.querySelectorAll('.tab-btn').forEach(btn => {
+document.querySelectorAll('.tab-cap').forEach(btn => {
   btn.addEventListener('click', () => {
     const tab = btn.dataset.tab;
     if (tab === 'scan') startManualEntry();
