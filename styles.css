@@ -329,8 +329,25 @@ textarea.field { resize: vertical; font-family: inherit; }
 
 /* ---------- Detail ---------- */
 #screen-detail { flex: 1; padding: 0 16px 24px; overflow-y: auto; min-height: 0; }
-.back-link { background: none; border: none; color: var(--blue); font-size: 16px; padding: 10px 0; cursor: pointer; }
+/* Pillola col bordo, stesso linguaggio del riquadro Progetto e dei filtri Dataset - prima
+   era un link di testo nudo, l'unico angolo dell'app rimasto cosi' (feedback Rino 02.08.2026).
+   Usata identica su Dettaglio/Statistiche/Stato Ordine/Guida/Admin: stesso ruolo ovunque. */
+.back-link {
+  display: inline-flex; align-items: center; gap: 3px;
+  background: var(--bg-input); border: 1px solid var(--border); border-radius: 14px;
+  color: var(--text-primary); font-family: var(--font-body); font-size: 13px; font-weight: 600;
+  padding: 7px 13px 7px 10px; margin: 10px 0; cursor: pointer;
+}
 .detail-top-row { display: flex; align-items: center; justify-content: space-between; }
+.detail-top-row .back-link { margin: 10px 0; }
+.edit-pill-btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: var(--blue-bg); border: none; border-radius: 14px;
+  color: var(--blue-c); font-family: var(--font-body); font-size: 13px; font-weight: 700;
+  padding: 7px 15px; cursor: pointer; transition: opacity 0.12s ease;
+}
+.edit-pill-btn:hover { opacity: 0.85; }
+.edit-pill-icon { font-size: 12px; }
 .status-row { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
 .badge-status-open { color: var(--red); background: var(--red-bg); }
 .badge-status-closed { color: var(--green); background: var(--green-bg); }
