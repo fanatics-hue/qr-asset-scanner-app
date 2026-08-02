@@ -1,5 +1,5 @@
 const API_BASE = 'https://qr-scanner-api.fanatics.workers.dev';
-const APP_VERSION = 56;
+const APP_VERSION = 57;
 
 const TRANSLATIONS = {
   it: {
@@ -110,6 +110,16 @@ const TRANSLATIONS = {
     order_new_ph: 'Nome nuovo ordine',
     order_new_btn: '+ Nuovo ordine',
     order_status_title: 'Stato Ordine',
+    lookup_title: 'Cerca tubo',
+    lookup_title_sub: 'Solo consultazione — nessun salvataggio',
+    lookup_ph: 'Pipe N°',
+    lookup_no_input: 'Digita un Pipe N° per vedere i dati di produzione e se è già stato registrato.',
+    lookup_ambiguous_hint: 'Questo Pipe N° esiste su più Item — apri "Nuovo asset" e inserisci anche l\'Item N° per un risultato preciso.',
+    lookup_not_found: 'Nessun dato di produzione né scheda trovati per questo Pipe N°.',
+    lookup_prod_header: 'Dati produzione',
+    lookup_already_registered: 'Già registrato il {date} da {by} — condizione: {cond}.',
+    lookup_open_record: 'Apri scheda ›',
+    lookup_register_btn: '+ Registra questo asset',
     os_total: 'Tubi tracciati',
     os_complete_pct: 'Completati (ultimo step)',
     os_funnel_title: 'Imbuto produzione',
@@ -252,6 +262,16 @@ const TRANSLATIONS = {
     order_new_ph: 'New order name',
     order_new_btn: '+ New order',
     order_status_title: 'Order Status',
+    lookup_title: 'Pipe lookup',
+    lookup_title_sub: 'Read-only — nothing is saved',
+    lookup_ph: 'Pipe N°',
+    lookup_no_input: 'Type a Pipe N° to see production data and whether it has already been registered.',
+    lookup_ambiguous_hint: 'This Pipe N° exists on multiple Items — open "New asset" and also enter the Item N° for an exact match.',
+    lookup_not_found: 'No production data or record found for this Pipe N°.',
+    lookup_prod_header: 'Production data',
+    lookup_already_registered: 'Already registered on {date} by {by} — condition: {cond}.',
+    lookup_open_record: 'Open record ›',
+    lookup_register_btn: '+ Register this asset',
     os_total: 'Pipes tracked',
     os_complete_pct: 'Completed (last step)',
     os_funnel_title: 'Production funnel',
@@ -323,6 +343,9 @@ const HELP_CONTENT = {
     <div class="card"><div class="card-header"><span class="section-title">Dataset</span></div>
       <div class="help-p">La striscia colorata a sinistra indica la condizione: verde = ottimo, blu = buono, arancio = da revisionare, rosso = danneggiato. Cerca per Pipe N°, Item N°, CS Heat o CRA Heat, oppure usa il filtro "Tutti / Solo difetti" per vedere solo le schede Da revisionare/Danneggiate. Solo l'admin può eliminare una scheda (cestino).</div>
     </div>
+    <div class="card"><div class="card-header"><span class="section-title">Cerca tubo</span></div>
+      <div class="help-p">Pulsante 🔍 nel Dataset: consulta un Pipe N° (dati produzione: Item N°, CS Heat, CRA Heat, Length, step ITP, avanzamento) e ti dice subito se è già stato registrato, con chi e quando, senza creare o modificare nessuna scheda. Utile per un controllo veloce prima di decidere se serve davvero un nuovo rilievo. Se vuoi comunque registrarlo, il pulsante "+ Registra questo asset" in fondo apre "Nuovo asset" già precompilato.</div>
+    </div>
     <div class="card"><div class="card-header"><span class="section-title">Stato Ordine</span></div>
       <div class="help-p">Pulsante 🚨 nel Dataset: mostra l'avanzamento dell'Item ancora in lavorazione (dal foglio "Riepilogo per Fase" del file Excel di produzione). In alto: Item N°, riferimento PO, scadenza contrattuale e giorni residui. Per ogni fase: completati/totale, pezzi rimanenti, data prevista e scarto in giorni vs scadenza contrattuale, con badge OK (verde, in anticipo/puntuale), RITARDO (rosso, previsione oltre la scadenza) o N/D (grigio, dato insufficiente). Il "collo di bottiglia" in cima è la fase con più pezzi ancora da fare. Mostra anche i difetti aperti per step e, in fondo, la nota che spiega come viene calcolata la previsione. Se la produzione non è mai stata sincronizzata la sezione resta vuota; se manca il foglio "Riepilogo per Fase" nel file Excel, l'app mostra in automatico un imbuto più semplice su tutti i tubi tracciati.</div>
     </div>
@@ -372,6 +395,9 @@ const HELP_CONTENT = {
     </div>
     <div class="card"><div class="card-header"><span class="section-title">Dataset</span></div>
       <div class="help-p">The colored stripe on the left shows the condition: green = excellent, blue = good, orange = needs review, red = damaged. Search by Pipe No., Item No., CS Heat or CRA Heat, or use the "All / Defects only" filter to see just the Needs review/Damaged records. Only admins can delete a record (trash icon).</div>
+    </div>
+    <div class="card"><div class="card-header"><span class="section-title">Pipe lookup</span></div>
+      <div class="help-p">🔍 button in the Dataset: look up a Pipe N° (production data: Item No., CS Heat, CRA Heat, Length, ITP step, progress) and instantly see whether it's already been registered, by whom and when — without creating or changing any record. Handy for a quick check before deciding whether a new record is actually needed. If you do want to register it, the "+ Register this asset" button at the bottom opens "New asset" already pre-filled.</div>
     </div>
     <div class="card"><div class="card-header"><span class="section-title">Order Status</span></div>
       <div class="help-p">🚨 button in the Dataset: shows progress for the Item still in production (from the "Riepilogo per Fase" sheet of the production Excel file). At the top: Item No., PO reference, contractual due date and days remaining. For each phase: completed/total, pipes remaining, forecast date and deviation in days vs the contractual due date, with an OK (green, ahead/on time), DELAY (red, forecast past the due date) or N/A (grey, not enough data) badge. The "bottleneck" at the top is the phase with the most pipes still to go. Also shows open defects by step and, at the bottom, the note explaining how the forecast is calculated. If production data has never been synced this stays empty; if the "Riepilogo per Fase" sheet isn't in the Excel file, the app automatically falls back to a simpler funnel across all tracked pipes.</div>
@@ -444,7 +470,7 @@ const prodKey = (itemNo, pipeNo) => normProdNum(itemNo) + '-' + normProdNum(pipe
 const el = (id) => document.getElementById(id);
 const t = (key) => (TRANSLATIONS[state.lang] && TRANSLATIONS[state.lang][key]) || key;
 const condLabel = (code) => t(condKey(code));
-const screens = ['login', 'confirm', 'dataset', 'detail', 'admin', 'help', 'stats', 'order-status'];
+const screens = ['login', 'confirm', 'dataset', 'detail', 'admin', 'help', 'stats', 'order-status', 'lookup'];
 
 function translateBackendError(msg) {
   const entry = BACKEND_ERR_MAP[msg];
@@ -1854,6 +1880,88 @@ el('order-status-btn').addEventListener('click', async () => {
   if (state.screen === 'order-status') renderOrderStatus();
 });
 el('order-status-back').addEventListener('click', () => showScreen('dataset'));
+
+// ---------------- Cerca tubo (solo consultazione, nessun salvataggio) ----------------
+function renderLookup() {
+  const q = el('lookup-input').value.trim();
+  const empty = el('lookup-empty');
+  const ambHint = el('lookup-ambiguous-hint');
+  const notFound = el('lookup-not-found');
+  const prodCard = el('lookup-prod-card');
+  const foundHint = el('lookup-found-hint');
+  const registerBtn = el('lookup-register-btn');
+  state._lookupExistingId = null;
+  if (!q) {
+    empty.classList.remove('hidden');
+    ambHint.classList.add('hidden');
+    notFound.classList.add('hidden');
+    prodCard.classList.add('hidden');
+    foundHint.classList.add('hidden');
+    registerBtn.classList.add('hidden');
+    return;
+  }
+  empty.classList.add('hidden');
+  registerBtn.classList.remove('hidden');
+  const normPipe = normProdNum(q);
+  const match = state.productionByPipe.get(normPipe);
+  const isAmbiguous = !match && state.ambiguousPipes.has(normPipe);
+  ambHint.classList.toggle('hidden', !isAmbiguous);
+
+  if (match) {
+    el('lk-itemNo').textContent = match.itemNo || '-';
+    el('lk-csHeat').textContent = match.csHeat || '-';
+    el('lk-craHeat').textContent = match.craHeat || '-';
+    el('lk-length').textContent = match.length || '-';
+    if (typeof match.progress === 'number' && match.currentStep) {
+      const pct = Math.round(match.progress * 100);
+      const stepNum = match.currentStepNum || (ITP_STEPS_FALLBACK.indexOf(match.currentStep) + 1);
+      el('lk-progress').textContent = `${pct}% — ITP Step N° ${stepNum}: ${match.currentStep}`;
+      el('lk-progress-row').classList.remove('hidden');
+    } else {
+      el('lk-progress-row').classList.add('hidden');
+    }
+    prodCard.classList.remove('hidden');
+  } else {
+    prodCard.classList.add('hidden');
+  }
+
+  const existing = state.records
+    .filter(r => normProdNum(r.pipeNo) === normPipe)
+    .sort((a, b) => new Date(b.scannedAt) - new Date(a.scannedAt))[0];
+  if (existing) {
+    const date = existing.scannedAt ? new Date(existing.scannedAt).toLocaleDateString(t('locale')) : '-';
+    el('lookup-found-text').textContent = t('lookup_already_registered')
+      .replace('{date}', date).replace('{by}', existing.scannedBy || '-').replace('{cond}', condLabel(existing.condition));
+    foundHint.classList.remove('hidden');
+    state._lookupExistingId = existing.id;
+  } else {
+    foundHint.classList.add('hidden');
+  }
+
+  notFound.classList.toggle('hidden', !!(match || isAmbiguous || existing));
+}
+el('lookup-input').addEventListener('input', renderLookup);
+el('lookup-open-record-btn').addEventListener('click', () => {
+  if (state._lookupExistingId) openDetail(state._lookupExistingId);
+});
+el('lookup-register-btn').addEventListener('click', () => {
+  const q = el('lookup-input').value.trim();
+  if (!q) return;
+  const match = state.productionByPipe.get(normProdNum(q));
+  startManualEntry();
+  el('f-pipeNo').value = q;
+  state.draft.pipeNo = q;
+  if (match && match.itemNo) { el('f-itemNo').value = match.itemNo; state.draft.itemNo = match.itemNo; }
+  tryAutoFillFromProduction();
+});
+el('lookup-btn').addEventListener('click', async () => {
+  el('lookup-input').value = '';
+  renderLookup();
+  showScreen('lookup');
+  try { await loadProductionData(); } catch (e) { /* rete assente: resta la copia gia' caricata */ }
+  el('lookup-input').focus();
+});
+el('lookup-back').addEventListener('click', () => showScreen('dataset'));
 
 async function loadUsers() {
   try {

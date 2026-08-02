@@ -388,6 +388,13 @@ textarea.field { resize: vertical; font-family: inherit; }
    (contenuta dentro #app che ha overflow:hidden) - stesso pattern delle altre schermate
    a pagina intera (Dettaglio/Guida/Statistiche/Admin), dimenticato quando creata. */
 #screen-order-status { flex: 1; padding: 0 16px 24px; overflow-y: auto; min-height: 0; }
+#screen-lookup { flex: 1; padding: 0 16px 24px; overflow-y: auto; min-height: 0; }
+.lookup-sub { padding: 0 0 14px; font-size: 12.5px; color: var(--text-tertiary); }
+.lookup-input-wrap { margin-bottom: 14px; }
+.lookup-not-found { padding: 10px 14px; font-size: 12.5px; color: var(--text-tertiary); background: var(--bg-input); border-radius: 10px; margin-bottom: 14px; }
+#screen-lookup .ambiguous-hint { border-radius: 10px; margin-bottom: 14px; }
+.lookup-found-hint { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 14px; font-size: 12.5px; color: var(--green); background: var(--green-bg); border-radius: 10px; margin-bottom: 14px; }
+.lookup-open-link { background: none; border: none; color: var(--blue); font-size: 12.5px; font-weight: 700; cursor: pointer; padding: 0; white-space: nowrap; }
 
 /* ---------- Statistiche ---------- */
 #screen-stats { flex: 1; padding: 0 16px 24px; overflow-y: auto; min-height: 0; }

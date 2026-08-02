@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=31">
+<link rel="stylesheet" href="styles.css?v=32">
 </head>
 <body>
 <div id="app">
@@ -108,6 +108,7 @@
         <span class="order-pill-icon">▾</span>
       </button>
       <div class="toggles">
+        <button id="lookup-btn" class="admin-gear" data-i18n-title="lookup_title" title="Cerca tubo">&#128269;</button>
         <button id="order-status-btn" class="admin-gear" data-i18n-title="order_status_title" title="Stato Ordine">&#128678;</button>
         <button id="stats-btn" class="admin-gear" data-i18n-title="stats_title" title="Statistiche">&#128202;</button>
         <button id="help-btn" class="admin-gear" data-i18n-title="help_title" title="Guida">?</button>
@@ -272,6 +273,30 @@
     </div>
   </section>
 
+  <!-- CERCA TUBO -->
+  <section id="screen-lookup" class="hidden">
+    <button id="lookup-back" class="back-link">&lsaquo; <span data-i18n="dataset_title_short">Dataset</span></button>
+    <div class="large-title" style="padding-left:0" data-i18n="lookup_title">Cerca tubo</div>
+    <div class="lookup-sub" data-i18n="lookup_title_sub">Solo consultazione — nessun salvataggio</div>
+    <div class="lookup-input-wrap"><input id="lookup-input" class="field" type="text" data-i18n-ph="lookup_ph" placeholder="Pipe N°"></div>
+    <div class="empty-state" id="lookup-empty" data-i18n="lookup_no_input">Digita un Pipe N° per vedere i dati di produzione e se è già stato registrato.</div>
+    <div class="ambiguous-hint hidden" id="lookup-ambiguous-hint" data-i18n="lookup_ambiguous_hint">Questo Pipe N° esiste su più Item — apri "Nuovo asset" e inserisci anche l'Item N° per un risultato preciso.</div>
+    <div class="lookup-not-found hidden" id="lookup-not-found" data-i18n="lookup_not_found">Nessun dato di produzione né scheda trovati per questo Pipe N°.</div>
+    <div class="card hidden" id="lookup-prod-card">
+      <div class="card-header"><span class="section-title" data-i18n="lookup_prod_header">Dati produzione</span></div>
+      <div class="row"><label>Item N°</label><span class="readonly" id="lk-itemNo">-</span></div>
+      <div class="row"><label>CS Heat</label><span class="readonly" id="lk-csHeat">-</span></div>
+      <div class="row"><label>CRA Heat</label><span class="readonly" id="lk-craHeat">-</span></div>
+      <div class="row"><label>Length</label><span class="readonly" id="lk-length">-</span></div>
+      <div class="row hidden" id="lk-progress-row"><label data-i18n="field_progress">Avanzamento</label><span class="readonly" id="lk-progress">-</span></div>
+    </div>
+    <div class="lookup-found-hint hidden" id="lookup-found-hint">
+      <span id="lookup-found-text"></span>
+      <button type="button" id="lookup-open-record-btn" class="lookup-open-link" data-i18n="lookup_open_record">Apri scheda ›</button>
+    </div>
+    <button class="btn-primary hidden" id="lookup-register-btn" type="button" data-i18n="lookup_register_btn">+ Registra questo asset</button>
+  </section>
+
   <!-- STATO ORDINE -->
   <section id="screen-order-status" class="hidden">
     <button id="order-status-back" class="back-link">&lsaquo; <span data-i18n="dataset_title_short">Dataset</span></button>
@@ -335,6 +360,6 @@
   </div>
 </div>
 
-<script src="app.js?v=56"></script>
+<script src="app.js?v=57"></script>
 </body>
 </html>
