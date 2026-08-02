@@ -1,5 +1,5 @@
 const API_BASE = 'https://qr-scanner-api.fanatics.workers.dev';
-const APP_VERSION = 49;
+const APP_VERSION = 50;
 
 const TRANSLATIONS = {
   it: {
@@ -152,6 +152,7 @@ const TRANSLATIONS = {
     status_queued: 'In coda',
     err_queued_no_detail: 'Scheda non ancora inviata: apribile dopo la sincronizzazione.',
     saved_offline_note: 'Nessuna rete: salvato in locale, verrà inviato appena torna la connessione.',
+    badge_new: 'Nuovo',
     wa_title: 'Asset scansionato:',
     wa_condition: 'Condizione',
     wa_comments: 'Commenti',
@@ -308,6 +309,7 @@ const TRANSLATIONS = {
     status_queued: 'Queued',
     err_queued_no_detail: 'Not sent yet: openable after it syncs.',
     saved_offline_note: 'No network: saved locally, will be sent once the connection is back.',
+    badge_new: 'New',
     wa_title: 'Scanned asset:',
     wa_condition: 'Condition',
     wa_comments: 'Comments',
@@ -449,7 +451,9 @@ const state = {
   ambiguousPipes: new Set(),
   editingId: null,
   orders: [],
-  currentOrderId: localStorage.getItem('qr_order_id') || 'default'
+  currentOrderId: localStorage.getItem('qr_order_id') || 'default',
+  justArrivedIds: new Set(),
+  audioCtx: null
 };
 
 const normProdNum = (v) => { const n = parseInt(String(v || '').trim(), 10); return isNaN(n) ? String(v || '').trim() : String(n); };
@@ -545,6 +549,7 @@ function loadSession() {
 
 // ---------------- Login ----------------
 el('login-btn').addEventListener('click', async () => {
+  unlockAudio(); // click = gesto utente valido per sbloccare l'audio, va fatto qui e non piu' tardi
   const username = el('login-username').value.trim();
   const password = el('login-password').value;
   el('login-error').textContent = '';
@@ -569,6 +574,8 @@ async function afterLogin() {
   showScreen('dataset');
   syncPendingQueue(); // scan rimasti in coda da una sessione precedente offline
   updateSyncBanner();
+  checkForNewAssets(); // seed silenzioso dell'elenco "visti" al primo login, poi il polling
+  startNewAssetsPolling();
 }
 
 // ---------------- Ordini (multi-progetto) ----------------
@@ -657,8 +664,10 @@ async function switchOrder(orderId) {
   state.currentOrderId = orderId;
   localStorage.setItem('qr_order_id', orderId);
   renderOrderPill();
+  el('tab-dataset-ring').classList.add('hidden'); // era per l'ordine precedente, non ha piu' senso qui
   await loadRecords();
   loadProductionData();
+  checkForNewAssets(); // semina l'elenco "visti" per il nuovo ordine se non esiste ancora
 }
 
 el('order-pill').addEventListener('click', () => {
@@ -837,6 +846,74 @@ async function syncPendingQueue() {
 
 window.addEventListener('online', () => { syncPendingQueue(); updateSyncBanner(); });
 window.addEventListener('offline', () => updateSyncBanner());
+
+// ---------------- Avviso nuovi asset da colleghi ----------------
+// Niente notifiche push vere (servirebbe un Service Worker, tenuto apposta fuori dall'app -
+// vedi coda offline sopra): mentre l'app resta aperta, un controllo periodico confronta i
+// record dal server con quelli gia' "visti" su questo telefono (per ordine, in localStorage).
+// Un nuovo scan fatto da un ALTRO ispettore fa suonare un breve bip e accende un pallino
+// rosso sul tab Dataset; un tuo stesso scan non fa mai suonare nulla. Alla primissima
+// esecuzione (nessun elenco "visti" salvato) si segna tutto come gia' visto senza avvisare,
+// altrimenti al primo login suonerebbe per l'intero storico.
+function unlockAudio() {
+  if (state.audioCtx) return;
+  try {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    state.audioCtx = new Ctx();
+  } catch (e) { /* Web Audio non disponibile: niente bip, il resto funziona comunque */ }
+}
+function playChime() {
+  if (!state.audioCtx) return;
+  try {
+    if (state.audioCtx.state === 'suspended') state.audioCtx.resume();
+    const ctx = state.audioCtx;
+    const now = ctx.currentTime;
+    [[880, now, 0.14], [1175, now + 0.13, 0.16]].forEach(([freq, start, dur]) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.0001, start);
+      gain.gain.exponentialRampToValueAtTime(0.22, start + 0.015);
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.start(start); osc.stop(start + dur + 0.02);
+    });
+  } catch (e) { /* rumore non essenziale, non deve mai bloccare nient'altro */ }
+}
+async function checkForNewAssets() {
+  if (!state.session || !state.currentOrderId) return;
+  let data;
+  try { data = await api('/api/records'); } catch (e) { return; }
+  const records = data.records || [];
+  const seenKey = 'qr_seen_' + state.currentOrderId;
+  const rawSeen = localStorage.getItem(seenKey);
+  const isFirstRun = rawSeen === null;
+  const seen = new Set(isFirstRun ? [] : JSON.parse(rawSeen));
+  const me = state.session.name || state.session.username;
+  const arrivedIds = [];
+  records.forEach(r => {
+    if (!seen.has(r.id)) {
+      if (!isFirstRun && r.scannedBy !== me) arrivedIds.push(r.id);
+      seen.add(r.id);
+    }
+  });
+  localStorage.setItem(seenKey, JSON.stringify(Array.from(seen)));
+  if (!arrivedIds.length) return;
+  arrivedIds.forEach(id => state.justArrivedIds.add(id));
+  playChime();
+  el('tab-dataset-ring').classList.remove('hidden');
+  await loadRecords();
+  setTimeout(() => {
+    arrivedIds.forEach(id => state.justArrivedIds.delete(id));
+    renderDatasetList();
+  }, 2500);
+}
+let newAssetsPoll = null;
+function startNewAssetsPolling() {
+  if (newAssetsPoll) return;
+  newAssetsPoll = setInterval(checkForNewAssets, 50000);
+}
 
 // ---------------- Nuovo asset ----------------
 // I dati identificativi (Item N°/Pipe N°) sono stampati in chiaro sull'etichetta accanto al QR:
@@ -1211,7 +1288,8 @@ function renderDatasetList() {
   card.className = 'list-card';
   filtered.forEach(r => {
     const row = document.createElement('div');
-    row.className = 'list-row row-' + r.condition;
+    const isNew = state.justArrivedIds && state.justArrivedIds.has(r.id);
+    row.className = 'list-row row-' + r.condition + (isNew ? ' new-flash' : '');
     row.setAttribute('role', 'button');
     row.setAttribute('tabindex', '0');
     const dateStr = r.scannedAt ? new Date(r.scannedAt).toLocaleDateString(t('locale')) : '';
@@ -1222,6 +1300,7 @@ function renderDatasetList() {
         <span class="meta">${escapeHtml(r.itemNo || '-')} · ${escapeHtml(r.itpStep || '-')} · ${dateStr}</span>
       </div>
       <div class="right">
+        ${isNew ? `<span class="badge-new">${escapeHtml(t('badge_new'))}</span>` : ''}
         ${r._pending
           ? `<span class="badge badge-queued">${escapeHtml(t('status_queued'))}</span>`
           : `<span class="badge badge-${r.condition}">${escapeHtml(condLabel(r.condition))}</span>`}
@@ -1263,7 +1342,11 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     const tab = btn.dataset.tab;
     if (tab === 'scan') startManualEntry();
-    else { loadRecords(); showScreen('dataset'); }
+    else {
+      loadRecords();
+      showScreen('dataset');
+      el('tab-dataset-ring').classList.add('hidden'); // visto: sparisce aprendo il Dataset
+    }
   });
 });
 
