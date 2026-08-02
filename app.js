@@ -1,5 +1,5 @@
 const API_BASE = 'https://qr-scanner-api.fanatics.workers.dev';
-const APP_VERSION = 51;
+const APP_VERSION = 52;
 
 const TRANSLATIONS = {
   it: {
@@ -7,21 +7,6 @@ const TRANSLATIONS = {
     login_password_ph: 'Password',
     login_btn: 'Entra',
     login_err_missing: 'Inserisci utente e password',
-    scan_hint_idle: 'Tocca il pulsante per scattare una foto del QR',
-    scan_hint_scanning: 'Analisi della foto in corso...',
-    scan_hint_tip: 'Avvicina o allontana il telefono e assicurati che ci sia buona luce',
-    scan_hint_no_code_found: 'Nessun QR trovato nella foto, riprova (avvicinati e assicurati che sia a fuoco)',
-    camera_flip_title: 'Cambia fotocamera',
-    scan_hint_camera_error: 'Errore: ',
-    scan_btn: 'Scansiona QR',
-    scan_btn_scanning: 'Scansione...',
-    paste_step1: "Apri la Fotocamera del telefono (o Google Lens) e inquadra il QR sull'attrezzatura",
-    paste_step2: 'Tocca il testo riconosciuto per copiarlo',
-    paste_step3: 'Torna qui, incolla il codice e continua',
-    paste_ph: 'Incolla qui il codice (es. 45650-00400-2458)',
-    paste_continue_btn: 'Continua',
-    paste_err_empty: 'Incolla prima il codice letto dalla fotocamera',
-    scan_btn_alt: 'Prova invece la scansione automatica dalla foto',
     confirm_cancel: 'Annulla',
     confirm_title: 'Nuovo asset',
     confirm_save: 'Salva',
@@ -67,8 +52,6 @@ const TRANSLATIONS = {
     stats_defects: 'Difetti (da rev./danneggiato)',
     stats_defect_pct: '% difetti',
     stats_weekly_title: 'Rilievi per settimana',
-    stats_defects_list_title: 'Elenco difetti',
-    stats_no_defects: 'Nessun difetto registrato',
     stats_defects_open: 'Difetti aperti',
     stats_closure_pct: '% chiusura',
     status_open: 'Aperto',
@@ -166,21 +149,6 @@ const TRANSLATIONS = {
     login_password_ph: 'Password',
     login_btn: 'Log in',
     login_err_missing: 'Enter username and password',
-    scan_hint_idle: 'Tap the button to take a photo of the QR code',
-    scan_hint_scanning: 'Analyzing photo...',
-    scan_hint_tip: 'Move the phone closer or further away and make sure there is good light',
-    scan_hint_no_code_found: 'No QR code found in the photo, try again (get closer and make sure it is in focus)',
-    camera_flip_title: 'Switch camera',
-    scan_hint_camera_error: 'Error: ',
-    scan_btn: 'Scan QR',
-    scan_btn_scanning: 'Scanning...',
-    paste_step1: 'Open the phone Camera (or Google Lens) and point it at the QR code on the equipment',
-    paste_step2: 'Tap the recognized text to copy it',
-    paste_step3: 'Come back here, paste the code and continue',
-    paste_ph: 'Paste the code here (e.g. 45650-00400-2458)',
-    paste_continue_btn: 'Continue',
-    paste_err_empty: 'Paste the code read by the camera first',
-    scan_btn_alt: 'Try automatic scan from photo instead',
     confirm_cancel: 'Cancel',
     confirm_title: 'New asset',
     confirm_save: 'Save',
@@ -226,8 +194,6 @@ const TRANSLATIONS = {
     stats_defects: 'Defects (needs review/damaged)',
     stats_defect_pct: '% defects',
     stats_weekly_title: 'Findings per week',
-    stats_defects_list_title: 'Defects list',
-    stats_no_defects: 'No defects logged',
     stats_defects_open: 'Open defects',
     stats_closure_pct: '% closed',
     status_open: 'Open',
@@ -432,7 +398,12 @@ const BACKEND_ERR_MAP = {
   'Campi obbligatori mancanti (Pipe N°, ITP Step, Condizione)': { it: 'Campi obbligatori mancanti (Pipe N°, ITP Step, Condizione)', en: 'Missing required fields (Pipe No., ITP Step, Condition)' },
   'Solo admin': { it: 'Solo admin', en: 'Admins only' },
   'Campi mancanti': { it: 'Campi mancanti', en: 'Missing fields' },
-  'Record non trovato': { it: 'Record non trovato', en: 'Record not found' }
+  'Record non trovato': { it: 'Record non trovato', en: 'Record not found' },
+  'Nota di chiusura obbligatoria': { it: 'Nota di chiusura obbligatoria', en: 'Closure note required' },
+  'Conferma ri-collaudo obbligatoria': { it: 'Conferma ri-collaudo obbligatoria', en: 'Retest confirmation required' },
+  'Stato non valido': { it: 'Stato non valido', en: 'Invalid status' },
+  'Nome ordine mancante': { it: 'Nome ordine mancante', en: 'Order name missing' },
+  'Ordine non trovato': { it: 'Ordine non trovato', en: 'Order not found' }
 };
 
 const CONDITION_CODES = ['excellent', 'good', 'needs-review', 'damaged'];
