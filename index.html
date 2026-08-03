@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=38">
+<link rel="stylesheet" href="styles.css?v=39">
 </head>
 <body>
 <div id="app">
@@ -304,6 +304,11 @@
     <div class="lookup-sub" id="fi-tally-sub">-</div>
     <div class="empty-state hidden" id="fi-tally-empty" data-i18n="fi_tally_empty">Nessuna Tally List caricata dal tool desktop.</div>
     <div class="fi-tally-banner hidden" id="fi-tally-banner"></div>
+    <div class="fi-tally-summary hidden" id="fi-tally-summary">
+      <div class="fi-tally-summary-icon">✅</div>
+      <div class="fi-tally-summary-text" id="fi-tally-summary-text"></div>
+      <button type="button" class="link-btn" id="fi-tally-show-detail-btn" data-i18n="fi_tally_show_detail">Mostra elenco dettagliato</button>
+    </div>
     <div class="fi-tally-list" id="fi-tally-list"></div>
   </section>
 
@@ -394,6 +399,6 @@
   </div>
 </div>
 
-<script src="app.js?v=64"></script>
+<script src="app.js?v=65"></script>
 </body>
 </html>

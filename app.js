@@ -1,5 +1,5 @@
 const API_BASE = 'https://qr-scanner-api.fanatics.workers.dev';
-const APP_VERSION = 64;
+const APP_VERSION = 65;
 
 const TRANSLATIONS = {
   it: {
@@ -142,6 +142,8 @@ const TRANSLATIONS = {
     fi_tally_reason_ph: 'Motivo dello scarto',
     fi_tally_reason_required: 'Il motivo dello scarto è obbligatorio.',
     fi_tally_confirm_reject_btn: 'Conferma scarto',
+    fi_tally_summary: '{certNo} completata — {accepted} accettati, {rejected} scartati',
+    fi_tally_show_detail: 'Mostra elenco dettagliato',
     os_total: 'Tubi tracciati',
     os_complete_pct: 'Completati (ultimo step)',
     os_funnel_title: 'Imbuto produzione',
@@ -316,6 +318,8 @@ const TRANSLATIONS = {
     fi_tally_reason_ph: 'Reason for rejection',
     fi_tally_reason_required: 'The rejection reason is required.',
     fi_tally_confirm_reject_btn: 'Confirm rejection',
+    fi_tally_summary: '{certNo} completed — {accepted} accepted, {rejected} rejected',
+    fi_tally_show_detail: 'Show detailed list',
     os_total: 'Pipes tracked',
     os_complete_pct: 'Completed (last step)',
     os_funnel_title: 'Production funnel',
@@ -513,6 +517,7 @@ const state = {
   productionByPipe: new Map(),
   ambiguousPipes: new Set(),
   fiTallyEntries: [],
+  fiTallyExpanded: false,
   editingId: null,
   orders: [],
   currentOrderId: localStorage.getItem('qr_order_id') || 'default',
@@ -2075,14 +2080,39 @@ async function loadFiTally() {
   empty.classList.add('hidden');
   el('fi-tally-sub').textContent = `${latestCertNo} — Item ${entries[0].itemNo} — ${entries[0].dateStr}`;
 
+  // Ogni apertura della schermata riparte "chiusa" se la lista e' completa - solo il
+  // tocco su "Mostra elenco dettagliato" la riapre per quella visita.
+  state.fiTallyExpanded = false;
   renderFiTallyList(entries);
 }
+
+el('fi-tally-show-detail-btn').addEventListener('click', () => {
+  state.fiTallyExpanded = true;
+  renderFiTallyList(state.fiTallyEntries.filter(e => e.certNo === state.fiTallyEntries[0].certNo));
+});
 
 function renderFiTallyList(entries) {
   const list = el('fi-tally-list');
   const banner = el('fi-tally-banner');
-  list.innerHTML = '';
+  const summary = el('fi-tally-summary');
   const pending = entries.filter(e => !e.esito).length;
+
+  // Tally List completamente valutata: la schermata "si chiude" da sola su un
+  // riepilogo compatto invece di lasciare 46 righe tutte verdi/rosse in vista -
+  // quando arriva una Tally List nuova (con righe ancora da valutare) si riapre
+  // automaticamente sulla lista interattiva, nessuna azione manuale richiesta.
+  if (pending === 0 && entries.length && !state.fiTallyExpanded) {
+    const accepted = entries.filter(e => e.esito === 'accepted').length;
+    const rejected = entries.filter(e => e.esito === 'rejected').length;
+    el('fi-tally-summary-text').textContent = t('fi_tally_summary')
+      .replace('{certNo}', entries[0].certNo).replace('{accepted}', accepted).replace('{rejected}', rejected);
+    summary.classList.remove('hidden');
+    list.innerHTML = '';
+    banner.classList.add('hidden');
+    return;
+  }
+  summary.classList.add('hidden');
+  list.innerHTML = '';
   const done = entries.length - pending;
   banner.classList.remove('hidden');
   banner.textContent = t('fi_tally_banner').replace('{pending}', pending).replace('{done}', done);
