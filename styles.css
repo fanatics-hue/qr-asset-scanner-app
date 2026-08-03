@@ -424,10 +424,10 @@ textarea.field { resize: vertical; font-family: inherit; }
 .fi-tally-row .sub { font-size: 11.5px; color: var(--text-tertiary); margin-top: 1px; }
 .fi-tally-row .warn { font-size: 11px; color: var(--red); font-weight: 700; margin-top: 2px; }
 .fi-tally-row .who { font-size: 10px; color: var(--text-tertiary); margin-top: 2px; }
-.fi-flag-btns { display: flex; gap: 6px; flex-shrink: 0; }
+.fi-flag-btns { display: flex; gap: 16px; flex-shrink: 0; }
 .fi-flag-btn {
-  width: 32px; height: 32px; border-radius: 9px; display: flex; align-items: center; justify-content: center;
-  font-size: 15px; font-weight: 800; border: 1px solid var(--border); background: var(--bg-input);
+  width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center;
+  font-size: 16px; font-weight: 800; border: 1px solid var(--border); background: var(--bg-input);
   color: var(--text-secondary); cursor: pointer;
 }
 .fi-flag-btn.accept { color: var(--green); border-color: var(--green); }
