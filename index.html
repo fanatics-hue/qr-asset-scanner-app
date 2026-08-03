@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=39">
+<link rel="stylesheet" href="styles.css?v=40">
 </head>
 <body>
 <div id="app">
@@ -123,12 +123,7 @@
         <span class="order-pill-icon">▾</span>
       </button>
       <div class="toggles">
-        <button id="fi-tally-btn" class="admin-gear" data-i18n-title="fi_tally_title" title="Tally List FI">&#127937;</button>
-        <button id="lookup-btn" class="admin-gear" data-i18n-title="lookup_title" title="Cerca tubo">&#128269;</button>
-        <button id="order-status-btn" class="admin-gear" data-i18n-title="order_status_title" title="Stato Ordine">&#128678;</button>
-        <button id="stats-btn" class="admin-gear" data-i18n-title="stats_title" title="Statistiche">&#128202;</button>
-        <button id="help-btn" class="admin-gear" data-i18n-title="help_title" title="Guida">?</button>
-        <button id="admin-gear" class="admin-gear hidden" data-i18n-title="admin_title" title="Gestione ispettori">&#9881;</button>
+        <button id="tools-menu-btn" class="admin-gear" data-i18n-title="tools_menu_title" title="Strumenti">&#8942;</button>
       </div>
     </div>
     <div id="sync-banner" class="sync-banner hidden"><span class="sync-dot"></span><span id="sync-banner-text"></span></div>
@@ -386,6 +381,22 @@
 
 </div>
 
+<!-- Menu strumenti -->
+<div id="tools-sheet" class="sheet-overlay hidden">
+  <div class="sheet-card">
+    <div class="sheet-title" data-i18n="tools_sheet_title">Strumenti</div>
+    <div class="tools-list">
+      <button id="fi-tally-btn" class="tools-row" type="button"><span class="tools-row-icon">&#127937;</span><span class="tools-row-name" data-i18n="fi_tally_title">Tally List FI</span></button>
+      <button id="lookup-btn" class="tools-row" type="button"><span class="tools-row-icon">&#128269;</span><span class="tools-row-name" data-i18n="lookup_title">Cerca tubo</span></button>
+      <button id="order-status-btn" class="tools-row" type="button"><span class="tools-row-icon">&#128678;</span><span class="tools-row-name" data-i18n="order_status_title">Stato Ordine</span></button>
+      <button id="stats-btn" class="tools-row" type="button"><span class="tools-row-icon">&#128202;</span><span class="tools-row-name" data-i18n="stats_title">Statistiche</span></button>
+      <button id="help-btn" class="tools-row" type="button"><span class="tools-row-icon">?</span><span class="tools-row-name" data-i18n="help_title">Guida</span></button>
+      <button id="admin-gear" class="tools-row hidden" type="button"><span class="tools-row-icon">&#9881;</span><span class="tools-row-name" data-i18n="admin_title">Gestione ispettori</span></button>
+    </div>
+    <button id="tools-sheet-close" class="link-btn" data-i18n="cancel_btn">Annulla</button>
+  </div>
+</div>
+
 <!-- Selettore ordine -->
 <div id="order-sheet" class="sheet-overlay hidden">
   <div class="sheet-card">
@@ -399,6 +410,6 @@
   </div>
 </div>
 
-<script src="app.js?v=65"></script>
+<script src="app.js?v=66"></script>
 </body>
 </html>

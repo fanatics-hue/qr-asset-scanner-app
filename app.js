@@ -1,5 +1,5 @@
 const API_BASE = 'https://qr-scanner-api.fanatics.workers.dev';
-const APP_VERSION = 65;
+const APP_VERSION = 66;
 
 const TRANSLATIONS = {
   it: {
@@ -117,6 +117,8 @@ const TRANSLATIONS = {
     stats_by_disposition: 'Per disposizione',
     order_pill_label: 'Progetto',
     order_sheet_title: 'Progetto',
+    tools_menu_title: 'Strumenti',
+    tools_sheet_title: 'Strumenti',
     order_new_ph: 'Nome nuovo ordine',
     order_new_btn: '+ Nuovo ordine',
     order_status_title: 'Stato Ordine',
@@ -293,6 +295,8 @@ const TRANSLATIONS = {
     stats_by_disposition: 'By disposition',
     order_pill_label: 'Project',
     order_sheet_title: 'Project',
+    tools_menu_title: 'Tools',
+    tools_sheet_title: 'Tools',
     order_new_ph: 'New order name',
     order_new_btn: '+ New order',
     order_status_title: 'Order Status',
@@ -755,6 +759,18 @@ el('order-pill').addEventListener('click', () => {
 });
 el('order-sheet-close').addEventListener('click', () => el('order-sheet').classList.add('hidden'));
 el('order-sheet').addEventListener('click', (e) => { if (e.target.id === 'order-sheet') el('order-sheet').classList.add('hidden'); });
+
+// Menu "Strumenti": un solo pulsante nella barra in alto invece delle 5-6 icone
+// separate di prima (Tally List FI/Cerca tubo/Stato Ordine/Statistiche/Guida/
+// Gestione ispettori) - i pulsanti dentro il pannello hanno mantenuto gli stessi
+// id di prima, quindi i loro click handler (registrati altrove) restano invariati;
+// qui si aggiunge solo apertura/chiusura del pannello.
+el('tools-menu-btn').addEventListener('click', () => el('tools-sheet').classList.remove('hidden'));
+el('tools-sheet-close').addEventListener('click', () => el('tools-sheet').classList.add('hidden'));
+el('tools-sheet').addEventListener('click', (e) => { if (e.target.id === 'tools-sheet') el('tools-sheet').classList.add('hidden'); });
+document.querySelectorAll('#tools-sheet .tools-row').forEach(btn => {
+  btn.addEventListener('click', () => el('tools-sheet').classList.add('hidden'));
+});
 el('order-new-btn').addEventListener('click', async () => {
   const name = el('order-new-input').value.trim();
   if (!name) return;
