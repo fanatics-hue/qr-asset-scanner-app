@@ -1,5 +1,5 @@
 const API_BASE = 'https://qr-scanner-api.fanatics.workers.dev';
-const APP_VERSION = 68;
+const APP_VERSION = 69;
 
 const TRANSLATIONS = {
   it: {
@@ -68,6 +68,10 @@ const TRANSLATIONS = {
     admin_empty: 'Nessun ispettore ancora aggiunto',
     admin_role_admin: 'Admin',
     admin_role_inspector: 'Ispettore',
+    admin_role_viewer: 'Visitatore',
+    admin_role_label: 'Ruolo',
+    viewer_banner: 'Modalità sola consultazione',
+    viewer_readonly_tag: 'sola lettura',
     remove: 'Rimuovi',
     deactivate: 'Disattiva',
     reactivate: 'Riattiva',
@@ -249,6 +253,10 @@ const TRANSLATIONS = {
     admin_empty: 'No inspectors added yet',
     admin_role_admin: 'Admin',
     admin_role_inspector: 'Inspector',
+    admin_role_viewer: 'Viewer',
+    admin_role_label: 'Role',
+    viewer_banner: 'Read-only mode',
+    viewer_readonly_tag: 'read-only',
     remove: 'Remove',
     deactivate: 'Deactivate',
     reactivate: 'Reactivate',
@@ -414,7 +422,7 @@ const HELP_CONTENT = {
       <div class="help-p">Pulsante 📊 nel Dataset: schede totali, difetti aperti, % chiusura, giorni medi di chiusura, quanti difetti restano aperti da oltre 5 giorni, un grafico settimanale (ultime 8 settimane) e la ripartizione per tipo difetto/disposizione. Per vedere i singoli difetti uno per uno, usa il filtro "Solo difetti" nel Dataset invece di cercarli qui.</div>
     </div>
     <div class="card"><div class="card-header"><span class="section-title">Gestione ispettori (solo admin)</span></div>
-      <div class="help-p">Icona ingranaggio nel Dataset: aggiungi ispettori con username/nome/password. "Disattiva" non cancella l'account — lo sposta nello "Storico ispettori" (resta la traccia di chi ha lavorato sull'ordine) e blocca subito l'accesso, anche se l'ispettore aveva ancora una sessione aperta sul telefono; "Riattiva" lo riporta attivo. A fine ordine, "Fine ordine: disattiva tutti" disattiva in un colpo solo l'intera squadra (mai il tuo account admin).</div>
+      <div class="help-p">Icona ingranaggio nel Dataset: aggiungi ispettori con username/nome/password. Scegli il ruolo con i due tasti "Ispettore"/"Visitatore": un Visitatore vede tutto (Dataset, Tally List FI, Statistiche, ecc.) ma non può registrare nuovi asset, modificare o chiudere difetti, né flaggare la Tally List FI — vede l'etichetta "Modalità sola consultazione" e i pulsanti di scrittura restano nascosti. "Disattiva" non cancella l'account — lo sposta nello "Storico ispettori" (resta la traccia di chi ha lavorato sull'ordine) e blocca subito l'accesso, anche se l'ispettore aveva ancora una sessione aperta sul telefono; "Riattiva" lo riporta attivo. A fine ordine, "Fine ordine: disattiva tutti" disattiva in un colpo solo l'intera squadra (mai il tuo account admin).</div>
     </div>
     <div class="card"><div class="card-header"><span class="section-title">Lingua e tema</span></div>
       <div class="help-p">Pulsante "EN"/"IT" cambia lingua. Pulsante ☽/☀ forza il tema chiaro o scuro (di default segue il telefono).</div>
@@ -473,7 +481,7 @@ const HELP_CONTENT = {
       <div class="help-p">📊 button in the Dataset: total records, open defects, % closed, average days to close, how many defects have been open for more than 5 days, an 8-week chart, and a breakdown by defect type/disposition. To browse individual defects, use the "Defects only" filter in the Dataset instead of looking for them here.</div>
     </div>
     <div class="card"><div class="card-header"><span class="section-title">Inspector management (admin only)</span></div>
-      <div class="help-p">Gear icon in the Dataset: add inspectors with username/name/password. "Deactivate" doesn't delete the account — it moves it into "Inspector history" (keeping a record of who worked on the order) and immediately blocks access, even if the inspector still had an open session on their phone; "Reactivate" brings it back. At the end of an order, "End of order: deactivate all" deactivates the whole team in one go (never your own admin account).</div>
+      <div class="help-p">Gear icon in the Dataset: add inspectors with username/name/password. Pick the role with the "Inspector"/"Viewer" buttons: a Viewer sees everything (Dataset, Tally List FI, Statistics, etc.) but can't register new assets, edit or close defects, or flag the Tally List FI — they see a "Read-only mode" label and write buttons stay hidden. "Deactivate" doesn't delete the account — it moves it into "Inspector history" (keeping a record of who worked on the order) and immediately blocks access, even if the inspector still had an open session on their phone; "Reactivate" brings it back. At the end of an order, "End of order: deactivate all" deactivates the whole team in one go (never your own admin account).</div>
     </div>
     <div class="card"><div class="card-header"><span class="section-title">Language and theme</span></div>
       <div class="help-p">"EN"/"IT" button switches language. ☽/☀ button forces light or dark theme (follows the phone by default).</div>
@@ -635,6 +643,16 @@ function loadSession() {
   const raw = localStorage.getItem('qr_session');
   if (raw) state.session = JSON.parse(raw);
 }
+// Visitatore: sola consultazione, nessuna creazione/modifica/chiusura/flag - vedi anche
+// la validazione server-side ripetuta in worker.js su ogni endpoint di scrittura.
+function isViewer() {
+  return !!(state.session && state.session.role === 'viewer');
+}
+function applyViewerRestrictions() {
+  const viewer = isViewer();
+  el('viewer-banner').classList.toggle('hidden', !viewer);
+  el('tab-scan-btn').classList.toggle('hidden', viewer);
+}
 
 // ---------------- Login ----------------
 el('login-btn').addEventListener('click', async () => {
@@ -654,6 +672,7 @@ el('login-btn').addEventListener('click', async () => {
 });
 
 async function afterLogin() {
+  applyViewerRestrictions();
   try {
     state.meta = await api('/api/meta');
   } catch (e) { state.meta = { itpSteps: [], conditions: CONDITION_CODES }; }
@@ -1546,6 +1565,7 @@ function openDetail(id) {
     el('d-status-badge').className = 'badge badge-status-' + (isOpen ? 'open' : 'closed');
     el('d-status-toggle').textContent = t(isOpen ? 'status_close_btn' : 'status_reopen_btn');
     el('d-status-toggle').className = 'btn-status-toggle ' + (isOpen ? 'btn-status-close' : 'btn-status-reopen');
+    el('d-status-toggle').classList.toggle('hidden', isViewer());
     if (isOpen && rec.scannedAt) {
       const days = Math.floor((Date.now() - new Date(rec.scannedAt).getTime()) / 86400000);
       if (days >= 1) { el('d-aging').textContent = '● ' + days + 'g'; el('d-aging').classList.remove('hidden'); }
@@ -1557,7 +1577,7 @@ function openDetail(id) {
     el('d-status-row').classList.add('hidden');
   }
   renderTimeline(rec);
-  el('detail-edit-btn').classList.remove('hidden');
+  el('detail-edit-btn').classList.toggle('hidden', isViewer());
   showScreen('detail');
 }
 
@@ -1994,7 +2014,7 @@ function renderLookup() {
     return;
   }
   empty.classList.add('hidden');
-  registerBtn.classList.remove('hidden');
+  registerBtn.classList.toggle('hidden', isViewer());
   const normPipe = normProdNum(q);
   const match = state.productionByPipe.get(normPipe);
   const isAmbiguous = !match && state.ambiguousPipes.has(normPipe);
@@ -2198,10 +2218,12 @@ function renderFiTallyList(entries) {
         ${warn ? `<div class="warn">${escapeHtml(t('fi_tally_warn').replace('{label}', warn))}</div>` : ''}
         ${whoLine}
       </div>
-      <div class="fi-flag-btns">
+      ${isViewer()
+        ? `<span class="viewonly-tag">${escapeHtml(t('viewer_readonly_tag'))}</span>`
+        : `<div class="fi-flag-btns">
         <button type="button" class="fi-flag-btn accept${e.esito === 'accepted' ? ' on' : ''}" data-id="${escapeHtml(e.id)}" data-esito="accepted">✓</button>
         <button type="button" class="fi-flag-btn reject${e.esito === 'rejected' ? ' on' : ''}" data-id="${escapeHtml(e.id)}" data-esito="rejected">✗</button>
-      </div>`;
+      </div>`}`;
     list.appendChild(row);
 
     // Pannello motivo scarto, nascosto finche' non si tocca ✗ - stesso stile della
@@ -2309,7 +2331,7 @@ function renderUsers(users) {
       row.innerHTML = `
         <div>
           <div style="font-weight:600">${escapeHtml(u.name)} <span style="color:var(--text-secondary);font-weight:400">(${escapeHtml(u.username)})</span></div>
-          <div style="font-size:12px;color:var(--text-secondary)">${u.role === 'admin' ? escapeHtml(t('admin_role_admin')) : escapeHtml(t('admin_role_inspector'))}</div>
+          <div style="font-size:12px;color:var(--text-secondary)">${u.role === 'admin' ? escapeHtml(t('admin_role_admin')) : u.role === 'viewer' ? escapeHtml(t('admin_role_viewer')) : escapeHtml(t('admin_role_inspector'))}</div>
         </div>
         <button class="danger-link" data-username="${escapeHtml(u.username)}">${escapeHtml(t('deactivate'))}</button>`;
       row.querySelector('.danger-link').addEventListener('click', async (e) => {
@@ -2351,14 +2373,30 @@ function renderUsers(users) {
   }
 }
 
+// Ruolo scelto alla creazione (chip Ispettore/Visitatore) - la creazione di un admin
+// resta fuori da questa UI, come gia' era prima di introdurre il Visitatore.
+let newUserRole = 'inspector';
+el('a-role-inspector').addEventListener('click', () => {
+  newUserRole = 'inspector';
+  el('a-role-inspector').classList.add('active');
+  el('a-role-viewer').classList.remove('active');
+});
+el('a-role-viewer').addEventListener('click', () => {
+  newUserRole = 'viewer';
+  el('a-role-viewer').classList.add('active');
+  el('a-role-inspector').classList.remove('active');
+});
 el('a-add-btn').addEventListener('click', async () => {
   const username = el('a-username').value.trim();
   const name = el('a-name').value.trim();
   const password = el('a-password').value;
   if (!username || !name || !password) { alert(t('err_fill_all')); return; }
   try {
-    await api('/api/admin/users', { method: 'POST', body: JSON.stringify({ username, name, password, role: 'inspector' }) });
+    await api('/api/admin/users', { method: 'POST', body: JSON.stringify({ username, name, password, role: newUserRole }) });
     el('a-username').value = ''; el('a-name').value = ''; el('a-password').value = '';
+    newUserRole = 'inspector';
+    el('a-role-inspector').classList.add('active');
+    el('a-role-viewer').classList.remove('active');
     await loadUsers();
   } catch (err) { alert(t('err_generic') + err.message); }
 });

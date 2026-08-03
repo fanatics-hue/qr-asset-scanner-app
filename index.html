@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=41">
+<link rel="stylesheet" href="styles.css?v=42">
 </head>
 <body>
 <div id="app">
@@ -127,6 +127,7 @@
       </div>
     </div>
     <div id="sync-banner" class="sync-banner hidden"><span class="sync-dot"></span><span id="sync-banner-text"></span></div>
+    <div id="viewer-banner" class="viewer-banner hidden"><span class="viewer-banner-dot"></span><span data-i18n="viewer_banner">Modalità sola consultazione</span></div>
     <div class="dataset-title-row">
       <div class="dataset-title-ic">&#9638;</div>
       <div class="dataset-title-txt">
@@ -143,7 +144,7 @@
     </div>
     <div class="dataset-list" id="dataset-list"></div>
     <nav class="tab-bar">
-      <button class="tab-cap" data-tab="scan" type="button">
+      <button id="tab-scan-btn" class="tab-cap" data-tab="scan" type="button">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         <span data-i18n="tab_scan">Nuovo asset</span>
       </button>
@@ -227,6 +228,13 @@
       <div class="row"><label>Username</label><input id="a-username" class="field" style="text-align:left" data-i18n-ph="admin_username_ph"></div>
       <div class="row"><label data-i18n="admin_name">Nome</label><input id="a-name" class="field" style="text-align:left" data-i18n-ph="admin_name_ph"></div>
       <div class="row"><label>Password</label><input id="a-password" class="field" style="text-align:left" data-i18n-ph="admin_password_ph"></div>
+      <div class="row">
+        <label data-i18n="admin_role_label">Ruolo</label>
+        <div style="display:flex;gap:8px">
+          <button type="button" class="filter-chip active" id="a-role-inspector" data-role="inspector" data-i18n="admin_role_inspector">Ispettore</button>
+          <button type="button" class="filter-chip" id="a-role-viewer" data-role="viewer" data-i18n="admin_role_viewer">Visitatore</button>
+        </div>
+      </div>
       <div class="row" style="justify-content:flex-end">
         <button id="a-add-btn" class="btn-primary" style="width:auto;padding:0 20px;height:40px" data-i18n="admin_add_btn">Aggiungi ispettore</button>
       </div>
@@ -414,6 +422,6 @@
   </div>
 </div>
 
-<script src="app.js?v=68"></script>
+<script src="app.js?v=69"></script>
 </body>
 </html>

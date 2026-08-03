@@ -425,6 +425,7 @@ textarea.field { resize: vertical; font-family: inherit; }
 .fi-tally-row .warn { font-size: 11px; color: var(--red); font-weight: 700; margin-top: 2px; }
 .fi-tally-row .who { font-size: 10px; color: var(--text-tertiary); margin-top: 2px; }
 .fi-flag-btns { display: flex; gap: 16px; flex-shrink: 0; }
+.viewonly-tag { font-size: 10.5px; color: var(--text-tertiary); flex-shrink: 0; }
 .fi-flag-btn {
   width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center;
   font-size: 16px; font-weight: 800; border: 1px solid var(--border); background: var(--bg-input);
@@ -643,6 +644,13 @@ textarea.field { resize: vertical; font-family: inherit; }
 @keyframes sync-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
 
 .badge-queued { color: var(--orange); background: var(--orange-bg); }
+
+.viewer-banner {
+  display: flex; align-items: center; gap: 8px; margin: 0 16px 10px;
+  padding: 8px 12px; border-radius: 10px; font-size: 12px; font-weight: 600;
+  background: var(--bg-input); color: var(--text-secondary); border: 1px solid var(--border);
+}
+.viewer-banner-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex: none; }
 
 /* ---------- Stato Ordine: avanzamento per fase (Item singolo, da "Riepilogo per Fase") ---------- */
 .os-item-header { padding: 12px 14px; }
