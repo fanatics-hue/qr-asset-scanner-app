@@ -1,5 +1,5 @@
 const API_BASE = 'https://qr-scanner-api.fanatics.workers.dev';
-const APP_VERSION = 66;
+const APP_VERSION = 67;
 
 const TRANSLATIONS = {
   it: {
@@ -146,6 +146,9 @@ const TRANSLATIONS = {
     fi_tally_confirm_reject_btn: 'Conferma scarto',
     fi_tally_summary: '{certNo} completata — {accepted} accettati, {rejected} scartati',
     fi_tally_show_detail: 'Mostra elenco dettagliato',
+    fi_tally_weekly_title: 'Riepilogo settimanale',
+    fi_tally_week_label: 'Settimana {week}/{year}',
+    fi_tally_weekly_empty: 'Nessun tubo ancora valutato.',
     os_total: 'Tubi tracciati',
     os_complete_pct: 'Completati (ultimo step)',
     os_funnel_title: 'Imbuto produzione',
@@ -324,6 +327,9 @@ const TRANSLATIONS = {
     fi_tally_confirm_reject_btn: 'Confirm rejection',
     fi_tally_summary: '{certNo} completed — {accepted} accepted, {rejected} rejected',
     fi_tally_show_detail: 'Show detailed list',
+    fi_tally_weekly_title: 'Weekly summary',
+    fi_tally_week_label: 'Week {week}/{year}',
+    fi_tally_weekly_empty: 'No pipes evaluated yet.',
     os_total: 'Pipes tracked',
     os_complete_pct: 'Completed (last step)',
     os_funnel_title: 'Production funnel',
@@ -2064,6 +2070,46 @@ function fiDefectWarning(pipeNo) {
   return parts.join(' / ');
 }
 
+function parseDdMmYyyy(s) {
+  const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(s || '');
+  if (!m) return null;
+  return new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1]));
+}
+
+// Riepilogo accettati/scartati per settimana ISO (stessa numerazione gia' usata in
+// Statistiche) su TUTTO lo storico caricato (non solo l'ultima Tally List) - la
+// Tally List viene emessa dal lunedi' al venerdi', quindi la settimana e' il livello
+// naturale per vedere un totale invece di una lista al giorno.
+function renderFiTallyWeeklySummary() {
+  const container = el('fi-tally-weekly-list');
+  const weekMap = new Map();
+  (state.fiTallyEntries || []).forEach(e => {
+    if (!e.esito) return;
+    const d = parseDdMmYyyy(e.dateStr);
+    if (!d) return;
+    const { week, year } = isoWeekNumber(d);
+    const key = year + '-' + week;
+    if (!weekMap.has(key)) weekMap.set(key, { week, year, accepted: 0, rejected: 0 });
+    const w = weekMap.get(key);
+    if (e.esito === 'accepted') w.accepted++;
+    else if (e.esito === 'rejected') w.rejected++;
+  });
+  const weeks = Array.from(weekMap.values()).sort((a, b) => (b.year - a.year) || (b.week - a.week));
+  container.innerHTML = '';
+  if (!weeks.length) {
+    container.innerHTML = `<div class="row">${escapeHtml(t('fi_tally_weekly_empty'))}</div>`;
+    return;
+  }
+  weeks.forEach(w => {
+    const row = document.createElement('div');
+    row.className = 'fi-tally-week-row';
+    row.innerHTML = `
+      <span class="fi-tally-week-label">${escapeHtml(t('fi_tally_week_label').replace('{week}', w.week).replace('{year}', w.year))}</span>
+      <span class="fi-tally-week-counts"><span class="accepted">✓ ${w.accepted}</span><span class="rejected">✗ ${w.rejected}</span></span>`;
+    container.appendChild(row);
+  });
+}
+
 async function loadFiTally() {
   const empty = el('fi-tally-empty');
   const banner = el('fi-tally-banner');
@@ -2078,6 +2124,7 @@ async function loadFiTally() {
     banner.classList.add('hidden');
     return;
   }
+  renderFiTallyWeeklySummary();
   if (!state.fiTallyEntries.length) {
     el('fi-tally-sub').textContent = '';
     empty.classList.remove('hidden');
@@ -2193,6 +2240,7 @@ function renderFiTallyList(entries) {
         });
         const idx = state.fiTallyEntries.findIndex(x => x.id === id);
         if (idx >= 0) state.fiTallyEntries[idx] = entry;
+        renderFiTallyWeeklySummary();
         renderFiTallyList(state.fiTallyEntries.filter(e => e.certNo === entry.certNo));
       } catch (err) {
         alert(t('err_generic') + err.message);
@@ -2219,6 +2267,7 @@ function renderFiTallyList(entries) {
         });
         const idx = state.fiTallyEntries.findIndex(x => x.id === id);
         if (idx >= 0) state.fiTallyEntries[idx] = entry;
+        renderFiTallyWeeklySummary();
         renderFiTallyList(state.fiTallyEntries.filter(e => e.certNo === entry.certNo));
       } catch (err) {
         alert(t('err_generic') + err.message);
