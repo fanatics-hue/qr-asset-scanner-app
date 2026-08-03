@@ -357,9 +357,9 @@ textarea.field { resize: vertical; font-family: inherit; }
    Usata identica su Dettaglio/Statistiche/Stato Ordine/Guida/Admin: stesso ruolo ovunque. */
 .back-link {
   display: inline-flex; align-items: center; gap: 3px;
-  background: var(--bg-input); border: 1px solid var(--border); border-radius: 14px;
+  background: var(--bg-input); border: 1px solid var(--border); border-radius: 999px;
   color: var(--text-primary); font-family: var(--font-body); font-size: 13px; font-weight: 600;
-  padding: 7px 13px 7px 10px; margin: 10px 0; cursor: pointer;
+  padding: 7px 15px 7px 12px; margin: 10px 0; cursor: pointer;
 }
 .detail-top-row { display: flex; align-items: center; justify-content: space-between; }
 .detail-top-row .back-link { margin: 10px 0; }
