@@ -1,5 +1,5 @@
 const API_BASE = 'https://qr-scanner-api.fanatics.workers.dev';
-const APP_VERSION = 63;
+const APP_VERSION = 64;
 
 const TRANSLATIONS = {
   it: {
@@ -139,6 +139,9 @@ const TRANSLATIONS = {
     fi_tally_who: '{esito} da {by}, {when}',
     fi_tally_esito_accepted: 'Accettato',
     fi_tally_esito_rejected: 'Scartato',
+    fi_tally_reason_ph: 'Motivo dello scarto',
+    fi_tally_reason_required: 'Il motivo dello scarto è obbligatorio.',
+    fi_tally_confirm_reject_btn: 'Conferma scarto',
     os_total: 'Tubi tracciati',
     os_complete_pct: 'Completati (ultimo step)',
     os_funnel_title: 'Imbuto produzione',
@@ -310,6 +313,9 @@ const TRANSLATIONS = {
     fi_tally_who: '{esito} by {by}, {when}',
     fi_tally_esito_accepted: 'Accepted',
     fi_tally_esito_rejected: 'Rejected',
+    fi_tally_reason_ph: 'Reason for rejection',
+    fi_tally_reason_required: 'The rejection reason is required.',
+    fi_tally_confirm_reject_btn: 'Confirm rejection',
     os_total: 'Pipes tracked',
     os_complete_pct: 'Completed (last step)',
     os_funnel_title: 'Production funnel',
@@ -382,7 +388,7 @@ const HELP_CONTENT = {
       <div class="help-p">La striscia colorata a sinistra indica la condizione: verde = ottimo, blu = buono, arancio = da revisionare, rosso = danneggiato. Cerca per Pipe N°, Item N°, CS Heat o CRA Heat, oppure usa il filtro "Tutti / Solo difetti" per vedere solo le schede Da revisionare/Danneggiate. Solo l'admin può eliminare una scheda (cestino).</div>
     </div>
     <div class="card"><div class="card-header"><span class="section-title">Tally List FI</span></div>
-      <div class="help-p">Pulsante 🏁 nel Dataset: mostra l'ultima Tally List di Final Inspection caricata dal tool desktop (Cert-No, Item, data), con l'elenco tubi da valutare. Tocca ✓ o ✗ su ogni tubo per segnarlo Accettato o Scartato - qualunque ispettore loggato può farlo, si vede subito chi e quando. Se un tubo ha un difetto ancora aperto registrato in questa stessa app, compare un avviso arancione prima di decidere. L'esito resta salvato per sempre (anche per riscontri futuri), e il tool desktop può riscaricarlo per tenerlo anche nell'archivio Excel.</div>
+      <div class="help-p">Pulsante 🏁 nel Dataset: mostra l'ultima Tally List di Final Inspection caricata dal tool desktop (Cert-No, Item, data), con l'elenco tubi da valutare. Tocca ✓ per Accettare (subito, nessuna conferma) o ✗ per Scartare (chiede prima una conferma, essendo la scelta più delicata) - qualunque ispettore loggato può farlo, si vede subito chi e quando. Se un tubo ha un difetto ancora aperto registrato in questa stessa app, compare un avviso arancione prima di decidere. L'esito resta salvato per sempre (anche per riscontri futuri), e il tool desktop può riscaricarlo per tenerlo anche nell'archivio Excel.</div>
     </div>
     <div class="card"><div class="card-header"><span class="section-title">Cerca tubo</span></div>
       <div class="help-p">Pulsante 🔍 nel Dataset: consulta un Pipe N° (dati produzione: Item N°, CS Heat, CRA Heat, Length, step ITP, avanzamento) e ti dice subito se è già stato registrato, con chi e quando, senza creare o modificare nessuna scheda. Utile per un controllo veloce prima di decidere se serve davvero un nuovo rilievo. Se vuoi comunque registrarlo, il pulsante "+ Registra questo asset" in fondo apre "Nuovo asset" già precompilato.</div>
@@ -441,7 +447,7 @@ const HELP_CONTENT = {
       <div class="help-p">The colored stripe on the left shows the condition: green = excellent, blue = good, orange = needs review, red = damaged. Search by Pipe No., Item No., CS Heat or CRA Heat, or use the "All / Defects only" filter to see just the Needs review/Damaged records. Only admins can delete a record (trash icon).</div>
     </div>
     <div class="card"><div class="card-header"><span class="section-title">Tally List FI</span></div>
-      <div class="help-p">🏁 button in the Dataset: shows the latest Final Inspection Tally List uploaded from the desktop tool (Cert-No, Item, date), with the list of pipes to evaluate. Tap ✓ or ✗ on each pipe to mark it Accepted or Rejected - any logged-in inspector can do this, and who/when is shown right away. If a pipe has a defect still open in this same app, an orange warning appears before you decide. The result is saved permanently (for future cross-checks too), and the desktop tool can re-download it to keep it in the Excel archive as well.</div>
+      <div class="help-p">🏁 button in the Dataset: shows the latest Final Inspection Tally List uploaded from the desktop tool (Cert-No, Item, date), with the list of pipes to evaluate. Tap ✓ to Accept (right away, no confirmation) or ✗ to Reject (asks for confirmation first, since it's the more consequential choice) - any logged-in inspector can do this, and who/when is shown right away. If a pipe has a defect still open in this same app, an orange warning appears before you decide. The result is saved permanently (for future cross-checks too), and the desktop tool can re-download it to keep it in the Excel archive as well.</div>
     </div>
     <div class="card"><div class="card-header"><span class="section-title">Pipe lookup</span></div>
       <div class="help-p">🔍 button in the Dataset: look up a Pipe N° (production data: Item No., CS Heat, CRA Heat, Length, ITP step, progress) and instantly see whether it's already been registered, by whom and when — without creating or changing any record. Handy for a quick check before deciding whether a new record is actually needed. If you do want to register it, the "+ Register this asset" button at the bottom opens "New asset" already pre-filled.</div>
@@ -2089,7 +2095,8 @@ function renderFiTallyList(entries) {
       ? `<div class="who">${escapeHtml(t('fi_tally_who')
           .replace('{esito}', t('fi_tally_esito_' + e.esito))
           .replace('{by}', e.flaggedBy || '-')
-          .replace('{when}', e.flaggedAt ? new Date(e.flaggedAt).toLocaleString(t('locale')) : '-'))}</div>`
+          .replace('{when}', e.flaggedAt ? new Date(e.flaggedAt).toLocaleString(t('locale')) : '-'))
+          + (e.esito === 'rejected' && e.reason ? ' — ' + escapeHtml(e.reason) : '')}</div>`
       : '';
     row.innerHTML = `
       <div>
@@ -2103,16 +2110,66 @@ function renderFiTallyList(entries) {
         <button type="button" class="fi-flag-btn reject${e.esito === 'rejected' ? ' on' : ''}" data-id="${escapeHtml(e.id)}" data-esito="rejected">✗</button>
       </div>`;
     list.appendChild(row);
+
+    // Pannello motivo scarto, nascosto finche' non si tocca ✗ - stesso stile della
+    // nota di chiusura obbligatoria gia' usata per i difetti (textarea + Annulla/Conferma).
+    const rejectPrompt = document.createElement('div');
+    rejectPrompt.className = 'fi-reject-prompt hidden';
+    rejectPrompt.id = 'fi-reject-prompt-' + e.id;
+    rejectPrompt.innerHTML = `
+      <textarea class="field" rows="2" data-i18n-ph="fi_tally_reason_ph" placeholder="Motivo dello scarto"></textarea>
+      <div class="fi-reject-actions">
+        <button type="button" class="link-btn" data-cancel-id="${escapeHtml(e.id)}" data-i18n="cancel_btn">Annulla</button>
+        <button type="button" class="btn-status-toggle btn-status-close" data-confirm-id="${escapeHtml(e.id)}" data-i18n="fi_tally_confirm_reject_btn">Conferma scarto</button>
+      </div>`;
+    list.appendChild(rejectPrompt);
   });
 
   list.querySelectorAll('.fi-flag-btn').forEach(btn => {
     btn.addEventListener('click', async () => {
       const id = btn.dataset.id;
       const esito = btn.dataset.esito;
+      // "Scarta" ha conseguenze piu' serie di "Accetta" (esclude il tubo dalla Final
+      // Inspection): richiede di scrivere il motivo prima di procedere, stessa logica
+      // gia' usata per la nota di chiusura obbligatoria di un difetto - "Accetta" resta
+      // invece un tocco solo, e' la scelta piu' comune.
+      if (esito === 'rejected') {
+        list.querySelectorAll('.fi-reject-prompt').forEach(p => { if (p.id !== 'fi-reject-prompt-' + id) p.classList.add('hidden'); });
+        const prompt = el('fi-reject-prompt-' + id);
+        prompt.classList.remove('hidden');
+        prompt.querySelector('textarea').focus();
+        return;
+      }
       btn.disabled = true;
       try {
         const { entry } = await api('/api/fi-tally/' + encodeURIComponent(id) + '/flag', {
           method: 'POST', body: JSON.stringify({ esito })
+        });
+        const idx = state.fiTallyEntries.findIndex(x => x.id === id);
+        if (idx >= 0) state.fiTallyEntries[idx] = entry;
+        renderFiTallyList(state.fiTallyEntries.filter(e => e.certNo === entry.certNo));
+      } catch (err) {
+        alert(t('err_generic') + err.message);
+      }
+      btn.disabled = false;
+    });
+  });
+
+  list.querySelectorAll('[data-cancel-id]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      el('fi-reject-prompt-' + btn.dataset.cancelId).classList.add('hidden');
+    });
+  });
+  list.querySelectorAll('[data-confirm-id]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.dataset.confirmId;
+      const prompt = el('fi-reject-prompt-' + id);
+      const reason = prompt.querySelector('textarea').value.trim();
+      if (!reason) { alert(t('fi_tally_reason_required')); return; }
+      btn.disabled = true;
+      try {
+        const { entry } = await api('/api/fi-tally/' + encodeURIComponent(id) + '/flag', {
+          method: 'POST', body: JSON.stringify({ esito: 'rejected', reason })
         });
         const idx = state.fiTallyEntries.findIndex(x => x.id === id);
         if (idx >= 0) state.fiTallyEntries[idx] = entry;
