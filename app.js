@@ -1,5 +1,5 @@
 const API_BASE = 'https://qr-scanner-api.fanatics.workers.dev';
-const APP_VERSION = 74;
+const APP_VERSION = 75;
 
 const TRANSLATIONS = {
   it: {
@@ -85,6 +85,8 @@ const TRANSLATIONS = {
     err_session_expired: 'Sessione scaduta o account disattivato: accedi di nuovo.',
     err_fill_all: 'Compila tutti i campi',
     confirm_remove_user: 'Rimuovere {u}?',
+    delete_user_permanently_title: 'Elimina definitivamente',
+    confirm_delete_user_permanently: 'Eliminare DEFINITIVAMENTE {u}? A differenza di "Disattiva", questa azione non lascia traccia e non si può annullare.',
     confirm_deactivate_user: 'Disattivare {u}? Non potrà più accedere, ma resterà nello storico ispettori.',
     confirm_bulk_deactivate: 'Disattivare tutti gli ispettori attivi? Utile a fine ordine. Il tuo account admin non viene toccato.',
     confirm_remove_record: 'Eliminare questo record? L\'operazione non e\' reversibile.',
@@ -270,6 +272,8 @@ const TRANSLATIONS = {
     err_session_expired: 'Session expired or account disabled: please log in again.',
     err_fill_all: 'Fill in all fields',
     confirm_remove_user: 'Remove {u}?',
+    delete_user_permanently_title: 'Delete permanently',
+    confirm_delete_user_permanently: 'PERMANENTLY delete {u}? Unlike "Deactivate", this leaves no trace and cannot be undone.',
     confirm_deactivate_user: 'Deactivate {u}? They will no longer be able to log in, but will stay in the inspector history.',
     confirm_bulk_deactivate: 'Deactivate all active inspectors? Handy at the end of an order. Your admin account is not affected.',
     confirm_remove_record: 'Delete this record? This cannot be undone.',
@@ -422,7 +426,7 @@ const HELP_CONTENT = {
       <div class="help-p">Pulsante 📊 nel Dataset: schede totali, difetti aperti, % chiusura, giorni medi di chiusura, quanti difetti restano aperti da oltre 5 giorni, un grafico settimanale (ultime 8 settimane) e la ripartizione per tipo difetto/disposizione. Per vedere i singoli difetti uno per uno, usa il filtro "Solo difetti" nel Dataset invece di cercarli qui.</div>
     </div>
     <div class="card"><div class="card-header"><span class="section-title">Gestione ispettori (solo admin)</span></div>
-      <div class="help-p">Icona ingranaggio nel Dataset: aggiungi ispettori con username/nome/password. Scegli il ruolo con i due tasti "Ispettore"/"Visitatore": un Visitatore vede tutto (Dataset, Tally List FI, Statistiche, ecc.) ma non può registrare nuovi asset, modificare o chiudere difetti, né flaggare la Tally List FI — vede l'etichetta "Modalità sola consultazione" e i pulsanti di scrittura restano nascosti. "Disattiva" non cancella l'account — lo sposta nello "Storico ispettori" (resta la traccia di chi ha lavorato sull'ordine) e blocca subito l'accesso, anche se l'ispettore aveva ancora una sessione aperta sul telefono; "Riattiva" lo riporta attivo. A fine ordine, "Fine ordine: disattiva tutti" disattiva in un colpo solo l'intera squadra (mai il tuo account admin).</div>
+      <div class="help-p">Icona ingranaggio nel Dataset: aggiungi ispettori con username/nome/password. Scegli il ruolo con i due tasti "Ispettore"/"Visitatore": un Visitatore vede tutto (Dataset, Tally List FI, Statistiche, ecc.) ma non può registrare nuovi asset, modificare o chiudere difetti, né flaggare la Tally List FI — vede l'etichetta "Modalità sola consultazione" e i pulsanti di scrittura restano nascosti. "Disattiva" non cancella l'account — lo sposta nello "Storico ispettori" (resta la traccia di chi ha lavorato sull'ordine) e blocca subito l'accesso, anche se l'ispettore aveva ancora una sessione aperta sul telefono; "Riattiva" lo riporta attivo. L'icona del cestino (attiva o nello storico, mai sul tuo account admin) elimina invece l'account per sempre, senza lasciare traccia — a differenza di "Disattiva" non si può annullare, chiede conferma prima di procedere. A fine ordine, "Fine ordine: disattiva tutti" disattiva in un colpo solo l'intera squadra (mai il tuo account admin).</div>
     </div>
     <div class="card"><div class="card-header"><span class="section-title">Lingua e tema</span></div>
       <div class="help-p">Pulsante "EN"/"IT" cambia lingua. Pulsante ☽/☀ forza il tema chiaro o scuro (di default segue il telefono).</div>
@@ -481,7 +485,7 @@ const HELP_CONTENT = {
       <div class="help-p">📊 button in the Dataset: total records, open defects, % closed, average days to close, how many defects have been open for more than 5 days, an 8-week chart, and a breakdown by defect type/disposition. To browse individual defects, use the "Defects only" filter in the Dataset instead of looking for them here.</div>
     </div>
     <div class="card"><div class="card-header"><span class="section-title">Inspector management (admin only)</span></div>
-      <div class="help-p">Gear icon in the Dataset: add inspectors with username/name/password. Pick the role with the "Inspector"/"Viewer" buttons: a Viewer sees everything (Dataset, Tally List FI, Statistics, etc.) but can't register new assets, edit or close defects, or flag the Tally List FI — they see a "Read-only mode" label and write buttons stay hidden. "Deactivate" doesn't delete the account — it moves it into "Inspector history" (keeping a record of who worked on the order) and immediately blocks access, even if the inspector still had an open session on their phone; "Reactivate" brings it back. At the end of an order, "End of order: deactivate all" deactivates the whole team in one go (never your own admin account).</div>
+      <div class="help-p">Gear icon in the Dataset: add inspectors with username/name/password. Pick the role with the "Inspector"/"Viewer" buttons: a Viewer sees everything (Dataset, Tally List FI, Statistics, etc.) but can't register new assets, edit or close defects, or flag the Tally List FI — they see a "Read-only mode" label and write buttons stay hidden. "Deactivate" doesn't delete the account — it moves it into "Inspector history" (keeping a record of who worked on the order) and immediately blocks access, even if the inspector still had an open session on their phone; "Reactivate" brings it back. The trash icon (active or in history, never on your own admin account) deletes the account permanently instead, with no trace left — unlike "Deactivate" this can't be undone, and it asks for confirmation first. At the end of an order, "End of order: deactivate all" deactivates the whole team in one go (never your own admin account).</div>
     </div>
     <div class="card"><div class="card-header"><span class="section-title">Language and theme</span></div>
       <div class="help-p">"EN"/"IT" button switches language. ☽/☀ button forces light or dark theme (follows the phone by default).</div>
@@ -2333,7 +2337,10 @@ function renderUsers(users) {
           <div style="font-weight:600">${escapeHtml(u.name)} <span style="color:var(--text-secondary);font-weight:400">(${escapeHtml(u.username)})</span></div>
           <div style="font-size:12px;color:var(--text-secondary)">${u.role === 'admin' ? escapeHtml(t('admin_role_admin')) : u.role === 'viewer' ? escapeHtml(t('admin_role_viewer')) : escapeHtml(t('admin_role_inspector'))}</div>
         </div>
-        <button class="danger-link" data-username="${escapeHtml(u.username)}">${escapeHtml(t('deactivate'))}</button>`;
+        <div style="display:flex;align-items:center;gap:10px">
+          <button class="danger-link" data-username="${escapeHtml(u.username)}">${escapeHtml(t('deactivate'))}</button>
+          ${u.role !== 'admin' ? `<button class="delete-row-btn" data-username="${escapeHtml(u.username)}" title="${escapeHtml(t('delete_user_permanently_title'))}">&#128465;</button>` : ''}
+        </div>`;
       row.querySelector('.danger-link').addEventListener('click', async (e) => {
         const username = e.target.dataset.username;
         if (!confirm(t('confirm_deactivate_user').replace('{u}', username))) return;
@@ -2342,6 +2349,8 @@ function renderUsers(users) {
           await loadUsers();
         } catch (err) { alert(t('err_generic') + err.message); }
       });
+      const delBtn = row.querySelector('.delete-row-btn');
+      if (delBtn) delBtn.addEventListener('click', () => deleteUserPermanently(delBtn.dataset.username));
       activeWrap.appendChild(row);
     });
   }
@@ -2360,7 +2369,10 @@ function renderUsers(users) {
           <div style="font-weight:600">${escapeHtml(u.name)} <span style="color:var(--text-secondary);font-weight:400">(${escapeHtml(u.username)})</span></div>
           <div class="user-period">${escapeHtml(t('admin_disabled_on').replace('{date}', when))}</div>
         </div>
-        <button class="reactivate-link" data-username="${escapeHtml(u.username)}">${escapeHtml(t('reactivate'))}</button>`;
+        <div style="display:flex;align-items:center;gap:10px">
+          <button class="reactivate-link" data-username="${escapeHtml(u.username)}">${escapeHtml(t('reactivate'))}</button>
+          ${u.role !== 'admin' ? `<button class="delete-row-btn" data-username="${escapeHtml(u.username)}" title="${escapeHtml(t('delete_user_permanently_title'))}">&#128465;</button>` : ''}
+        </div>`;
       row.querySelector('.reactivate-link').addEventListener('click', async (e) => {
         const username = e.target.dataset.username;
         try {
@@ -2368,9 +2380,21 @@ function renderUsers(users) {
           await loadUsers();
         } catch (err) { alert(t('err_generic') + err.message); }
       });
+      const delBtn = row.querySelector('.delete-row-btn');
+      if (delBtn) delBtn.addEventListener('click', () => deleteUserPermanently(delBtn.dataset.username));
       histWrap.appendChild(row);
     });
   }
+}
+
+// Eliminazione definitiva (diversa da "Disattiva"): niente Storico, l'account sparisce
+// per sempre - disponibile subito su ogni riga (attiva o storica), mai per un account admin.
+async function deleteUserPermanently(username) {
+  if (!confirm(t('confirm_delete_user_permanently').replace('{u}', username))) return;
+  try {
+    await api('/api/admin/users/' + encodeURIComponent(username) + '/permanent', { method: 'DELETE' });
+    await loadUsers();
+  } catch (err) { alert(t('err_generic') + err.message); }
 }
 
 // Ruolo scelto alla creazione (chip Ispettore/Visitatore) - la creazione di un admin
