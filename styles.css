@@ -448,6 +448,15 @@ textarea.field { resize: vertical; font-family: inherit; }
 .user-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; border-top: 1px solid var(--border-light); }
 .user-row:first-child { border-top: none; }
 .danger-link { color: var(--red); background: none; border: none; font-size: 14px; cursor: pointer; }
+.bulk-deactivate-btn {
+  display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%;
+  background: var(--red-bg); border: 1px solid rgba(239,68,68,0.4); color: var(--red);
+  font-size: 13px; font-weight: 700; border-radius: 12px; padding: 12px; margin-bottom: 16px; cursor: pointer;
+}
+.bulk-deactivate-btn:hover { background: rgba(239,68,68,0.22); }
+.user-row.history-row { opacity: 0.65; }
+.user-row .user-period { font-size: 11px; color: var(--text-tertiary); margin-top: 2px; }
+.reactivate-link { color: var(--blue); background: none; border: none; font-size: 13px; font-weight: 600; cursor: pointer; }
 
 .top-strip { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px 0; }
 

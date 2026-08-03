@@ -1,5 +1,5 @@
 const API_BASE = 'https://qr-scanner-api.fanatics.workers.dev';
-const APP_VERSION = 60;
+const APP_VERSION = 61;
 
 const TRANSLATIONS = {
   it: {
@@ -69,10 +69,20 @@ const TRANSLATIONS = {
     admin_role_admin: 'Admin',
     admin_role_inspector: 'Ispettore',
     remove: 'Rimuovi',
+    deactivate: 'Disattiva',
+    reactivate: 'Riattiva',
+    admin_bulk_deactivate: '⚠ Fine ordine: disattiva tutti',
+    admin_active_title: 'Ispettori attivi',
+    admin_history_title: 'Storico ispettori',
+    admin_history_empty: 'Nessun ispettore disattivato',
+    admin_disabled_on: 'Disattivato il {date}',
     err_save: 'Errore salvataggio: ',
     err_generic: 'Errore: ',
+    err_session_expired: 'Sessione scaduta o account disattivato: accedi di nuovo.',
     err_fill_all: 'Compila tutti i campi',
     confirm_remove_user: 'Rimuovere {u}?',
+    confirm_deactivate_user: 'Disattivare {u}? Non potrà più accedere, ma resterà nello storico ispettori.',
+    confirm_bulk_deactivate: 'Disattivare tutti gli ispettori attivi? Utile a fine ordine. Il tuo account admin non viene toccato.',
     confirm_remove_record: 'Eliminare questo record? L\'operazione non e\' reversibile.',
     cond_excellent: 'Ottimo',
     cond_good: 'Buono',
@@ -221,10 +231,20 @@ const TRANSLATIONS = {
     admin_role_admin: 'Admin',
     admin_role_inspector: 'Inspector',
     remove: 'Remove',
+    deactivate: 'Deactivate',
+    reactivate: 'Reactivate',
+    admin_bulk_deactivate: '⚠ End of order: deactivate all',
+    admin_active_title: 'Active inspectors',
+    admin_history_title: 'Inspector history',
+    admin_history_empty: 'No deactivated inspectors',
+    admin_disabled_on: 'Deactivated on {date}',
     err_save: 'Save error: ',
     err_generic: 'Error: ',
+    err_session_expired: 'Session expired or account disabled: please log in again.',
     err_fill_all: 'Fill in all fields',
     confirm_remove_user: 'Remove {u}?',
+    confirm_deactivate_user: 'Deactivate {u}? They will no longer be able to log in, but will stay in the inspector history.',
+    confirm_bulk_deactivate: 'Deactivate all active inspectors? Handy at the end of an order. Your admin account is not affected.',
     confirm_remove_record: 'Delete this record? This cannot be undone.',
     cond_excellent: 'Excellent',
     cond_good: 'Good',
@@ -352,6 +372,9 @@ const HELP_CONTENT = {
     <div class="card"><div class="card-header"><span class="section-title">Statistiche</span></div>
       <div class="help-p">Pulsante 📊 nel Dataset: schede totali, difetti aperti, % chiusura, giorni medi di chiusura, quanti difetti restano aperti da oltre 5 giorni, un grafico settimanale (ultime 8 settimane) e la ripartizione per tipo difetto/disposizione. Per vedere i singoli difetti uno per uno, usa il filtro "Solo difetti" nel Dataset invece di cercarli qui.</div>
     </div>
+    <div class="card"><div class="card-header"><span class="section-title">Gestione ispettori (solo admin)</span></div>
+      <div class="help-p">Icona ingranaggio nel Dataset: aggiungi ispettori con username/nome/password. "Disattiva" non cancella l'account — lo sposta nello "Storico ispettori" (resta la traccia di chi ha lavorato sull'ordine) e blocca subito l'accesso, anche se l'ispettore aveva ancora una sessione aperta sul telefono; "Riattiva" lo riporta attivo. A fine ordine, "Fine ordine: disattiva tutti" disattiva in un colpo solo l'intera squadra (mai il tuo account admin).</div>
+    </div>
     <div class="card"><div class="card-header"><span class="section-title">Lingua e tema</span></div>
       <div class="help-p">Pulsante "EN"/"IT" cambia lingua. Pulsante ☽/☀ forza il tema chiaro o scuro (di default segue il telefono).</div>
     </div>
@@ -404,6 +427,9 @@ const HELP_CONTENT = {
     </div>
     <div class="card"><div class="card-header"><span class="section-title">Statistics</span></div>
       <div class="help-p">📊 button in the Dataset: total records, open defects, % closed, average days to close, how many defects have been open for more than 5 days, an 8-week chart, and a breakdown by defect type/disposition. To browse individual defects, use the "Defects only" filter in the Dataset instead of looking for them here.</div>
+    </div>
+    <div class="card"><div class="card-header"><span class="section-title">Inspector management (admin only)</span></div>
+      <div class="help-p">Gear icon in the Dataset: add inspectors with username/name/password. "Deactivate" doesn't delete the account — it moves it into "Inspector history" (keeping a record of who worked on the order) and immediately blocks access, even if the inspector still had an open session on their phone; "Reactivate" brings it back. At the end of an order, "End of order: deactivate all" deactivates the whole team in one go (never your own admin account).</div>
     </div>
     <div class="card"><div class="card-header"><span class="section-title">Language and theme</span></div>
       <div class="help-p">"EN"/"IT" button switches language. ☽/☀ button forces light or dark theme (follows the phone by default).</div>
@@ -540,6 +566,15 @@ async function api(path, opts = {}) {
   if (state.session && state.session.token) headers['Authorization'] = 'Bearer ' + state.session.token;
   if (state.currentOrderId) headers['X-Order-Id'] = state.currentOrderId;
   const resp = await fetch(API_BASE + path, Object.assign({}, opts, { headers }));
+  // Sessione non piu' valida (scaduta o, dal 02.08.2026, account disattivato dall'admin
+  // mentre l'ispettore era ancora loggato): riporta subito al login invece di lasciare
+  // che ogni chiamata fallisca con errori sparsi in giro per l'app.
+  if (resp.status === 401 && state.session) {
+    state.session = null;
+    localStorage.removeItem('qr_session');
+    showScreen('login');
+    el('login-error').textContent = t('err_session_expired');
+  }
   const data = await resp.json().catch(() => ({}));
   if (!resp.ok) throw new Error(translateBackendError(data.error) || ('Error ' + resp.status));
   return data;
@@ -1972,32 +2007,63 @@ async function loadUsers() {
   }
 }
 
+// Disattivare (non cancellare) lascia una traccia di chi ha lavorato su un ordine chiuso -
+// vedi worker.js getSession() per la revoca immediata dell'accesso lato server.
 function renderUsers(users) {
-  const wrap = el('a-user-list');
-  wrap.innerHTML = '';
-  if (!users.length) {
-    wrap.innerHTML = `<div class="row">${escapeHtml(t('admin_empty'))}</div>`;
-    return;
-  }
-  users.forEach(u => {
-    const row = document.createElement('div');
-    row.className = 'user-row';
-    row.innerHTML = `
-      <div>
-        <div style="font-weight:600">${escapeHtml(u.name)} <span style="color:var(--text-secondary);font-weight:400">(${escapeHtml(u.username)})</span></div>
-        <div style="font-size:12px;color:var(--text-secondary)">${u.role === 'admin' ? escapeHtml(t('admin_role_admin')) : escapeHtml(t('admin_role_inspector'))}</div>
-      </div>
-      <button class="danger-link" data-username="${escapeHtml(u.username)}">${escapeHtml(t('remove'))}</button>`;
-    row.querySelector('.danger-link').addEventListener('click', async (e) => {
-      const username = e.target.dataset.username;
-      if (!confirm(t('confirm_remove_user').replace('{u}', username))) return;
-      try {
-        await api('/api/admin/users/' + encodeURIComponent(username), { method: 'DELETE' });
-        await loadUsers();
-      } catch (err) { alert(t('err_generic') + err.message); }
+  const active = users.filter(u => !u.disabled);
+  const history = users.filter(u => u.disabled);
+
+  const activeWrap = el('a-user-list');
+  activeWrap.innerHTML = '';
+  if (!active.length) {
+    activeWrap.innerHTML = `<div class="row">${escapeHtml(t('admin_empty'))}</div>`;
+  } else {
+    active.forEach(u => {
+      const row = document.createElement('div');
+      row.className = 'user-row';
+      row.innerHTML = `
+        <div>
+          <div style="font-weight:600">${escapeHtml(u.name)} <span style="color:var(--text-secondary);font-weight:400">(${escapeHtml(u.username)})</span></div>
+          <div style="font-size:12px;color:var(--text-secondary)">${u.role === 'admin' ? escapeHtml(t('admin_role_admin')) : escapeHtml(t('admin_role_inspector'))}</div>
+        </div>
+        <button class="danger-link" data-username="${escapeHtml(u.username)}">${escapeHtml(t('deactivate'))}</button>`;
+      row.querySelector('.danger-link').addEventListener('click', async (e) => {
+        const username = e.target.dataset.username;
+        if (!confirm(t('confirm_deactivate_user').replace('{u}', username))) return;
+        try {
+          await api('/api/admin/users/' + encodeURIComponent(username), { method: 'DELETE' });
+          await loadUsers();
+        } catch (err) { alert(t('err_generic') + err.message); }
+      });
+      activeWrap.appendChild(row);
     });
-    wrap.appendChild(row);
-  });
+  }
+
+  const histWrap = el('a-user-history');
+  histWrap.innerHTML = '';
+  if (!history.length) {
+    histWrap.innerHTML = `<div class="row">${escapeHtml(t('admin_history_empty'))}</div>`;
+  } else {
+    history.forEach(u => {
+      const row = document.createElement('div');
+      row.className = 'user-row history-row';
+      const when = u.disabledAt ? new Date(u.disabledAt).toLocaleDateString(t('locale')) : '-';
+      row.innerHTML = `
+        <div>
+          <div style="font-weight:600">${escapeHtml(u.name)} <span style="color:var(--text-secondary);font-weight:400">(${escapeHtml(u.username)})</span></div>
+          <div class="user-period">${escapeHtml(t('admin_disabled_on').replace('{date}', when))}</div>
+        </div>
+        <button class="reactivate-link" data-username="${escapeHtml(u.username)}">${escapeHtml(t('reactivate'))}</button>`;
+      row.querySelector('.reactivate-link').addEventListener('click', async (e) => {
+        const username = e.target.dataset.username;
+        try {
+          await api('/api/admin/users/' + encodeURIComponent(username) + '/reactivate', { method: 'POST' });
+          await loadUsers();
+        } catch (err) { alert(t('err_generic') + err.message); }
+      });
+      histWrap.appendChild(row);
+    });
+  }
 }
 
 el('a-add-btn').addEventListener('click', async () => {
@@ -2010,6 +2076,23 @@ el('a-add-btn').addEventListener('click', async () => {
     el('a-username').value = ''; el('a-name').value = ''; el('a-password').value = '';
     await loadUsers();
   } catch (err) { alert(t('err_generic') + err.message); }
+});
+
+// Fine ordine: disattiva in un colpo solo tutti gli ispettori attivi (mai gli admin, mai
+// se lo stesso account e' quello loggato) - evita di ripetere "Disattiva" riga per riga
+// quando l'intera squadra cambia da un ordine all'altro.
+el('a-bulk-deactivate-btn').addEventListener('click', async () => {
+  if (!confirm(t('confirm_bulk_deactivate'))) return;
+  el('a-bulk-deactivate-btn').disabled = true;
+  try {
+    const data = await api('/api/admin/users');
+    const toDeactivate = (data.users || []).filter(u => !u.disabled && u.role !== 'admin');
+    for (const u of toDeactivate) {
+      await api('/api/admin/users/' + encodeURIComponent(u.username), { method: 'DELETE' });
+    }
+    await loadUsers();
+  } catch (err) { alert(t('err_generic') + err.message); }
+  el('a-bulk-deactivate-btn').disabled = false;
 });
 
 // ---------------- Boot ----------------
