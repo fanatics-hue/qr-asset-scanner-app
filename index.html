@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=35">
+<link rel="stylesheet" href="styles.css?v=36">
 </head>
 <body>
 <div id="app">
@@ -123,6 +123,7 @@
         <span class="order-pill-icon">▾</span>
       </button>
       <div class="toggles">
+        <button id="fi-tally-btn" class="admin-gear" data-i18n-title="fi_tally_title" title="Tally List FI">&#127937;</button>
         <button id="lookup-btn" class="admin-gear" data-i18n-title="lookup_title" title="Cerca tubo">&#128269;</button>
         <button id="order-status-btn" class="admin-gear" data-i18n-title="order_status_title" title="Stato Ordine">&#128678;</button>
         <button id="stats-btn" class="admin-gear" data-i18n-title="stats_title" title="Statistiche">&#128202;</button>
@@ -296,6 +297,16 @@
     </div>
   </section>
 
+  <!-- TALLY LIST FI -->
+  <section id="screen-fi-tally" class="hidden">
+    <button id="fi-tally-back" class="back-link">&lsaquo; <span data-i18n="dataset_title_short">Dataset</span></button>
+    <div class="large-title" style="padding-left:0" data-i18n="fi_tally_title">Tally List FI</div>
+    <div class="lookup-sub" id="fi-tally-sub">-</div>
+    <div class="empty-state hidden" id="fi-tally-empty" data-i18n="fi_tally_empty">Nessuna Tally List caricata dal tool desktop.</div>
+    <div class="fi-tally-banner hidden" id="fi-tally-banner"></div>
+    <div class="fi-tally-list" id="fi-tally-list"></div>
+  </section>
+
   <!-- CERCA TUBO -->
   <section id="screen-lookup" class="hidden">
     <button id="lookup-back" class="back-link">&lsaquo; <span data-i18n="dataset_title_short">Dataset</span></button>
@@ -383,6 +394,6 @@
   </div>
 </div>
 
-<script src="app.js?v=61"></script>
+<script src="app.js?v=62"></script>
 </body>
 </html>

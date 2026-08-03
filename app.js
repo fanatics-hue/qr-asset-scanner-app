@@ -1,5 +1,5 @@
 const API_BASE = 'https://qr-scanner-api.fanatics.workers.dev';
-const APP_VERSION = 61;
+const APP_VERSION = 62;
 
 const TRANSLATIONS = {
   it: {
@@ -130,6 +130,15 @@ const TRANSLATIONS = {
     lookup_already_registered: 'Già registrato il {date} da {by} — condizione: {cond}.',
     lookup_open_record: 'Apri scheda ›',
     lookup_register_btn: '+ Registra questo asset',
+    fi_tally_title: 'Tally List FI',
+    fi_tally_empty: 'Nessuna Tally List caricata dal tool desktop.',
+    fi_tally_pending: 'da valutare',
+    fi_tally_accepted_lbl: 'valutati',
+    fi_tally_banner: '{pending} da valutare · {done} valutati',
+    fi_tally_warn: '⚠ Difetto aperto: {label}',
+    fi_tally_who: '{esito} da {by}, {when}',
+    fi_tally_esito_accepted: 'Accettato',
+    fi_tally_esito_rejected: 'Scartato',
     os_total: 'Tubi tracciati',
     os_complete_pct: 'Completati (ultimo step)',
     os_funnel_title: 'Imbuto produzione',
@@ -292,6 +301,15 @@ const TRANSLATIONS = {
     lookup_already_registered: 'Already registered on {date} by {by} — condition: {cond}.',
     lookup_open_record: 'Open record ›',
     lookup_register_btn: '+ Register this asset',
+    fi_tally_title: 'Tally List FI',
+    fi_tally_empty: 'No Tally List uploaded from the desktop tool yet.',
+    fi_tally_pending: 'pending',
+    fi_tally_accepted_lbl: 'evaluated',
+    fi_tally_banner: '{pending} pending · {done} evaluated',
+    fi_tally_warn: '⚠ Open defect: {label}',
+    fi_tally_who: '{esito} by {by}, {when}',
+    fi_tally_esito_accepted: 'Accepted',
+    fi_tally_esito_rejected: 'Rejected',
     os_total: 'Pipes tracked',
     os_complete_pct: 'Completed (last step)',
     os_funnel_title: 'Production funnel',
@@ -363,6 +381,9 @@ const HELP_CONTENT = {
     <div class="card"><div class="card-header"><span class="section-title">Dataset</span></div>
       <div class="help-p">La striscia colorata a sinistra indica la condizione: verde = ottimo, blu = buono, arancio = da revisionare, rosso = danneggiato. Cerca per Pipe N°, Item N°, CS Heat o CRA Heat, oppure usa il filtro "Tutti / Solo difetti" per vedere solo le schede Da revisionare/Danneggiate. Solo l'admin può eliminare una scheda (cestino).</div>
     </div>
+    <div class="card"><div class="card-header"><span class="section-title">Tally List FI</span></div>
+      <div class="help-p">Pulsante 🏁 nel Dataset: mostra l'ultima Tally List di Final Inspection caricata dal tool desktop (Cert-No, Item, data), con l'elenco tubi da valutare. Tocca ✓ o ✗ su ogni tubo per segnarlo Accettato o Scartato - qualunque ispettore loggato può farlo, si vede subito chi e quando. Se un tubo ha un difetto ancora aperto registrato in questa stessa app, compare un avviso arancione prima di decidere. L'esito resta salvato per sempre (anche per riscontri futuri), e il tool desktop può riscaricarlo per tenerlo anche nell'archivio Excel.</div>
+    </div>
     <div class="card"><div class="card-header"><span class="section-title">Cerca tubo</span></div>
       <div class="help-p">Pulsante 🔍 nel Dataset: consulta un Pipe N° (dati produzione: Item N°, CS Heat, CRA Heat, Length, step ITP, avanzamento) e ti dice subito se è già stato registrato, con chi e quando, senza creare o modificare nessuna scheda. Utile per un controllo veloce prima di decidere se serve davvero un nuovo rilievo. Se vuoi comunque registrarlo, il pulsante "+ Registra questo asset" in fondo apre "Nuovo asset" già precompilato.</div>
     </div>
@@ -418,6 +439,9 @@ const HELP_CONTENT = {
     </div>
     <div class="card"><div class="card-header"><span class="section-title">Dataset</span></div>
       <div class="help-p">The colored stripe on the left shows the condition: green = excellent, blue = good, orange = needs review, red = damaged. Search by Pipe No., Item No., CS Heat or CRA Heat, or use the "All / Defects only" filter to see just the Needs review/Damaged records. Only admins can delete a record (trash icon).</div>
+    </div>
+    <div class="card"><div class="card-header"><span class="section-title">Tally List FI</span></div>
+      <div class="help-p">🏁 button in the Dataset: shows the latest Final Inspection Tally List uploaded from the desktop tool (Cert-No, Item, date), with the list of pipes to evaluate. Tap ✓ or ✗ on each pipe to mark it Accepted or Rejected - any logged-in inspector can do this, and who/when is shown right away. If a pipe has a defect still open in this same app, an orange warning appears before you decide. The result is saved permanently (for future cross-checks too), and the desktop tool can re-download it to keep it in the Excel archive as well.</div>
     </div>
     <div class="card"><div class="card-header"><span class="section-title">Pipe lookup</span></div>
       <div class="help-p">🔍 button in the Dataset: look up a Pipe N° (production data: Item No., CS Heat, CRA Heat, Length, ITP step, progress) and instantly see whether it's already been registered, by whom and when — without creating or changing any record. Handy for a quick check before deciding whether a new record is actually needed. If you do want to register it, the "+ Register this asset" button at the bottom opens "New asset" already pre-filled.</div>
@@ -482,6 +506,7 @@ const state = {
   productionMap: new Map(),
   productionByPipe: new Map(),
   ambiguousPipes: new Set(),
+  fiTallyEntries: [],
   editingId: null,
   orders: [],
   currentOrderId: localStorage.getItem('qr_order_id') || 'default',
@@ -496,7 +521,7 @@ const prodKey = (itemNo, pipeNo) => normProdNum(itemNo) + '-' + normProdNum(pipe
 const el = (id) => document.getElementById(id);
 const t = (key) => (TRANSLATIONS[state.lang] && TRANSLATIONS[state.lang][key]) || key;
 const condLabel = (code) => t(condKey(code));
-const screens = ['login', 'confirm', 'dataset', 'detail', 'admin', 'help', 'stats', 'order-status', 'lookup'];
+const screens = ['login', 'confirm', 'dataset', 'detail', 'admin', 'help', 'stats', 'order-status', 'lookup', 'fi-tally'];
 
 function translateBackendError(msg) {
   const entry = BACKEND_ERR_MAP[msg];
@@ -1997,6 +2022,114 @@ el('lookup-btn').addEventListener('click', async () => {
   el('lookup-input').focus();
 });
 el('lookup-back').addEventListener('click', () => showScreen('dataset'));
+
+// ---------------- Tally List FI (caricata dal tool desktop, flaggata dagli ispettori) ----------------
+// La lista viene caricata da gui_produzione.py (POST /api/admin/fi-tally) - qui si legge
+// e si flagga soltanto, nessun salvataggio verso il tool desktop parte da qui.
+function fiDefectWarning(pipeNo) {
+  const normPipe = normProdNum(pipeNo);
+  const rec = state.records.find(r =>
+    normProdNum(r.pipeNo) === normPipe && r.status === 'open' && isDefectCondition(r.condition)
+  );
+  if (!rec) return '';
+  const parts = [condLabel(rec.condition)];
+  if (rec.disposition) parts.push(t('disp_' + rec.disposition));
+  return parts.join(' / ');
+}
+
+async function loadFiTally() {
+  const empty = el('fi-tally-empty');
+  const banner = el('fi-tally-banner');
+  const list = el('fi-tally-list');
+  try {
+    const data = await api('/api/fi-tally');
+    state.fiTallyEntries = data.entries || [];
+  } catch (err) {
+    list.innerHTML = '';
+    empty.textContent = t('err_generic') + err.message;
+    empty.classList.remove('hidden');
+    banner.classList.add('hidden');
+    return;
+  }
+  if (!state.fiTallyEntries.length) {
+    el('fi-tally-sub').textContent = '';
+    empty.classList.remove('hidden');
+    banner.classList.add('hidden');
+    list.innerHTML = '';
+    return;
+  }
+  // mostra solo l'ultima Tally List caricata (certNo con la data piu' recente), non tutto
+  // lo storico - le liste precedenti restano comunque nell'archivio del tool desktop.
+  const latestCertNo = state.fiTallyEntries.reduce((acc, e) => {
+    if (!acc) return e.certNo;
+    const a = state.fiTallyEntries.find(x => x.certNo === acc);
+    return (e.dateStr || '') > (a.dateStr || '') ? e.certNo : acc;
+  }, null);
+  const entries = state.fiTallyEntries.filter(e => e.certNo === latestCertNo);
+  empty.classList.add('hidden');
+  el('fi-tally-sub').textContent = `${latestCertNo} — Item ${entries[0].itemNo} — ${entries[0].dateStr}`;
+
+  renderFiTallyList(entries);
+}
+
+function renderFiTallyList(entries) {
+  const list = el('fi-tally-list');
+  const banner = el('fi-tally-banner');
+  list.innerHTML = '';
+  const pending = entries.filter(e => !e.esito).length;
+  const done = entries.length - pending;
+  banner.classList.remove('hidden');
+  banner.textContent = t('fi_tally_banner').replace('{pending}', pending).replace('{done}', done);
+
+  entries.forEach(e => {
+    const warn = fiDefectWarning(e.pipeNo);
+    const row = document.createElement('div');
+    row.className = 'fi-tally-row' + (e.esito === 'accepted' ? ' accepted' : e.esito === 'rejected' ? ' rejected' : '') + (warn ? ' haswarn' : '');
+    const whoLine = e.esito
+      ? `<div class="who">${escapeHtml(t('fi_tally_who')
+          .replace('{esito}', t('fi_tally_esito_' + e.esito))
+          .replace('{by}', e.flaggedBy || '-')
+          .replace('{when}', e.flaggedAt ? new Date(e.flaggedAt).toLocaleString(t('locale')) : '-'))}</div>`
+      : '';
+    row.innerHTML = `
+      <div>
+        <div class="pn">${escapeHtml(e.pipeNo)}</div>
+        <div class="sub">${escapeHtml(e.grade || '')} ${e.od ? '· OD ' + escapeHtml(e.od) : ''}</div>
+        ${warn ? `<div class="warn">${escapeHtml(t('fi_tally_warn').replace('{label}', warn))}</div>` : ''}
+        ${whoLine}
+      </div>
+      <div class="fi-flag-btns">
+        <button type="button" class="fi-flag-btn accept${e.esito === 'accepted' ? ' on' : ''}" data-id="${escapeHtml(e.id)}" data-esito="accepted">✓</button>
+        <button type="button" class="fi-flag-btn reject${e.esito === 'rejected' ? ' on' : ''}" data-id="${escapeHtml(e.id)}" data-esito="rejected">✗</button>
+      </div>`;
+    list.appendChild(row);
+  });
+
+  list.querySelectorAll('.fi-flag-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.dataset.id;
+      const esito = btn.dataset.esito;
+      btn.disabled = true;
+      try {
+        const { entry } = await api('/api/fi-tally/' + encodeURIComponent(id) + '/flag', {
+          method: 'POST', body: JSON.stringify({ esito })
+        });
+        const idx = state.fiTallyEntries.findIndex(x => x.id === id);
+        if (idx >= 0) state.fiTallyEntries[idx] = entry;
+        renderFiTallyList(state.fiTallyEntries.filter(e => e.certNo === entry.certNo));
+      } catch (err) {
+        alert(t('err_generic') + err.message);
+      }
+      btn.disabled = false;
+    });
+  });
+}
+
+el('fi-tally-btn').addEventListener('click', async () => {
+  showScreen('fi-tally');
+  await loadFiTally();
+});
+el('fi-tally-back').addEventListener('click', () => showScreen('dataset'));
 
 async function loadUsers() {
   try {
