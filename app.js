@@ -1,5 +1,5 @@
 const API_BASE = 'https://qr-scanner-api.fanatics.workers.dev';
-const APP_VERSION = 76;
+const APP_VERSION = 77;
 
 const TRANSLATIONS = {
   it: {
@@ -155,6 +155,13 @@ const TRANSLATIONS = {
     fi_tally_weekly_title: 'Riepilogo settimanale',
     fi_tally_week_label: 'Settimana {week}/{year}',
     fi_tally_weekly_empty: 'Nessun tubo ancora valutato.',
+    fi_tally_total_title: 'Totale — tutte le Tally List',
+    fi_tally_total_since_start: 'Dall\'inizio',
+    fi_tally_chart_title: 'Andamento Tally List',
+    fi_tally_chart_lists: 'Tally List',
+    fi_tally_chart_total_pipes: 'Tubi valutati',
+    fi_tally_chart_best_week: 'Settimana con il tasso migliore',
+    fi_tally_chart_rejection_rate: 'Tasso di scarto',
     tools_tag_new: 'Nuova',
     tools_tag_updated: 'Aggiornato',
     os_total: 'Tubi tracciati',
@@ -344,6 +351,13 @@ const TRANSLATIONS = {
     fi_tally_weekly_title: 'Weekly summary',
     fi_tally_week_label: 'Week {week}/{year}',
     fi_tally_weekly_empty: 'No pipes evaluated yet.',
+    fi_tally_total_title: 'Total — all Tally Lists',
+    fi_tally_total_since_start: 'Since the start',
+    fi_tally_chart_title: 'Tally List trend',
+    fi_tally_chart_lists: 'Tally Lists',
+    fi_tally_chart_total_pipes: 'Pipes evaluated',
+    fi_tally_chart_best_week: 'Week with the best rate',
+    fi_tally_chart_rejection_rate: 'Rejection rate',
     tools_tag_new: 'New',
     tools_tag_updated: 'Updated',
     os_total: 'Pipes tracked',
@@ -418,7 +432,7 @@ const HELP_CONTENT = {
       <div class="help-p">La striscia colorata a sinistra indica la condizione: verde = ottimo, blu = buono, arancio = da revisionare, rosso = danneggiato. Cerca per Pipe N°, Item N°, CS Heat o CRA Heat, oppure usa il filtro "Tutti / Solo difetti" per vedere solo le schede Da revisionare/Danneggiate. Solo l'admin può eliminare una scheda (cestino).</div>
     </div>
     <div class="card"><div class="card-header"><span class="section-title">Tally List FI</span></div>
-      <div class="help-p">Un pallino rosso sull'icona "⋮" Strumenti (e l'etichetta "Nuova" su questa voce) avvisa quando arriva una Tally List più recente di quella già vista - sparisce aprendo questa schermata. Pulsante 🏁 nel Dataset: mostra l'ultima Tally List di Final Inspection caricata dal tool desktop (Cert-No, Item, data), con l'elenco tubi da valutare. Tocca ✓ per Accettare (subito, nessuna conferma) o ✗ per Scartare (richiede di scrivere il motivo dello scarto) - qualunque ispettore loggato può farlo, si vede subito chi e quando. Se un tubo ha un difetto ancora aperto registrato in questa stessa app, compare un avviso arancione prima di decidere. Quando tutti i tubi della lista sono stati valutati, la schermata si riduce a un riepilogo compatto (accettati/scartati) fino all'arrivo della prossima Tally List; sotto trovi anche un riepilogo per settimana (lun-ven) di tutti gli accettati/scartati. L'esito resta salvato per sempre (anche per riscontri futuri), e il tool desktop può riscaricarlo per tenerlo anche nell'archivio Excel.</div>
+      <div class="help-p">Un pallino rosso sull'icona "⋮" Strumenti (e l'etichetta "Nuova" su questa voce) avvisa quando arriva una Tally List più recente di quella già vista - sparisce aprendo questa schermata. Pulsante 🏁 nel Dataset: mostra l'ultima Tally List di Final Inspection caricata dal tool desktop (Cert-No, Item, data), con l'elenco tubi da valutare. Tocca ✓ per Accettare (subito, nessuna conferma) o ✗ per Scartare (richiede di scrivere il motivo dello scarto) - qualunque ispettore loggato può farlo, si vede subito chi e quando. Se un tubo ha un difetto ancora aperto registrato in questa stessa app, compare un avviso arancione prima di decidere. Quando tutti i tubi della lista sono stati valutati, la schermata si riduce a un riepilogo compatto (accettati/scartati) fino all'arrivo della prossima Tally List; sotto trovi anche un riepilogo per settimana (lun-ven), un totale su tutto lo storico, e un grafico con l'andamento delle ultime Tally List (accettati/scartati per lista, più Tally List totali, tubi valutati, la settimana col tasso di accettazione migliore e il tasso di scarto complessivo). L'esito resta salvato per sempre (anche per riscontri futuri), e il tool desktop può riscaricarlo per tenerlo anche nell'archivio Excel.</div>
     </div>
     <div class="card"><div class="card-header"><span class="section-title">Cerca tubo</span></div>
       <div class="help-p">Pulsante 🔍 nel Dataset: consulta un Pipe N° (dati produzione: Item N°, CS Heat, CRA Heat, Length, step ITP, avanzamento) e ti dice subito se è già stato registrato, con chi e quando, senza creare o modificare nessuna scheda. Utile per un controllo veloce prima di decidere se serve davvero un nuovo rilievo. Se vuoi comunque registrarlo, il pulsante "+ Registra questo asset" in fondo apre "Nuovo asset" già precompilato.</div>
@@ -477,7 +491,7 @@ const HELP_CONTENT = {
       <div class="help-p">The colored stripe on the left shows the condition: green = excellent, blue = good, orange = needs review, red = damaged. Search by Pipe No., Item No., CS Heat or CRA Heat, or use the "All / Defects only" filter to see just the Needs review/Damaged records. Only admins can delete a record (trash icon).</div>
     </div>
     <div class="card"><div class="card-header"><span class="section-title">Tally List FI</span></div>
-      <div class="help-p">A red dot on the "⋮" Tools icon (and a "New" tag on this row) shows up when a Tally List newer than the one you've already seen arrives - it clears once you open this screen. 🏁 button in the Dataset: shows the latest Final Inspection Tally List uploaded from the desktop tool (Cert-No, Item, date), with the list of pipes to evaluate. Tap ✓ to Accept (right away, no confirmation) or ✗ to Reject (requires typing a reason) - any logged-in inspector can do this, and who/when is shown right away. If a pipe has a defect still open in this same app, an orange warning appears before you decide. Once every pipe in the list has been evaluated, the screen collapses into a compact summary (accepted/rejected) until the next Tally List arrives; below it there's also a weekly (Mon-Fri) breakdown of all accepted/rejected pipes. The result is saved permanently (for future cross-checks too), and the desktop tool can re-download it to keep it in the Excel archive as well.</div>
+      <div class="help-p">A red dot on the "⋮" Tools icon (and a "New" tag on this row) shows up when a Tally List newer than the one you've already seen arrives - it clears once you open this screen. 🏁 button in the Dataset: shows the latest Final Inspection Tally List uploaded from the desktop tool (Cert-No, Item, date), with the list of pipes to evaluate. Tap ✓ to Accept (right away, no confirmation) or ✗ to Reject (requires typing a reason) - any logged-in inspector can do this, and who/when is shown right away. If a pipe has a defect still open in this same app, an orange warning appears before you decide. Once every pipe in the list has been evaluated, the screen collapses into a compact summary (accepted/rejected) until the next Tally List arrives; below it there's also a weekly (Mon-Fri) breakdown, an all-time total, and a chart of the latest Tally Lists (accepted/rejected per list, plus total Tally Lists, pipes evaluated, the week with the best acceptance rate, and the overall rejection rate). The result is saved permanently (for future cross-checks too), and the desktop tool can re-download it to keep it in the Excel archive as well.</div>
     </div>
     <div class="card"><div class="card-header"><span class="section-title">Pipe lookup</span></div>
       <div class="help-p">🔍 button in the Dataset: look up a Pipe N° (production data: Item No., CS Heat, CRA Heat, Length, ITP step, progress) and instantly see whether it's already been registered, by whom and when — without creating or changing any record. Handy for a quick check before deciding whether a new record is actually needed. If you do want to register it, the "+ Register this asset" button at the bottom opens "New asset" already pre-filled.</div>
@@ -2192,6 +2206,117 @@ function renderFiTallyWeeklySummary() {
   });
 }
 
+// Totale accettati/scartati su tutto lo storico caricato, senza raggruppare per settimana -
+// stesso dato del riepilogo settimanale ma sommato tutto insieme (04.08.2026, richiesta di Rino).
+function renderFiTallyTotalSummary() {
+  const card = el('fi-tally-total-card');
+  const container = el('fi-tally-total-list');
+  const accepted = (state.fiTallyEntries || []).filter(e => e.esito === 'accepted').length;
+  const rejected = (state.fiTallyEntries || []).filter(e => e.esito === 'rejected').length;
+  if (!accepted && !rejected) {
+    card.classList.add('hidden');
+    return;
+  }
+  card.classList.remove('hidden');
+  container.innerHTML = `
+    <div class="fi-tally-week-row">
+      <span class="fi-tally-week-label">${escapeHtml(t('fi_tally_total_since_start'))}</span>
+      <span class="fi-tally-week-counts"><span class="accepted">✓ ${accepted}</span><span class="rejected">✗ ${rejected}</span></span>
+    </div>`;
+}
+
+// Raggruppa gli esiti per Cert-No (una Tally List = un Cert-No) invece che per settimana -
+// serve per il grafico, dove ogni barra e' una Tally List, non un periodo di tempo.
+function groupTallyByCertNo(entries) {
+  const map = new Map();
+  (entries || []).forEach(e => {
+    if (!e.esito) return;
+    if (!map.has(e.certNo)) map.set(e.certNo, { certNo: e.certNo, itemNo: e.itemNo, dateStr: e.dateStr, accepted: 0, rejected: 0 });
+    const g = map.get(e.certNo);
+    if (e.esito === 'accepted') g.accepted++;
+    else if (e.esito === 'rejected') g.rejected++;
+  });
+  return Array.from(map.values());
+}
+
+// Grafico a barre impilate (verde/rosso), una barra per Tally List, piu' un blocchetto di
+// note riassuntive sotto - stesso linguaggio visivo del grafico settimanale di Statistiche,
+// ma con metriche proprie della Tally List FI (niente metri/settimane, quelli sono
+// dell'altro foglio Excel "Weekly TL" che non c'entra con questa schermata). Limitato alle
+// ultime N liste per non far crescere il grafico all'infinito nel tempo.
+const FI_CHART_WINDOW = 10;
+function renderFiTallyChart() {
+  const card = el('fi-tally-chart-card');
+  const groups = groupTallyByCertNo(state.fiTallyEntries);
+  if (!groups.length) {
+    card.classList.add('hidden');
+    return;
+  }
+  card.classList.remove('hidden');
+  groups.sort((a, b) => {
+    const da = parseDdMmYyyy(a.dateStr);
+    const db = parseDdMmYyyy(b.dateStr);
+    return (da ? da.getTime() : 0) - (db ? db.getTime() : 0);
+  });
+  const shown = groups.slice(-FI_CHART_WINDOW);
+  const maxTotal = Math.max(...shown.map(g => g.accepted + g.rejected), 1);
+  el('fi-tally-chart-bars').innerHTML = shown.map(g => {
+    const total = g.accepted + g.rejected;
+    const heightPct = Math.round((total / maxTotal) * 100);
+    const acceptPct = total ? Math.round((g.accepted / total) * 100) : 0;
+    const rejectPct = total ? 100 - acceptPct : 0;
+    return `
+      <div class="fi-chart-col">
+        <span class="fi-chart-total">${total}</span>
+        <div class="fi-chart-bar" style="height:${heightPct}%">
+          <div class="fi-chart-seg-reject" style="height:${rejectPct}%"></div>
+          <div class="fi-chart-seg-accept" style="height:${acceptPct}%"></div>
+        </div>
+        <span class="fi-chart-label">${escapeHtml(g.certNo)}<br>${escapeHtml(g.dateStr || '')}</span>
+      </div>`;
+  }).join('');
+
+  const totalPipes = groups.reduce((s, g) => s + g.accepted + g.rejected, 0);
+  const totalRejected = groups.reduce((s, g) => s + g.rejected, 0);
+  const rejectionRate = totalPipes ? ((totalRejected / totalPipes) * 100).toFixed(1) : '0.0';
+  const bestWeek = bestAcceptanceRateWeek(state.fiTallyEntries);
+  el('fi-tally-chart-notes').innerHTML = `
+    <div class="fi-tally-note-row"><span>${escapeHtml(t('fi_tally_chart_lists'))}</span><span>${groups.length}</span></div>
+    <div class="fi-tally-note-row"><span>${escapeHtml(t('fi_tally_chart_total_pipes'))}</span><span>${totalPipes}</span></div>
+    <div class="fi-tally-note-row"><span>${escapeHtml(t('fi_tally_chart_best_week'))}</span><span>${bestWeek ? t('fi_tally_week_label').replace('{week}', bestWeek.week).replace('{year}', bestWeek.year) + ' (' + bestWeek.rate + '%)' : '-'}</span></div>
+    <div class="fi-tally-note-row"><span>${escapeHtml(t('fi_tally_chart_rejection_rate'))}</span><span>${rejectionRate}%</span></div>
+  `;
+}
+
+// Settimana ISO con la migliore percentuale di accettati (non semplicemente quella con piu'
+// tubi) - raggruppa per settimana come il riepilogo settimanale, poi confronta i tassi.
+// A parita' di tasso vince chi ha valutato piu' tubi (un 100% su 2 tubi non e' significativo
+// quanto un 100% su 50).
+function bestAcceptanceRateWeek(entries) {
+  const weekMap = new Map();
+  (entries || []).forEach(e => {
+    if (!e.esito) return;
+    const d = parseDdMmYyyy(e.dateStr);
+    if (!d) return;
+    const { week, year } = isoWeekNumber(d);
+    const key = year + '-' + week;
+    if (!weekMap.has(key)) weekMap.set(key, { week, year, accepted: 0, rejected: 0 });
+    const w = weekMap.get(key);
+    if (e.esito === 'accepted') w.accepted++;
+    else if (e.esito === 'rejected') w.rejected++;
+  });
+  let best = null;
+  weekMap.forEach(w => {
+    const total = w.accepted + w.rejected;
+    if (!total) return;
+    const rate = w.accepted / total;
+    if (!best || rate > best.rate || (rate === best.rate && total > best.total)) {
+      best = { week: w.week, year: w.year, rate: Math.round(rate * 1000) / 10, total };
+    }
+  });
+  return best;
+}
+
 // Cert-No con la data piu' recente tra tutte le voci - stessa logica usata sia per decidere
 // quale lista mostrare come "attiva" (loadFiTally) sia per il controllo di avviso novita'
 // (checkToolsUpdates), tenuta in un solo posto per non farle divergere.
@@ -2218,6 +2343,8 @@ async function loadFiTally() {
     return;
   }
   renderFiTallyWeeklySummary();
+  renderFiTallyTotalSummary();
+  renderFiTallyChart();
   if (!state.fiTallyEntries.length) {
     el('fi-tally-sub').textContent = '';
     empty.classList.remove('hidden');
@@ -2332,6 +2459,8 @@ function renderFiTallyList(entries) {
         const idx = state.fiTallyEntries.findIndex(x => x.id === id);
         if (idx >= 0) state.fiTallyEntries[idx] = entry;
         renderFiTallyWeeklySummary();
+  renderFiTallyTotalSummary();
+  renderFiTallyChart();
         renderFiTallyList(state.fiTallyEntries.filter(e => e.certNo === entry.certNo));
       } catch (err) {
         alert(t('err_generic') + err.message);
@@ -2359,6 +2488,8 @@ function renderFiTallyList(entries) {
         const idx = state.fiTallyEntries.findIndex(x => x.id === id);
         if (idx >= 0) state.fiTallyEntries[idx] = entry;
         renderFiTallyWeeklySummary();
+  renderFiTallyTotalSummary();
+  renderFiTallyChart();
         renderFiTallyList(state.fiTallyEntries.filter(e => e.certNo === entry.certNo));
       } catch (err) {
         alert(t('err_generic') + err.message);

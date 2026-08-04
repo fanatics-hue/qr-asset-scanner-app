@@ -451,6 +451,25 @@ textarea.field { resize: vertical; font-family: inherit; }
 .fi-tally-week-counts { display: flex; gap: 12px; font-size: 13px; font-weight: 700; }
 .fi-tally-week-counts .accepted { color: var(--green); }
 .fi-tally-week-counts .rejected { color: var(--red); }
+.fi-chart-wrap { display: flex; align-items: flex-end; gap: 10px; height: 120px; padding: 8px 2px 0; }
+.fi-chart-col { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; gap: 4px; }
+.fi-chart-bar {
+  width: 100%; max-width: 26px; border-radius: 4px 4px 0 0; overflow: hidden;
+  display: flex; flex-direction: column-reverse; background: var(--bg-input);
+}
+.fi-chart-seg-accept { background: var(--green); }
+.fi-chart-seg-reject { background: var(--red); }
+.fi-chart-total { font-size: 9.5px; color: var(--text-tertiary); }
+.fi-chart-label { font-size: 9px; color: var(--text-tertiary); text-align: center; line-height: 1.25; margin-top: 2px; }
+.fi-chart-legend { display: flex; gap: 14px; justify-content: center; margin-top: 10px; font-size: 10.5px; color: var(--text-secondary); }
+.fi-chart-legend span { display: inline-flex; align-items: center; gap: 5px; }
+.fi-chart-dot-accept, .fi-chart-dot-reject { width: 8px; height: 8px; border-radius: 2px; display: inline-block; }
+.fi-chart-dot-accept { background: var(--green); }
+.fi-chart-dot-reject { background: var(--red); }
+.fi-tally-note-row { display: flex; align-items: center; justify-content: space-between; padding: 9px 0; border-top: 1px solid var(--border-light); font-size: 12.5px; }
+.fi-tally-note-row:first-child { border-top: none; }
+.fi-tally-note-row span:first-child { color: var(--text-secondary); }
+.fi-tally-note-row span:last-child { font-weight: 700; color: var(--text-primary); }
 .lookup-sub { padding: 0 0 14px; font-size: 12.5px; color: var(--text-tertiary); }
 .lookup-input-wrap { margin-bottom: 14px; }
 .lookup-not-found { padding: 10px 14px; font-size: 12.5px; color: var(--text-tertiary); background: var(--bg-input); border-radius: 10px; margin-bottom: 14px; }

@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=48">
+<link rel="stylesheet" href="styles.css?v=49">
 </head>
 <body>
 <div id="app">
@@ -320,6 +320,19 @@
       <div class="card-header"><span class="section-title" data-i18n="fi_tally_weekly_title">Riepilogo settimanale</span></div>
       <div id="fi-tally-weekly-list"></div>
     </div>
+    <div class="card hidden" id="fi-tally-total-card">
+      <div class="card-header"><span class="section-title" data-i18n="fi_tally_total_title">Totale — tutte le Tally List</span></div>
+      <div id="fi-tally-total-list"></div>
+    </div>
+    <div class="card hidden" id="fi-tally-chart-card">
+      <div class="card-header"><span class="section-title" data-i18n="fi_tally_chart_title">Andamento Tally List</span></div>
+      <div class="fi-chart-wrap" id="fi-tally-chart-bars"></div>
+      <div class="fi-chart-legend">
+        <span><i class="fi-chart-dot-accept"></i><span data-i18n="fi_tally_esito_accepted">Accettato</span></span>
+        <span><i class="fi-chart-dot-reject"></i><span data-i18n="fi_tally_esito_rejected">Scartato</span></span>
+      </div>
+      <div id="fi-tally-chart-notes"></div>
+    </div>
   </section>
 
   <!-- CERCA TUBO -->
@@ -425,6 +438,6 @@
   </div>
 </div>
 
-<script src="app.js?v=76"></script>
+<script src="app.js?v=77"></script>
 </body>
 </html>
