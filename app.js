@@ -1,5 +1,5 @@
 const API_BASE = 'https://qr-scanner-api.fanatics.workers.dev';
-const APP_VERSION = 78;
+const APP_VERSION = 79;
 
 const TRANSLATIONS = {
   it: {
@@ -165,8 +165,10 @@ const TRANSLATIONS = {
     fi_tally_chart_rejection_rate: 'Tasso di scarto',
     fi_tally_heat_worse: 'Peggio',
     fi_tally_heat_better: 'Meglio',
+    fi_tally_heat_historical: 'Storico (solo conteggio)',
     fi_tally_heat_date: 'Data',
     fi_tally_heat_result: 'Esito',
+    fi_tally_historical_note: 'Dal foglio "Weekly TL": {pipes} tubi rilasciati dal 2025 ({weeks} settimane con TL, {meters} m) — solo conteggio, nessun dettaglio accettato/scartato per le liste più vecchie. Settimana con più tubi: {bestWeek} ({bestWeekPipes}).',
     tools_tag_new: 'Nuova',
     tools_tag_updated: 'Aggiornato',
     os_total: 'Tubi tracciati',
@@ -366,8 +368,10 @@ const TRANSLATIONS = {
     fi_tally_chart_rejection_rate: 'Rejection rate',
     fi_tally_heat_worse: 'Worse',
     fi_tally_heat_better: 'Better',
+    fi_tally_heat_historical: 'Historical (count only)',
     fi_tally_heat_date: 'Date',
     fi_tally_heat_result: 'Result',
+    fi_tally_historical_note: 'From the "Weekly TL" sheet: {pipes} pipes released since 2025 ({weeks} weeks with a TL, {meters} m) — count only, no accepted/rejected detail for older lists. Week with the most pipes: {bestWeek} ({bestWeekPipes}).',
     tools_tag_new: 'New',
     tools_tag_updated: 'Updated',
     os_total: 'Pipes tracked',
@@ -442,7 +446,7 @@ const HELP_CONTENT = {
       <div class="help-p">La striscia colorata a sinistra indica la condizione: verde = ottimo, blu = buono, arancio = da revisionare, rosso = danneggiato. Cerca per Pipe N°, Item N°, CS Heat o CRA Heat, oppure usa il filtro "Tutti / Solo difetti" per vedere solo le schede Da revisionare/Danneggiate. Solo l'admin può eliminare una scheda (cestino).</div>
     </div>
     <div class="card"><div class="card-header"><span class="section-title">Tally List FI</span></div>
-      <div class="help-p">Un pallino rosso sull'icona "⋮" Strumenti (e l'etichetta "Nuova" su questa voce) avvisa quando arriva una Tally List più recente di quella già vista - sparisce aprendo questa schermata. Pulsante 🏁 nel Dataset: mostra l'ultima Tally List di Final Inspection caricata dal tool desktop (Cert-No, Item, data), con l'elenco tubi da valutare. Tocca ✓ per Accettare (subito, nessuna conferma) o ✗ per Scartare (richiede di scrivere il motivo dello scarto) - qualunque ispettore loggato può farlo, si vede subito chi e quando. Se un tubo ha un difetto ancora aperto registrato in questa stessa app, compare un avviso arancione prima di decidere. Quando tutti i tubi della lista sono stati valutati, la schermata si riduce a un riepilogo compatto (accettati/scartati) fino all'arrivo della prossima Tally List; sotto trovi anche un riepilogo per settimana (lun-ven), un totale su tutto lo storico, e una mappa a quadratini colorati (una per Tally List, raggruppate per mese) che mostra a colpo d'occhio quali liste hanno avuto più scarti — verde=tutto accettato, rosso=molti scarti; toccando un quadratino compare il dettaglio sotto. In fondo trovi anche il totale Tally List, i tubi valutati, la settimana col tasso di accettazione migliore (evidenziata) e il tasso di scarto complessivo. L'esito resta salvato per sempre (anche per riscontri futuri), e il tool desktop può riscaricarlo per tenerlo anche nell'archivio Excel.</div>
+      <div class="help-p">Un pallino rosso sull'icona "⋮" Strumenti (e l'etichetta "Nuova" su questa voce) avvisa quando arriva una Tally List più recente di quella già vista - sparisce aprendo questa schermata. Pulsante 🏁 nel Dataset: mostra l'ultima Tally List di Final Inspection caricata dal tool desktop (Cert-No, Item, data), con l'elenco tubi da valutare. Tocca ✓ per Accettare (subito, nessuna conferma) o ✗ per Scartare (richiede di scrivere il motivo dello scarto) - qualunque ispettore loggato può farlo, si vede subito chi e quando. Se un tubo ha un difetto ancora aperto registrato in questa stessa app, compare un avviso arancione prima di decidere. Quando tutti i tubi della lista sono stati valutati, la schermata si riduce a un riepilogo compatto (accettati/scartati) fino all'arrivo della prossima Tally List; sotto trovi anche un riepilogo per settimana (lun-ven), un totale su tutto lo storico, e una mappa a quadratini colorati (una per Tally List, raggruppate per mese) che mostra a colpo d'occhio quali liste hanno avuto più scarti — verde=tutto accettato, rosso=molti scarti; toccando un quadratino compare il dettaglio sotto. In fondo trovi anche il totale Tally List, i tubi valutati, la settimana col tasso di accettazione migliore (evidenziata) e il tasso di scarto complessivo. La mappa include anche le Tally List più vecchie dal 2025 (quadratini grigi, presi dal foglio Excel "Weekly TL" — solo conteggio tubi, nessun accettato/scartato disponibile per quelle) e ovunque compare una nota con il totale ufficiale (3.702 tubi, 45.281,645 m, 59 settimane con TL). L'esito resta salvato per sempre (anche per riscontri futuri), e il tool desktop può riscaricarlo per tenerlo anche nell'archivio Excel.</div>
     </div>
     <div class="card"><div class="card-header"><span class="section-title">Cerca tubo</span></div>
       <div class="help-p">Pulsante 🔍 nel Dataset: consulta un Pipe N° (dati produzione: Item N°, CS Heat, CRA Heat, Length, step ITP, avanzamento) e ti dice subito se è già stato registrato, con chi e quando, senza creare o modificare nessuna scheda. Utile per un controllo veloce prima di decidere se serve davvero un nuovo rilievo. Se vuoi comunque registrarlo, il pulsante "+ Registra questo asset" in fondo apre "Nuovo asset" già precompilato.</div>
@@ -501,7 +505,7 @@ const HELP_CONTENT = {
       <div class="help-p">The colored stripe on the left shows the condition: green = excellent, blue = good, orange = needs review, red = damaged. Search by Pipe No., Item No., CS Heat or CRA Heat, or use the "All / Defects only" filter to see just the Needs review/Damaged records. Only admins can delete a record (trash icon).</div>
     </div>
     <div class="card"><div class="card-header"><span class="section-title">Tally List FI</span></div>
-      <div class="help-p">A red dot on the "⋮" Tools icon (and a "New" tag on this row) shows up when a Tally List newer than the one you've already seen arrives - it clears once you open this screen. 🏁 button in the Dataset: shows the latest Final Inspection Tally List uploaded from the desktop tool (Cert-No, Item, date), with the list of pipes to evaluate. Tap ✓ to Accept (right away, no confirmation) or ✗ to Reject (requires typing a reason) - any logged-in inspector can do this, and who/when is shown right away. If a pipe has a defect still open in this same app, an orange warning appears before you decide. Once every pipe in the list has been evaluated, the screen collapses into a compact summary (accepted/rejected) until the next Tally List arrives; below it there's also a weekly (Mon-Fri) breakdown, an all-time total, and a grid of colored squares (one per Tally List, grouped by month) that shows at a glance which lists had more rejections — green=all accepted, red=lots of rejections; tap a square to see its detail below. At the bottom you'll also find the total Tally Lists, pipes evaluated, the week with the best acceptance rate (highlighted), and the overall rejection rate. The result is saved permanently (for future cross-checks too), and the desktop tool can re-download it to keep it in the Excel archive as well.</div>
+      <div class="help-p">A red dot on the "⋮" Tools icon (and a "New" tag on this row) shows up when a Tally List newer than the one you've already seen arrives - it clears once you open this screen. 🏁 button in the Dataset: shows the latest Final Inspection Tally List uploaded from the desktop tool (Cert-No, Item, date), with the list of pipes to evaluate. Tap ✓ to Accept (right away, no confirmation) or ✗ to Reject (requires typing a reason) - any logged-in inspector can do this, and who/when is shown right away. If a pipe has a defect still open in this same app, an orange warning appears before you decide. Once every pipe in the list has been evaluated, the screen collapses into a compact summary (accepted/rejected) until the next Tally List arrives; below it there's also a weekly (Mon-Fri) breakdown, an all-time total, and a grid of colored squares (one per Tally List, grouped by month) that shows at a glance which lists had more rejections — green=all accepted, red=lots of rejections; tap a square to see its detail below. At the bottom you'll also find the total Tally Lists, pipes evaluated, the week with the best acceptance rate (highlighted), and the overall rejection rate. The grid also includes older Tally Lists since 2025 (gray squares, sourced from the "Weekly TL" Excel sheet — pipe count only, no accepted/rejected detail available for those) and a note with the official total (3,702 pipes, 45,281.645 m, 59 weeks with a TL) appears everywhere it's relevant. The result is saved permanently (for future cross-checks too), and the desktop tool can re-download it to keep it in the Excel archive as well.</div>
     </div>
     <div class="card"><div class="card-header"><span class="section-title">Pipe lookup</span></div>
       <div class="help-p">🔍 button in the Dataset: look up a Pipe N° (production data: Item No., CS Heat, CRA Heat, Length, ITP step, progress) and instantly see whether it's already been registered, by whom and when — without creating or changing any record. Handy for a quick check before deciding whether a new record is actually needed. If you do want to register it, the "+ Register this asset" button at the bottom opens "New asset" already pre-filled.</div>
@@ -2204,16 +2208,22 @@ function renderFiTallyWeeklySummary() {
   container.innerHTML = '';
   if (!weeks.length) {
     container.innerHTML = `<div class="row">${escapeHtml(t('fi_tally_weekly_empty'))}</div>`;
-    return;
+  } else {
+    weeks.forEach(w => {
+      const row = document.createElement('div');
+      row.className = 'fi-tally-week-row';
+      row.innerHTML = `
+        <span class="fi-tally-week-label">${escapeHtml(t('fi_tally_week_label').replace('{week}', w.week).replace('{year}', w.year))}</span>
+        <span class="fi-tally-week-counts"><span class="accepted">✓ ${w.accepted}</span><span class="rejected">✗ ${w.rejected}</span></span>`;
+      container.appendChild(row);
+    });
   }
-  weeks.forEach(w => {
-    const row = document.createElement('div');
-    row.className = 'fi-tally-week-row';
-    row.innerHTML = `
-      <span class="fi-tally-week-label">${escapeHtml(t('fi_tally_week_label').replace('{week}', w.week).replace('{year}', w.year))}</span>
-      <span class="fi-tally-week-counts"><span class="accepted">✓ ${w.accepted}</span><span class="rejected">✗ ${w.rejected}</span></span>`;
-    container.appendChild(row);
-  });
+  // Nota informativa sul volume storico dal 2025 (foglio Excel "Weekly TL") - solo
+  // conteggio, mai mescolata alle cifre accettati/scartati sopra (05.08.2026).
+  const note = document.createElement('div');
+  note.className = 'fi-tally-historical-note';
+  note.textContent = fiHistoricalNote();
+  container.appendChild(note);
 }
 
 // Totale accettati/scartati su tutto lo storico caricato, senza raggruppare per settimana -
@@ -2223,16 +2233,108 @@ function renderFiTallyTotalSummary() {
   const container = el('fi-tally-total-list');
   const accepted = (state.fiTallyEntries || []).filter(e => e.esito === 'accepted').length;
   const rejected = (state.fiTallyEntries || []).filter(e => e.esito === 'rejected').length;
-  if (!accepted && !rejected) {
-    card.classList.add('hidden');
-    return;
-  }
   card.classList.remove('hidden');
-  container.innerHTML = `
-    <div class="fi-tally-week-row">
+  container.innerHTML = '';
+  if (accepted || rejected) {
+    const row = document.createElement('div');
+    row.className = 'fi-tally-week-row';
+    row.innerHTML = `
       <span class="fi-tally-week-label">${escapeHtml(t('fi_tally_total_since_start'))}</span>
-      <span class="fi-tally-week-counts"><span class="accepted">✓ ${accepted}</span><span class="rejected">✗ ${rejected}</span></span>
-    </div>`;
+      <span class="fi-tally-week-counts"><span class="accepted">✓ ${accepted}</span><span class="rejected">✗ ${rejected}</span></span>`;
+    container.appendChild(row);
+  }
+  const note = document.createElement('div');
+  note.className = 'fi-tally-historical-note';
+  note.textContent = fiHistoricalNote();
+  container.appendChild(note);
+}
+
+// Storico Tally List dal 2025 (05.08.2026, richiesta di Rino): recuperato dal foglio
+// Excel "Weekly TL" del file "PO 1506050 SUMITOMO EEW Pipe progress_1.xlsm" (rollup
+// settimanale per Tally List, non per singolo tubo - fonte: colonne A-F, righe 4-61).
+// Dato fisso caricato una volta sola, non sincronizzato dal Worker: quel foglio non
+// tiene traccia dell'esito accettato/scartato per tubo, solo il conteggio totale - per
+// questo queste voci restano "solo conteggio" ovunque vengano mostrate (heatmap grigia,
+// mai unite alle cifre accettati/scartati calcolate sulle Tally List vere caricate
+// sull'app). L'ultima riga del foglio (2026-W32, 66 tubi) coincide esattamente con le
+// 2 Tally List vere gia' in app (46+20=66) ed e' stata esclusa qui per non duplicarla.
+const FI_HISTORICAL_TALLY_LISTS = [
+  { week: '2025-W16', date: '2025-04-14', tlNo: 2, ref: 'from 45650-TL-FI-MpfB-01 to 45650-TL-FI-400', total: 22 },
+  { week: '2025-W17', date: '2025-04-21', tlNo: 2, ref: 'from 45650-TL-FI-MpfB-02 to 45650-TL-FI-400', total: 3 },
+  { week: '2025-W19', date: '2025-05-05', tlNo: 4, ref: 'from 45650-TL-FI-MpfB-03 to 45650-TL-FI-MpfB-06', total: 10 },
+  { week: '2025-W20', date: '2025-05-12', tlNo: 2, ref: 'from 45650-TL-FI-400 to 45650-TL-FI-MpfB-07', total: 4 },
+  { week: '2025-W21', date: '2025-05-19', tlNo: 3, ref: 'from 45650-TL-FI-MpfB-08 to 45650-TL-FI-MpfB10', total: 9 },
+  { week: '2025-W22', date: '2025-05-26', tlNo: 4, ref: 'from 45650-TL-FI-MpfB11 to 45650-TL-FI-MpfB14', total: 9 },
+  { week: '2025-W23', date: '2025-06-02', tlNo: 3, ref: 'from 45650-TL-FI-MpfB15 to 45650-TL-FI-MpfB17', total: 10 },
+  { week: '2025-W24', date: '2025-06-09', tlNo: 3, ref: 'from 45650-TL-FI-MpfB18 to 45650-TL-FI-MpfB20', total: 24 },
+  { week: '2025-W26', date: '2025-06-23', tlNo: 1, ref: '45650-TL-FI-MpfB22', total: 3 },
+  { week: '2025-W29', date: '2025-07-14', tlNo: 1, ref: '45650 - TL-FI-100-01', total: 9 },
+  { week: '2025-W30', date: '2025-07-21', tlNo: 1, ref: '45650-TL-FI-MpfB21', total: 1 },
+  { week: '2025-W31', date: '2025-07-28', tlNo: 5, ref: 'from 45650 - TL-FI-400-04 to 45650 - TL-FI-400-08', total: 82 },
+  { week: '2025-W32', date: '2025-08-04', tlNo: 5, ref: 'from 45650 - TL-FI-400-09 to 45650 - TL-FI-400-13', total: 61 },
+  { week: '2025-W33', date: '2025-08-11', tlNo: 6, ref: 'from 45650 - TL-FI-400-14 to 45650 - TL-FI-400-18', total: 68 },
+  { week: '2025-W34', date: '2025-08-18', tlNo: 5, ref: 'from 45650 - TL-FI-400-19 to 45650 - TL-FI-400-23', total: 68 },
+  { week: '2025-W35', date: '2025-08-25', tlNo: 5, ref: 'from 45650 - TL-FI-400-24 to 45650 - TL-FI-400-28', total: 96 },
+  { week: '2025-W36', date: '2025-09-01', tlNo: 5, ref: 'from 45650 - TL-FI-400-29 to 45650 - TL-FI-400-33', total: 88 },
+  { week: '2025-W37', date: '2025-09-08', tlNo: 7, ref: 'from 45650-TL-FI-MpfB22 to 45650 - TL-FI-400-38', total: 102 },
+  { week: '2025-W38', date: '2025-09-15', tlNo: 5, ref: 'from 45650 - TL-FI-400-39 to 45650 - TL-FI-400-43', total: 109 },
+  { week: '2025-W39', date: '2025-09-22', tlNo: 5, ref: 'from 45650 - TL-FI-400-44 to 45650 - TL-FI-400-48', total: 90 },
+  { week: '2025-W40', date: '2025-09-29', tlNo: 4, ref: 'from 45650 - TL-FI-400-49 to 45650 - TL-FI-400-52', total: 77 },
+  { week: '2025-W41', date: '2025-10-06', tlNo: 5, ref: 'from 45650 - TL-FI-400-53 to 45650 - TL-FI-400-57', total: 96 },
+  { week: '2025-W42', date: '2025-10-13', tlNo: 5, ref: 'from 45650 - TL-FI-400-58 to 45650 - TL-FI-400-62', total: 80 },
+  { week: '2025-W43', date: '2025-10-20', tlNo: 6, ref: 'from 45650 - TL-FI-400-63 to 45650 - TL-FI-600-01', total: 108 },
+  { week: '2025-W44', date: '2025-10-27', tlNo: 7, ref: 'from 45650 - TL-FI-600-02 to 45650 - TL-FI-400-72', total: 105 },
+  { week: '2025-W45', date: '2025-11-03', tlNo: 7, ref: 'from 45650 - TL-FI-400-73 to 45650 - TL-FI-400-77', total: 102 },
+  { week: '2025-W46', date: '2025-11-10', tlNo: 8, ref: 'from 45650 - TL-FI-400-78 to 45650 - TL-FI-400-82', total: 123 },
+  { week: '2025-W47', date: '2025-11-17', tlNo: 6, ref: 'from 45650 - TL-FI-400-83 to 45650 - TL-FI-600-17', total: 110 },
+  { week: '2025-W48', date: '2025-11-24', tlNo: 6, ref: 'from 45650 - TL-FI-400-88 to 45650 - TL-FI-500-02', total: 89 },
+  { week: '2025-W49', date: '2025-12-01', tlNo: 6, ref: 'from 45650 - TL-FI-500-03 to 45650 - TL-FI-500-06', total: 40 },
+  { week: '2025-W50', date: '2025-12-08', tlNo: 8, ref: 'from 45650 - TL-FI-500-07 to 45650 - TL-FI-100-03', total: 35 },
+  { week: '2025-W51', date: '2025-12-15', tlNo: 7, ref: 'from 45650 - TL-FI-500-11 to 45650 - TL-FI-600-17', total: 38 },
+  { week: '2026-W02', date: '2026-01-05', tlNo: 5, ref: 'from 45650 - TL-FI-500-15 to 45650 - TL-FI-500-17', total: 22 },
+  { week: '2026-W03', date: '2026-01-12', tlNo: 9, ref: 'from 45650 - TL-FI-500-18 to 45650 - TL-FI-100-08', total: 57 },
+  { week: '2026-W04', date: '2026-01-19', tlNo: 8, ref: 'from 45650 - TL-FI-500-23 to 45650 - TL-FI-100-11-1', total: 29 },
+  { week: '2026-W05', date: '2026-01-26', tlNo: 6, ref: 'from 45650 - TL-FI-100-12 to 45650 - TL-FI-600-22', total: 19 },
+  { week: '2026-W06', date: '2026-02-02', tlNo: 11, ref: 'from 45650 - TL-FI-600-23 to 45650 - TL-FI-500-30', total: 66 },
+  { week: '2026-W07', date: '2026-02-09', tlNo: 10, ref: 'from 45650 - TL-FI-600-26 to 45650 - TL-FI-100-16', total: 75 },
+  { week: '2026-W08', date: '2026-02-16', tlNo: 15, ref: 'from 45650 - TL-FI-500-36 to 45650 - TL-FI-500-14', total: 79 },
+  { week: '2026-W09', date: '2026-02-23', tlNo: 8, ref: 'from 45650 - TL-FI-500-41 to 45650 - TL-FI-500-44', total: 59 },
+  { week: '2026-W10', date: '2026-03-02', tlNo: 7, ref: 'from 45650 - TL-FI-500-45 to 45650 - TL-FI-700-02', total: 41 },
+  { week: '2026-W11', date: '2026-03-09', tlNo: 13, ref: 'from 45650 - TL-FI-500-49 to 45650 - TL-FI-200-02', total: 61 },
+  { week: '2026-W12', date: '2026-03-16', tlNo: 11, ref: 'from 45650 - TL-FI-400-103 to 45650 - TL-FI-800-03', total: 92 },
+  { week: '2026-W13', date: '2026-03-23', tlNo: 9, ref: 'from 45650 - TL-FI-400-107 to 45650 - TL-FI-400-111', total: 58 },
+  { week: '2026-W14', date: '2026-03-30', tlNo: 8, ref: 'from 45650 - TL-FI-400-112 to 45650 - TL-FI-500-60', total: 64 },
+  { week: '2026-W15', date: '2026-04-06', tlNo: 5, ref: 'from 45650 - TL-FI-400-116 to 45650 - TL-FI-400-118', total: 30 },
+  { week: '2026-W16', date: '2026-04-13', tlNo: 5, ref: 'from 45650 - TL-FI-400-119 to 45650 - TL-FI-400-123', total: 92 },
+  { week: '2026-W17', date: '2026-04-20', tlNo: 3, ref: 'from 45650 - TL-FI-400-124 to 45650 - TL-FI-400-126', total: 27 },
+  { week: '2026-W22', date: '2026-05-25', tlNo: 1, ref: '45650 - TL-FI-400-127', total: 4 },
+  { week: '2026-W23', date: '2026-06-01', tlNo: 3, ref: 'from 45650 - TL-FI-400-128 to 45650 - TL-FI-400-130', total: 44 },
+  { week: '2026-W24', date: '2026-06-08', tlNo: 5, ref: 'from 45650 - TL-FI-400-131 to 45650 - TL-FI-400-135', total: 55 },
+  { week: '2026-W25', date: '2026-06-15', tlNo: 5, ref: 'from 45650 - TL-FI-400-136 to 45650 - TL-FI-400-140', total: 99 },
+  { week: '2026-W26', date: '2026-06-22', tlNo: 5, ref: 'from 45650 - TL-FI-400-141 to 45650 - TL-FI-400-145', total: 76 },
+  { week: '2026-W27', date: '2026-06-29', tlNo: 5, ref: 'from 45650 - TL-FI-400-146 to 45650 - TL-FI-400-150', total: 112 },
+  { week: '2026-W28', date: '2026-07-06', tlNo: 5, ref: 'from 45650 - TL-FI-400-151 to 45650 - TL-FI-400-155', total: 122 },
+  { week: '2026-W29', date: '2026-07-13', tlNo: 5, ref: 'from 45650 - TL-FI-400-156 to 45650 - TL-FI-400-160', total: 127 },
+  { week: '2026-W30', date: '2026-07-20', tlNo: 5, ref: 'from 45650 - TL-FI-400-161 to 45650 - TL-FI-400-165', total: 120 },
+  { week: '2026-W31', date: '2026-07-27', tlNo: 5, ref: 'from 45650 - TL-FI-400-166 to 45650 - TL-FI-400-170', total: 135 },
+];
+// Totali "certi" presi dal blocchetto "Totals Check" dello stesso foglio Excel (fonte
+// unica sempre verificabile) invece di risommare riga per riga - copre TUTTO lo storico,
+// incluse le 2 Tally List vere gia' in app (che vi sono gia' conteggiate dentro).
+const FI_HISTORICAL_TOTALS = { weeksWithTL: 59, totalPipes: 3702, totalMeters: 45281.645, bestWeekLabel: '2026-W31', bestWeekPipes: 135 };
+
+function fiHistoricalNote() {
+  // useGrouping esplicito: in alcuni motori il default di toLocaleString('it-IT') non
+  // raggruppa le migliaia (es. "3702" invece di "3.702") - scoperto testando questa
+  // stessa funzione, non capitava altrove nell'app perche' nessun altro numero mostrato
+  // superava le 999 unita'.
+  const fmt = (n) => n.toLocaleString(t('locale'), { useGrouping: true });
+  return t('fi_tally_historical_note')
+    .replace('{pipes}', fmt(FI_HISTORICAL_TOTALS.totalPipes))
+    .replace('{meters}', fmt(FI_HISTORICAL_TOTALS.totalMeters))
+    .replace('{weeks}', FI_HISTORICAL_TOTALS.weeksWithTL)
+    .replace('{bestWeek}', FI_HISTORICAL_TOTALS.bestWeekLabel)
+    .replace('{bestWeekPipes}', FI_HISTORICAL_TOTALS.bestWeekPipes);
 }
 
 // Raggruppa gli esiti per Cert-No (una Tally List = un Cert-No) invece che per settimana -
@@ -2268,20 +2370,24 @@ function fiHeatColor(rate) {
 function renderFiTallyChart() {
   const card = el('fi-tally-chart-card');
   const groups = groupTallyByCertNo(state.fiTallyEntries);
-  if (!groups.length) {
-    card.classList.add('hidden');
-    return;
-  }
   card.classList.remove('hidden');
   groups.forEach(g => { g._date = parseDdMmYyyy(g.dateStr); });
-  groups.sort((a, b) => (a._date ? a._date.getTime() : 0) - (b._date ? b._date.getTime() : 0));
+
+  // Unisce le Tally List vere (colorate per tasso di accettazione) con quelle storiche
+  // dal 2025 (grigie, solo conteggio) in un'unica sequenza ordinata per data - stessa
+  // heatmap, cella diversa solo nel colore e nel dettaglio mostrato al tocco.
+  const items = [
+    ...groups.map(g => ({ type: 'real', id: 'r_' + g.certNo, date: g._date, label: g.certNo, accepted: g.accepted, rejected: g.rejected, dateStr: g.dateStr })),
+    ...FI_HISTORICAL_TALLY_LISTS.map(h => ({ type: 'historical', id: 'h_' + h.week, date: new Date(h.date), label: 'TL#' + h.tlNo + ' · ' + h.week, ref: h.ref, total: h.total, week: h.week })),
+  ];
+  items.sort((a, b) => (a.date ? a.date.getTime() : 0) - (b.date ? b.date.getTime() : 0));
 
   const monthMap = new Map();
-  groups.forEach(g => {
-    const key = g._date ? (g._date.getFullYear() + '-' + g._date.getMonth()) : 'unknown';
-    const label = g._date ? g._date.toLocaleDateString(t('locale'), { month: 'short', year: 'numeric' }) : '-';
+  items.forEach(it => {
+    const key = it.date ? (it.date.getFullYear() + '-' + it.date.getMonth()) : 'unknown';
+    const label = it.date ? it.date.toLocaleDateString(t('locale'), { month: 'short', year: 'numeric' }) : '-';
     if (!monthMap.has(key)) monthMap.set(key, { label, items: [] });
-    monthMap.get(key).items.push(g);
+    monthMap.get(key).items.push(it);
   });
 
   const heatmap = el('fi-tally-heatmap');
@@ -2290,10 +2396,9 @@ function renderFiTallyChart() {
     <div class="fi-heat-month-row">
       <span class="fi-heat-month-label">${escapeHtml(m.label)}</span>
       <div class="fi-heat-cells">
-        ${m.items.map(g => {
-          const total = g.accepted + g.rejected;
-          const rate = total ? g.accepted / total : 1;
-          return `<button type="button" class="fi-heat-cell" style="background:${fiHeatColor(rate)}" data-cert="${escapeHtml(g.certNo)}" aria-label="${escapeHtml(g.certNo)}"></button>`;
+        ${m.items.map(it => {
+          const color = it.type === 'historical' ? 'var(--fi-heat-historical)' : fiHeatColor(it.accepted / ((it.accepted + it.rejected) || 1));
+          return `<button type="button" class="fi-heat-cell" style="background:${color}" data-id="${escapeHtml(it.id)}" aria-label="${escapeHtml(it.label)}"></button>`;
         }).join('')}
       </div>
     </div>`).join('');
@@ -2302,18 +2407,27 @@ function renderFiTallyChart() {
     cell.addEventListener('click', () => {
       heatmap.querySelectorAll('.fi-heat-cell.selected').forEach(c => c.classList.remove('selected'));
       cell.classList.add('selected');
-      const g = groups.find(x => x.certNo === cell.dataset.cert);
-      if (!g) return;
-      const total = g.accepted + g.rejected;
-      const rate = total ? ((g.rejected / total) * 100).toFixed(1) : '0.0';
+      const it = items.find(x => x.id === cell.dataset.id);
+      if (!it) return;
       const detail = el('fi-tally-heatmap-detail');
       detail.classList.remove('hidden');
-      detail.innerHTML = `
-        <div class="fi-heat-detail-title">${escapeHtml(g.certNo)}</div>
-        <div class="fi-heat-detail-row"><span>${escapeHtml(t('fi_tally_heat_date'))}</span><b>${escapeHtml(g.dateStr || '-')}</b></div>
-        <div class="fi-heat-detail-row"><span>${escapeHtml(t('fi_tally_heat_result'))}</span><b>✓ ${g.accepted} · ✗ ${g.rejected}</b></div>
-        <div class="fi-heat-detail-row"><span>${escapeHtml(t('fi_tally_chart_rejection_rate'))}</span><b>${rate}%</b></div>
-      `;
+      if (it.type === 'historical') {
+        detail.innerHTML = `
+          <div class="fi-heat-detail-title">${escapeHtml(it.label)}</div>
+          <div class="fi-heat-detail-row"><span>${escapeHtml(t('fi_tally_heat_date'))}</span><b>${escapeHtml(it.date.toLocaleDateString(t('locale')))}</b></div>
+          <div class="fi-heat-detail-row"><span>${escapeHtml(t('fi_tally_chart_total_pipes'))}</span><b>${it.total}</b></div>
+          <div class="fi-heat-detail-ref">${escapeHtml(it.ref)}</div>
+        `;
+      } else {
+        const total = it.accepted + it.rejected;
+        const rate = total ? ((it.rejected / total) * 100).toFixed(1) : '0.0';
+        detail.innerHTML = `
+          <div class="fi-heat-detail-title">${escapeHtml(it.label)}</div>
+          <div class="fi-heat-detail-row"><span>${escapeHtml(t('fi_tally_heat_date'))}</span><b>${escapeHtml(it.dateStr || '-')}</b></div>
+          <div class="fi-heat-detail-row"><span>${escapeHtml(t('fi_tally_heat_result'))}</span><b>✓ ${it.accepted} · ✗ ${it.rejected}</b></div>
+          <div class="fi-heat-detail-row"><span>${escapeHtml(t('fi_tally_chart_rejection_rate'))}</span><b>${rate}%</b></div>
+        `;
+      }
     });
   });
 
@@ -2326,6 +2440,7 @@ function renderFiTallyChart() {
     <div class="fi-tally-note-row"><span>${escapeHtml(t('fi_tally_chart_total_pipes'))}</span><span>${totalPipes}</span></div>
     <div class="fi-tally-note-row highlight"><span>${escapeHtml(t('fi_tally_chart_best_week'))}</span><span>${bestWeek ? t('fi_tally_chart_best_week_detail').replace('{week}', t('fi_tally_week_label').replace('{week}', bestWeek.week).replace('{year}', bestWeek.year)).replace('{rate}', bestWeek.rate).replace('{n}', bestWeek.total) : '-'}</span></div>
     <div class="fi-tally-note-row"><span>${escapeHtml(t('fi_tally_chart_rejection_rate'))}</span><span>${rejectionRate}%</span></div>
+    <div class="fi-tally-historical-note">${escapeHtml(fiHistoricalNote())}</div>
   `;
 }
 
