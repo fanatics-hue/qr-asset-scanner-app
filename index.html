@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=49">
+<link rel="stylesheet" href="styles.css?v=50">
 </head>
 <body>
 <div id="app">
@@ -326,10 +326,15 @@
     </div>
     <div class="card hidden" id="fi-tally-chart-card">
       <div class="card-header"><span class="section-title" data-i18n="fi_tally_chart_title">Andamento Tally List</span></div>
-      <div class="fi-chart-wrap" id="fi-tally-chart-bars"></div>
-      <div class="fi-chart-legend">
-        <span><i class="fi-chart-dot-accept"></i><span data-i18n="fi_tally_esito_accepted">Accettato</span></span>
-        <span><i class="fi-chart-dot-reject"></i><span data-i18n="fi_tally_esito_rejected">Scartato</span></span>
+      <div id="fi-tally-heatmap"></div>
+      <div id="fi-tally-heatmap-detail" class="fi-heat-detail hidden"></div>
+      <div class="fi-heat-legend">
+        <span data-i18n="fi_tally_heat_worse">Peggio</span>
+        <i class="fi-heat-cell" style="background:var(--red)"></i>
+        <i class="fi-heat-cell" style="background:var(--orange)"></i>
+        <i class="fi-heat-cell" style="background:var(--fi-heat-mid)"></i>
+        <i class="fi-heat-cell" style="background:var(--green)"></i>
+        <span data-i18n="fi_tally_heat_better">Meglio</span>
       </div>
       <div id="fi-tally-chart-notes"></div>
     </div>
@@ -438,6 +443,6 @@
   </div>
 </div>
 
-<script src="app.js?v=77"></script>
+<script src="app.js?v=78"></script>
 </body>
 </html>
