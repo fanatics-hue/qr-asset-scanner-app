@@ -1,5 +1,5 @@
 const API_BASE = 'https://qr-scanner-api.fanatics.workers.dev';
-const APP_VERSION = 75;
+const APP_VERSION = 76;
 
 const TRANSLATIONS = {
   it: {
@@ -155,6 +155,8 @@ const TRANSLATIONS = {
     fi_tally_weekly_title: 'Riepilogo settimanale',
     fi_tally_week_label: 'Settimana {week}/{year}',
     fi_tally_weekly_empty: 'Nessun tubo ancora valutato.',
+    tools_tag_new: 'Nuova',
+    tools_tag_updated: 'Aggiornato',
     os_total: 'Tubi tracciati',
     os_complete_pct: 'Completati (ultimo step)',
     os_funnel_title: 'Imbuto produzione',
@@ -342,6 +344,8 @@ const TRANSLATIONS = {
     fi_tally_weekly_title: 'Weekly summary',
     fi_tally_week_label: 'Week {week}/{year}',
     fi_tally_weekly_empty: 'No pipes evaluated yet.',
+    tools_tag_new: 'New',
+    tools_tag_updated: 'Updated',
     os_total: 'Pipes tracked',
     os_complete_pct: 'Completed (last step)',
     os_funnel_title: 'Production funnel',
@@ -414,13 +418,13 @@ const HELP_CONTENT = {
       <div class="help-p">La striscia colorata a sinistra indica la condizione: verde = ottimo, blu = buono, arancio = da revisionare, rosso = danneggiato. Cerca per Pipe N°, Item N°, CS Heat o CRA Heat, oppure usa il filtro "Tutti / Solo difetti" per vedere solo le schede Da revisionare/Danneggiate. Solo l'admin può eliminare una scheda (cestino).</div>
     </div>
     <div class="card"><div class="card-header"><span class="section-title">Tally List FI</span></div>
-      <div class="help-p">Pulsante 🏁 nel Dataset: mostra l'ultima Tally List di Final Inspection caricata dal tool desktop (Cert-No, Item, data), con l'elenco tubi da valutare. Tocca ✓ per Accettare (subito, nessuna conferma) o ✗ per Scartare (richiede di scrivere il motivo dello scarto) - qualunque ispettore loggato può farlo, si vede subito chi e quando. Se un tubo ha un difetto ancora aperto registrato in questa stessa app, compare un avviso arancione prima di decidere. Quando tutti i tubi della lista sono stati valutati, la schermata si riduce a un riepilogo compatto (accettati/scartati) fino all'arrivo della prossima Tally List; sotto trovi anche un riepilogo per settimana (lun-ven) di tutti gli accettati/scartati. L'esito resta salvato per sempre (anche per riscontri futuri), e il tool desktop può riscaricarlo per tenerlo anche nell'archivio Excel.</div>
+      <div class="help-p">Un pallino rosso sull'icona "⋮" Strumenti (e l'etichetta "Nuova" su questa voce) avvisa quando arriva una Tally List più recente di quella già vista - sparisce aprendo questa schermata. Pulsante 🏁 nel Dataset: mostra l'ultima Tally List di Final Inspection caricata dal tool desktop (Cert-No, Item, data), con l'elenco tubi da valutare. Tocca ✓ per Accettare (subito, nessuna conferma) o ✗ per Scartare (richiede di scrivere il motivo dello scarto) - qualunque ispettore loggato può farlo, si vede subito chi e quando. Se un tubo ha un difetto ancora aperto registrato in questa stessa app, compare un avviso arancione prima di decidere. Quando tutti i tubi della lista sono stati valutati, la schermata si riduce a un riepilogo compatto (accettati/scartati) fino all'arrivo della prossima Tally List; sotto trovi anche un riepilogo per settimana (lun-ven) di tutti gli accettati/scartati. L'esito resta salvato per sempre (anche per riscontri futuri), e il tool desktop può riscaricarlo per tenerlo anche nell'archivio Excel.</div>
     </div>
     <div class="card"><div class="card-header"><span class="section-title">Cerca tubo</span></div>
       <div class="help-p">Pulsante 🔍 nel Dataset: consulta un Pipe N° (dati produzione: Item N°, CS Heat, CRA Heat, Length, step ITP, avanzamento) e ti dice subito se è già stato registrato, con chi e quando, senza creare o modificare nessuna scheda. Utile per un controllo veloce prima di decidere se serve davvero un nuovo rilievo. Se vuoi comunque registrarlo, il pulsante "+ Registra questo asset" in fondo apre "Nuovo asset" già precompilato.</div>
     </div>
     <div class="card"><div class="card-header"><span class="section-title">Stato Ordine</span></div>
-      <div class="help-p">Pulsante 🚨 nel Dataset: mostra l'avanzamento dell'Item ancora in lavorazione (dal foglio "Riepilogo per Fase" del file Excel di produzione). In alto: Item N°, riferimento PO, scadenza contrattuale e giorni residui. Per ogni fase: completati/totale, pezzi rimanenti, data prevista e scarto in giorni vs scadenza contrattuale, con badge OK (verde, in anticipo/puntuale), RITARDO (rosso, previsione oltre la scadenza) o N/D (grigio, dato insufficiente). Il "collo di bottiglia" in cima è la fase con più pezzi ancora da fare. Mostra anche i difetti aperti per step e, in fondo, la nota che spiega come viene calcolata la previsione. Se la produzione non è mai stata sincronizzata la sezione resta vuota; se manca il foglio "Riepilogo per Fase" nel file Excel, l'app mostra in automatico un imbuto più semplice su tutti i tubi tracciati.</div>
+      <div class="help-p">Un pallino rosso sull'icona "⋮" Strumenti (e l'etichetta "Aggiornato" su questa voce) avvisa quando i dati di produzione sono stati risincronizzati dal tool desktop - sparisce aprendo questa schermata. Pulsante 🚨 nel Dataset: mostra l'avanzamento dell'Item ancora in lavorazione (dal foglio "Riepilogo per Fase" del file Excel di produzione). In alto: Item N°, riferimento PO, scadenza contrattuale e giorni residui. Per ogni fase: completati/totale, pezzi rimanenti, data prevista e scarto in giorni vs scadenza contrattuale, con badge OK (verde, in anticipo/puntuale), RITARDO (rosso, previsione oltre la scadenza) o N/D (grigio, dato insufficiente). Il "collo di bottiglia" in cima è la fase con più pezzi ancora da fare. Mostra anche i difetti aperti per step e, in fondo, la nota che spiega come viene calcolata la previsione. Se la produzione non è mai stata sincronizzata la sezione resta vuota; se manca il foglio "Riepilogo per Fase" nel file Excel, l'app mostra in automatico un imbuto più semplice su tutti i tubi tracciati.</div>
     </div>
     <div class="card"><div class="card-header"><span class="section-title">Statistiche</span></div>
       <div class="help-p">Pulsante 📊 nel Dataset: schede totali, difetti aperti, % chiusura, giorni medi di chiusura, quanti difetti restano aperti da oltre 5 giorni, un grafico settimanale (ultime 8 settimane) e la ripartizione per tipo difetto/disposizione. Per vedere i singoli difetti uno per uno, usa il filtro "Solo difetti" nel Dataset invece di cercarli qui.</div>
@@ -473,13 +477,13 @@ const HELP_CONTENT = {
       <div class="help-p">The colored stripe on the left shows the condition: green = excellent, blue = good, orange = needs review, red = damaged. Search by Pipe No., Item No., CS Heat or CRA Heat, or use the "All / Defects only" filter to see just the Needs review/Damaged records. Only admins can delete a record (trash icon).</div>
     </div>
     <div class="card"><div class="card-header"><span class="section-title">Tally List FI</span></div>
-      <div class="help-p">🏁 button in the Dataset: shows the latest Final Inspection Tally List uploaded from the desktop tool (Cert-No, Item, date), with the list of pipes to evaluate. Tap ✓ to Accept (right away, no confirmation) or ✗ to Reject (requires typing a reason) - any logged-in inspector can do this, and who/when is shown right away. If a pipe has a defect still open in this same app, an orange warning appears before you decide. Once every pipe in the list has been evaluated, the screen collapses into a compact summary (accepted/rejected) until the next Tally List arrives; below it there's also a weekly (Mon-Fri) breakdown of all accepted/rejected pipes. The result is saved permanently (for future cross-checks too), and the desktop tool can re-download it to keep it in the Excel archive as well.</div>
+      <div class="help-p">A red dot on the "⋮" Tools icon (and a "New" tag on this row) shows up when a Tally List newer than the one you've already seen arrives - it clears once you open this screen. 🏁 button in the Dataset: shows the latest Final Inspection Tally List uploaded from the desktop tool (Cert-No, Item, date), with the list of pipes to evaluate. Tap ✓ to Accept (right away, no confirmation) or ✗ to Reject (requires typing a reason) - any logged-in inspector can do this, and who/when is shown right away. If a pipe has a defect still open in this same app, an orange warning appears before you decide. Once every pipe in the list has been evaluated, the screen collapses into a compact summary (accepted/rejected) until the next Tally List arrives; below it there's also a weekly (Mon-Fri) breakdown of all accepted/rejected pipes. The result is saved permanently (for future cross-checks too), and the desktop tool can re-download it to keep it in the Excel archive as well.</div>
     </div>
     <div class="card"><div class="card-header"><span class="section-title">Pipe lookup</span></div>
       <div class="help-p">🔍 button in the Dataset: look up a Pipe N° (production data: Item No., CS Heat, CRA Heat, Length, ITP step, progress) and instantly see whether it's already been registered, by whom and when — without creating or changing any record. Handy for a quick check before deciding whether a new record is actually needed. If you do want to register it, the "+ Register this asset" button at the bottom opens "New asset" already pre-filled.</div>
     </div>
     <div class="card"><div class="card-header"><span class="section-title">Order Status</span></div>
-      <div class="help-p">🚨 button in the Dataset: shows progress for the Item still in production (from the "Riepilogo per Fase" sheet of the production Excel file). At the top: Item No., PO reference, contractual due date and days remaining. For each phase: completed/total, pipes remaining, forecast date and deviation in days vs the contractual due date, with an OK (green, ahead/on time), DELAY (red, forecast past the due date) or N/A (grey, not enough data) badge. The "bottleneck" at the top is the phase with the most pipes still to go. Also shows open defects by step and, at the bottom, the note explaining how the forecast is calculated. If production data has never been synced this stays empty; if the "Riepilogo per Fase" sheet isn't in the Excel file, the app automatically falls back to a simpler funnel across all tracked pipes.</div>
+      <div class="help-p">A red dot on the "⋮" Tools icon (and an "Updated" tag on this row) shows up when production data has been re-synced from the desktop tool - it clears once you open this screen. 🚨 button in the Dataset: shows progress for the Item still in production (from the "Riepilogo per Fase" sheet of the production Excel file). At the top: Item No., PO reference, contractual due date and days remaining. For each phase: completed/total, pipes remaining, forecast date and deviation in days vs the contractual due date, with an OK (green, ahead/on time), DELAY (red, forecast past the due date) or N/A (grey, not enough data) badge. The "bottleneck" at the top is the phase with the most pipes still to go. Also shows open defects by step and, at the bottom, the note explaining how the forecast is calculated. If production data has never been synced this stays empty; if the "Riepilogo per Fase" sheet isn't in the Excel file, the app automatically falls back to a simpler funnel across all tracked pipes.</div>
     </div>
     <div class="card"><div class="card-header"><span class="section-title">Statistics</span></div>
       <div class="help-p">📊 button in the Dataset: total records, open defects, % closed, average days to close, how many defects have been open for more than 5 days, an 8-week chart, and a breakdown by defect type/disposition. To browse individual defects, use the "Defects only" filter in the Dataset instead of looking for them here.</div>
@@ -535,11 +539,14 @@ const state = {
   theme: localStorage.getItem('qr_theme') || 'auto',
   productionRecords: [],
   phaseForecast: null,
+  productionMeta: null,
   productionMap: new Map(),
   productionByPipe: new Map(),
   ambiguousPipes: new Set(),
   fiTallyEntries: [],
   fiTallyExpanded: false,
+  tallyHasUpdate: false,
+  prodHasUpdate: false,
   editingId: null,
   orders: [],
   currentOrderId: localStorage.getItem('qr_order_id') || 'default',
@@ -688,6 +695,7 @@ async function afterLogin() {
   updateSyncBanner();
   checkForNewAssets(); // seed silenzioso dell'elenco "visti" al primo login, poi il polling
   startNewAssetsPolling();
+  startToolsUpdatePolling(); // pallino Strumenti + etichette Tally List FI/Stato Ordine
 }
 
 // ---------------- Ordini (multi-progetto) ----------------
@@ -815,6 +823,7 @@ async function loadProductionData() {
     const data = await api('/api/production-data');
     state.productionRecords = data.records || [];
     state.phaseForecast = data.phaseForecast || null;
+    state.productionMeta = data.meta || null;
     state.productionMap = new Map();
     state.productionByPipe = new Map();
     state.ambiguousPipes = new Set(); // Pipe N. che compaiono su piu' Item diversi
@@ -1037,6 +1046,48 @@ let newAssetsPoll = null;
 function startNewAssetsPolling() {
   if (newAssetsPoll) return;
   newAssetsPoll = setInterval(checkForNewAssets, 50000);
+}
+
+// Avviso "c'e' qualcosa di nuovo" per Tally List FI / Stato Ordine (04.08.2026): un pallino
+// sull'icona Strumenti come spia generale, un'etichetta per riga come dettaglio - solo
+// visivo, niente suono (diverso dal "nuovo asset" con la campanella). Come li' sopra: al
+// primo controllo per un ordine si registra solo il valore attuale senza far scattare
+// l'avviso (altrimenti ogni ordine "nuovo" per questa funzione mostrerebbe subito i pallini).
+function renderToolsBadges() {
+  el('tools-menu-dot').classList.toggle('hidden', !(state.tallyHasUpdate || state.prodHasUpdate));
+  el('fi-tally-new-tag').classList.toggle('hidden', !state.tallyHasUpdate);
+  el('order-status-new-tag').classList.toggle('hidden', !state.prodHasUpdate);
+}
+async function checkToolsUpdates() {
+  if (!state.session || !state.currentOrderId) return;
+  try {
+    const data = await api('/api/fi-tally');
+    const entries = data.entries || [];
+    const latestCertNo = entries.length ? latestTallyCertNo(entries) : null;
+    if (latestCertNo) {
+      const seenKey = 'qr_seen_tally_' + state.currentOrderId;
+      const seen = localStorage.getItem(seenKey);
+      if (seen === null) localStorage.setItem(seenKey, latestCertNo);
+      else if (seen !== latestCertNo) state.tallyHasUpdate = true;
+    }
+  } catch (e) { /* rete assente: il badge resta com'era, non deve bloccare nient'altro */ }
+  try {
+    const data = await api('/api/production-data');
+    const updatedAt = data.meta && data.meta.updatedAt;
+    if (updatedAt) {
+      const seenKey = 'qr_seen_prod_' + state.currentOrderId;
+      const seen = localStorage.getItem(seenKey);
+      if (seen === null) localStorage.setItem(seenKey, updatedAt);
+      else if (seen !== updatedAt) state.prodHasUpdate = true;
+    }
+  } catch (e) { /* idem */ }
+  renderToolsBadges();
+}
+let toolsUpdatePoll = null;
+function startToolsUpdatePolling() {
+  if (toolsUpdatePoll) return;
+  checkToolsUpdates();
+  toolsUpdatePoll = setInterval(checkToolsUpdates, 50000);
 }
 
 // ---------------- Nuovo asset ----------------
@@ -1995,6 +2046,13 @@ el('order-status-btn').addEventListener('click', async () => {
     await Promise.all([loadRecords(), loadProductionData()]);
   } catch (e) { /* rete assente: restano visibili gli ultimi dati caricati */ }
   if (state.screen === 'order-status') renderOrderStatus();
+  // L'etichetta "Aggiornato" sparisce solo aprendo davvero questa schermata - registra
+  // come "visto" l'orario dell'ultima sincronizzazione appena ricaricata sopra (loadProductionData).
+  if (state.productionMeta && state.productionMeta.updatedAt) {
+    localStorage.setItem('qr_seen_prod_' + state.currentOrderId, state.productionMeta.updatedAt);
+  }
+  state.prodHasUpdate = false;
+  renderToolsBadges();
 });
 el('order-status-back').addEventListener('click', () => showScreen('dataset'));
 
@@ -2134,6 +2192,17 @@ function renderFiTallyWeeklySummary() {
   });
 }
 
+// Cert-No con la data piu' recente tra tutte le voci - stessa logica usata sia per decidere
+// quale lista mostrare come "attiva" (loadFiTally) sia per il controllo di avviso novita'
+// (checkToolsUpdates), tenuta in un solo posto per non farle divergere.
+function latestTallyCertNo(entries) {
+  return entries.reduce((acc, e) => {
+    if (!acc) return e.certNo;
+    const a = entries.find(x => x.certNo === acc);
+    return (e.dateStr || '') > (a.dateStr || '') ? e.certNo : acc;
+  }, null);
+}
+
 async function loadFiTally() {
   const empty = el('fi-tally-empty');
   const banner = el('fi-tally-banner');
@@ -2158,11 +2227,7 @@ async function loadFiTally() {
   }
   // mostra solo l'ultima Tally List caricata (certNo con la data piu' recente), non tutto
   // lo storico - le liste precedenti restano comunque nell'archivio del tool desktop.
-  const latestCertNo = state.fiTallyEntries.reduce((acc, e) => {
-    if (!acc) return e.certNo;
-    const a = state.fiTallyEntries.find(x => x.certNo === acc);
-    return (e.dateStr || '') > (a.dateStr || '') ? e.certNo : acc;
-  }, null);
+  const latestCertNo = latestTallyCertNo(state.fiTallyEntries);
   const entries = state.fiTallyEntries.filter(e => e.certNo === latestCertNo);
   empty.classList.add('hidden');
   el('fi-tally-sub').textContent = `${latestCertNo} — Item ${entries[0].itemNo} — ${entries[0].dateStr}`;
@@ -2306,6 +2371,13 @@ function renderFiTallyList(entries) {
 el('fi-tally-btn').addEventListener('click', async () => {
   showScreen('fi-tally');
   await loadFiTally();
+  // L'etichetta "Nuova" sparisce solo aprendo davvero questa schermata, non solo il menu -
+  // registra come "vista" la lista che e' ora effettivamente mostrata.
+  if (state.fiTallyEntries.length) {
+    localStorage.setItem('qr_seen_tally_' + state.currentOrderId, latestTallyCertNo(state.fiTallyEntries));
+  }
+  state.tallyHasUpdate = false;
+  renderToolsBadges();
 });
 el('fi-tally-back').addEventListener('click', () => showScreen('dataset'));
 
