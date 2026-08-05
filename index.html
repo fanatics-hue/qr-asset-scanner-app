@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=51">
+<link rel="stylesheet" href="styles.css?v=52">
 </head>
 <body>
 <div id="app">
@@ -315,6 +315,13 @@
       <div class="fi-tally-summary-text" id="fi-tally-summary-text"></div>
       <button type="button" class="link-btn" id="fi-tally-show-detail-btn" data-i18n="fi_tally_show_detail">Mostra elenco dettagliato</button>
     </div>
+    <div class="fi-col-header hidden" id="fi-tally-bulk-header">
+      <span class="fi-col-header-label" data-i18n="fi_tally_bulk_label">Accetta tutti i tubi in sospeso</span>
+      <div class="fi-col-header-flags">
+        <button type="button" class="fi-col-check" id="fi-tally-bulk-accept-btn" title="Accetta tutti">&#10003;</button>
+        <span class="fi-col-check-spacer"></span>
+      </div>
+    </div>
     <div class="fi-tally-list" id="fi-tally-list"></div>
     <div class="card" id="fi-tally-weekly-card">
       <div class="card-header"><span class="section-title" data-i18n="fi_tally_weekly_title">Riepilogo settimanale</span></div>
@@ -446,6 +453,6 @@
   </div>
 </div>
 
-<script src="app.js?v=79"></script>
+<script src="app.js?v=80"></script>
 </body>
 </html>

@@ -437,6 +437,16 @@ textarea.field { resize: vertical; font-family: inherit; }
   font-size: 16px; font-weight: 800; border: 1px solid var(--border); background: var(--bg-input);
   color: var(--text-secondary); cursor: pointer;
 }
+.fi-col-header { display: flex; align-items: center; justify-content: space-between; padding-bottom: 8px; }
+.fi-col-header-label { font-size: 10.5px; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: .04em; }
+.fi-col-header-flags { display: flex; gap: 16px; flex-shrink: 0; }
+.fi-col-check {
+  width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center;
+  font-size: 16px; font-weight: 800; border: 1.5px dashed var(--green); background: var(--green-bg);
+  color: var(--green); cursor: pointer;
+}
+.fi-col-check:disabled { opacity: .45; cursor: default; }
+.fi-col-check-spacer { width: 38px; height: 38px; flex-shrink: 0; }
 .fi-flag-btn.accept { color: var(--green); border-color: var(--green); }
 .fi-flag-btn.accept.on { background: var(--green); color: #06280f; }
 .fi-flag-btn.reject { color: var(--red); border-color: var(--red); }
