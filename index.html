@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=52">
+<link rel="stylesheet" href="styles.css?v=53">
 </head>
 <body>
 <div id="app">
@@ -131,6 +131,14 @@
     </div>
     <div id="sync-banner" class="sync-banner hidden"><span class="sync-dot"></span><span id="sync-banner-text"></span></div>
     <div id="viewer-banner" class="viewer-banner hidden"><span class="viewer-banner-dot"></span><span data-i18n="viewer_banner">Modalità sola consultazione</span></div>
+    <div class="health-card" id="health-card">
+      <button type="button" class="health-summary" id="health-summary-btn">
+        <span class="dot" id="health-summary-dot"></span>
+        <span class="summary-text" id="health-summary-text"></span>
+        <span class="chev" id="health-chev">&rsaquo;</span>
+      </button>
+      <div id="health-rows" class="hidden"></div>
+    </div>
     <div class="dataset-title-row">
       <div class="dataset-title-ic">&#9638;</div>
       <div class="dataset-title-txt">
@@ -453,6 +461,6 @@
   </div>
 </div>
 
-<script src="app.js?v=80"></script>
+<script src="app.js?v=81"></script>
 </body>
 </html>

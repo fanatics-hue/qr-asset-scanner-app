@@ -702,6 +702,33 @@ textarea.field { resize: vertical; font-family: inherit; }
 
 .badge-queued { color: var(--orange); background: var(--orange-bg); }
 
+.health-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; margin: 0 16px 10px; overflow: hidden; }
+.health-summary {
+  display: flex; align-items: center; gap: 9px; width: 100%; padding: 12px 14px;
+  background: none; border: none; cursor: pointer; font-family: var(--font-body); text-align: left;
+}
+.health-summary .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; background: var(--green); }
+.health-summary .dot.dot-orange { background: var(--orange); }
+.health-summary .dot.dot-red { background: var(--red); }
+.health-summary .summary-text { flex: 1; font-size: 13px; font-weight: 700; color: var(--green); }
+.health-summary .summary-text.warn { color: var(--orange); }
+.health-summary .summary-text.danger { color: var(--red); }
+.health-summary .chev { color: var(--text-tertiary); font-size: 14px; transition: transform 0.15s ease; }
+.health-card.open .chev { transform: rotate(90deg); }
+.health-row { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-top: 1px solid var(--border-light); cursor: pointer; }
+.health-row:active { background: var(--bg-input); }
+.health-row .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; background: var(--green); }
+.health-row .dot.dot-orange { background: var(--orange); }
+.health-row .dot.dot-red { background: var(--red); }
+.health-text { flex: 1; min-width: 0; }
+.health-label { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+.health-detail { font-size: 11.5px; color: var(--text-tertiary); margin-top: 1px; }
+.health-chevron { color: var(--text-tertiary); font-size: 16px; flex-shrink: 0; }
+.health-row.info { cursor: default; }
+.health-row.info:active { background: none; }
+.health-row.info .dot { background: var(--text-tertiary); opacity: .5; }
+.health-row.info .health-label { font-weight: 500; color: var(--text-secondary); font-size: 12.5px; }
+
 .viewer-banner {
   display: flex; align-items: center; gap: 8px; margin: 0 16px 10px;
   padding: 8px 12px; border-radius: 10px; font-size: 12px; font-weight: 600;

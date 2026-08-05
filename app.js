@@ -1,5 +1,5 @@
 const API_BASE = 'https://qr-scanner-api.fanatics.workers.dev';
-const APP_VERSION = 80;
+const APP_VERSION = 81;
 
 const TRANSLATIONS = {
   it: {
@@ -168,6 +168,21 @@ const TRANSLATIONS = {
     fi_tally_heat_historical: 'Storico (solo conteggio)',
     fi_tally_bulk_label: 'Accetta tutti i tubi in sospeso',
     fi_tally_bulk_confirm: 'Accettare tutti i {n} tubi ancora in sospeso?',
+    health_summary_ok: 'Tutto regolare',
+    health_summary_warn: 'Stato: da verificare ({n})',
+    health_prod_label: 'Dati produzione',
+    health_prod_never: 'Mai sincronizzati',
+    health_prod_synced: 'Ultima sincronizzazione: {when}',
+    health_prod_stale: 'Ultima sincronizzazione: {when} — verifica se sono aggiornati',
+    health_tally_label: 'Tally List FI',
+    health_tally_none: 'Nessuna Tally List caricata',
+    health_tally_pending: '{certNo} — {n} tubi ancora in sospeso',
+    health_tally_done: '{certNo} — tutti i {n} tubi valutati',
+    health_defects_label: 'Difetti aperti',
+    health_defects_none: 'Nessun difetto aperto',
+    health_defects_open: '{n} aperti',
+    health_defects_aging: '{open} aperti, {aging} da oltre 5 giorni',
+    health_last_scan: 'Ultimo scan registrato: {who}, {when}',
     fi_tally_heat_date: 'Data',
     fi_tally_heat_result: 'Esito',
     fi_tally_historical_note: 'Dal foglio "Weekly TL": {pipes} tubi rilasciati dal 2025 ({weeks} settimane con TL, {meters} m) — solo conteggio, nessun dettaglio accettato/scartato per le liste più vecchie. Settimana con più tubi: {bestWeek} ({bestWeekPipes}).',
@@ -373,6 +388,21 @@ const TRANSLATIONS = {
     fi_tally_heat_historical: 'Historical (count only)',
     fi_tally_bulk_label: 'Accept all pending pipes',
     fi_tally_bulk_confirm: 'Accept all {n} pipes still pending?',
+    health_summary_ok: 'All clear',
+    health_summary_warn: 'Status: needs review ({n})',
+    health_prod_label: 'Production data',
+    health_prod_never: 'Never synced',
+    health_prod_synced: 'Last synced: {when}',
+    health_prod_stale: 'Last synced: {when} — check if it\'s current',
+    health_tally_label: 'Tally List FI',
+    health_tally_none: 'No Tally List uploaded',
+    health_tally_pending: '{certNo} — {n} pipes still pending',
+    health_tally_done: '{certNo} — all {n} pipes evaluated',
+    health_defects_label: 'Open defects',
+    health_defects_none: 'No open defects',
+    health_defects_open: '{n} open',
+    health_defects_aging: '{open} open, {aging} for over 5 days',
+    health_last_scan: 'Last scan: {who}, {when}',
     fi_tally_heat_date: 'Date',
     fi_tally_heat_result: 'Result',
     fi_tally_historical_note: 'From the "Weekly TL" sheet: {pipes} pipes released since 2025 ({weeks} weeks with a TL, {meters} m) — count only, no accepted/rejected detail for older lists. Week with the most pipes: {bestWeek} ({bestWeekPipes}).',
@@ -421,6 +451,12 @@ const HELP_CONTENT = {
     </div>
     <div class="card"><div class="card-header"><span class="section-title">Progetto / Ordine</span></div>
       <div class="help-p">In alto nel Dataset c'è un riquadro con il nome del progetto attivo (es. "Order 45650 / COMP3B"). Toccalo per cambiare ordine se ne esiste più di uno: è lo stesso per tutti gli ispettori, come cambiare cantiere. Solo l'admin può rinominare un ordine (matita) o crearne uno nuovo ("+ Nuovo ordine").</div>
+    </div>
+    <div class="card"><div class="card-header"><span class="section-title">Stato generale</span></div>
+      <div class="help-p">Subito sotto la barra in alto nel Dataset c'è una riga riassuntiva ("Tutto regolare" in verde, o "Stato: da verificare (N)" in arancio/rosso) — toccala per aprirla e vedere il dettaglio: quando sono stati sincronizzati i dati produzione, quanti tubi restano da valutare nella Tally List FI attiva, quanti difetti sono aperti (e da quanto tempo), e l'ultimo scan registrato. Ogni riga si tocca e porta dritto alla schermata giusta. Resta sempre chiusa quando riapri l'app.</div>
+    </div>
+    <div class="card"><div class="card-header"><span class="section-title">Tornare indietro</span></div>
+      <div class="help-p">Oltre al pulsante "‹ Dataset" in alto a sinistra su ogni schermata, funziona anche il tasto/gesto "Indietro" del telefono — riporta al Dataset da qualunque schermata, senza dover raggiungere l'angolo in alto.</div>
     </div>
     <div class="card"><div class="card-header"><span class="section-title">Registrare un nuovo asset</span></div>
       <div class="help-p">Tab "Nuovo asset" → inserisci il Pipe N° (l'Item N° si auto-compila se il tubo è univoco — se lo stesso Pipe N° esiste su più Item compare un avviso e va inserito anche l'Item N°). Se il tubo è nei dati di produzione del giorno, si auto-compilano CS Heat, CRA Heat, Length, avanzamento % e ITP Step — puoi comunque correggere a mano. Se lo stesso Pipe N° risulta già scansionato oggi, compare un avviso rosso con l'ora e chi l'ha fatto (non blocca il salvataggio, è solo un avviso). Scegli ITP Step e Condizione (obbligatori); se scegli "Da revisionare" o "Danneggiato" compaiono anche Tipo difetto (saldatura/dimensionale/visivo/NDE/materiale/altro) e Disposizione (accetta/ripara/scarta/deroga), facoltativi ma utili per le Statistiche. Commenti facoltativi, poi "Salva".</div>
@@ -480,6 +516,12 @@ const HELP_CONTENT = {
     </div>
     <div class="card"><div class="card-header"><span class="section-title">Project / Order</span></div>
       <div class="help-p">A pill at the top of the Dataset shows the active project (e.g. "Order 45650 / COMP3B"). Tap it to switch orders if more than one exists: it's shared by all inspectors, like switching site. Only admins can rename an order (pencil) or create a new one ("+ New order").</div>
+    </div>
+    <div class="card"><div class="card-header"><span class="section-title">Overall status</span></div>
+      <div class="help-p">Right below the top bar in the Dataset there's a summary line ("All clear" in green, or "Status: needs review (N)" in orange/red) — tap it to open the detail: when production data was last synced, how many pipes are still pending in the active Tally List FI, how many defects are open (and for how long), and the last scan logged. Each row is tappable and jumps straight to the right screen. Always closed again when you reopen the app.</div>
+    </div>
+    <div class="card"><div class="card-header"><span class="section-title">Going back</span></div>
+      <div class="help-p">Besides the "‹ Dataset" button at the top-left of every screen, your phone's own back button/gesture also works — it returns to the Dataset from any screen, no need to reach the corner.</div>
     </div>
     <div class="card"><div class="card-header"><span class="section-title">Logging a new asset</span></div>
       <div class="help-p">"New asset" tab → enter the Pipe No. (Item No. auto-fills if the pipe is unique — if the same Pipe No. exists on more than one Item, a hint appears asking to also enter the Item No.). If the pipe is in today's production data, CS Heat/CRA Heat/Length/progress %/ITP Step auto-fill too — you can still edit any field by hand. If the same Pipe No. was already scanned today, a red warning shows the time and who did it (it doesn't block saving, it's just a heads-up). Choose ITP Step and Condition (required); picking "Needs review" or "Damaged" also reveals Defect type (weld/dimensional/visual/NDE/material/other) and Disposition (accept/repair/reject/concession), optional but useful for Statistics. Optional comments, then "Save".</div>
@@ -649,13 +691,34 @@ function setLang(lang) {
   if (state.screen === 'order-status') renderOrderStatus();
 }
 
+// Tasto/gesto "Indietro" nativo del telefono (05.08.2026, richiesta di Rino: il
+// pulsante in alto a sinistra come unico modo per tornare indietro era scomodo da
+// raggiungere). Ogni schermata di questa app torna sempre e solo a "dataset" (nessuno
+// stack a più livelli, verificato su tutti i pulsanti "indietro" esistenti) - quindi
+// basta che "dataset"/"login" sostituiscano la voce di cronologia (sono la "base") e
+// ogni altra schermata ne aggiunga una nuova: il tasto indietro del telefono, che
+// genera un evento popstate, riporta cosi' automaticamente a "dataset" da qualunque
+// schermata, esattamente come il pulsante "‹ Dataset" gia' esistente.
+let suppressHistoryPush = false;
 function showScreen(name) {
   state.screen = name;
   screens.forEach(s => el('screen-' + s).classList.toggle('hidden', s !== name));
   document.querySelectorAll('.tab-cap').forEach(b => {
     b.classList.toggle('active', b.dataset.tab === name);
   });
+  if (!suppressHistoryPush) {
+    if (name === 'dataset' || name === 'login') {
+      history.replaceState({ screen: name }, '', '#' + name);
+    } else {
+      history.pushState({ screen: name }, '', '#' + name);
+    }
+  }
 }
+window.addEventListener('popstate', (e) => {
+  suppressHistoryPush = true;
+  showScreen((e.state && e.state.screen) || 'dataset');
+  suppressHistoryPush = false;
+});
 
 // ---------------- API ----------------
 async function api(path, opts = {}) {
@@ -1095,6 +1158,7 @@ async function checkToolsUpdates() {
   try {
     const data = await api('/api/fi-tally');
     const entries = data.entries || [];
+    state.fiTallyEntries = entries; // tenuto aggiornato anche fuori dalla schermata Tally List FI, serve alla card Stato generale
     const latestCertNo = entries.length ? latestTallyCertNo(entries) : null;
     if (latestCertNo) {
       const seenKey = 'qr_seen_tally_' + state.currentOrderId;
@@ -1105,6 +1169,7 @@ async function checkToolsUpdates() {
   } catch (e) { /* rete assente: il badge resta com'era, non deve bloccare nient'altro */ }
   try {
     const data = await api('/api/production-data');
+    state.productionMeta = data.meta || null; // idem, serve alla card Stato generale
     const updatedAt = data.meta && data.meta.updatedAt;
     if (updatedAt) {
       const seenKey = 'qr_seen_prod_' + state.currentOrderId;
@@ -1114,6 +1179,7 @@ async function checkToolsUpdates() {
     }
   } catch (e) { /* idem */ }
   renderToolsBadges();
+  renderHealthCard();
 }
 let toolsUpdatePoll = null;
 function startToolsUpdatePolling() {
@@ -1474,7 +1540,100 @@ async function loadRecords() {
   renderDatasetList();
 }
 
+// Card "Stato generale" in cima al Dataset (05.08.2026, richiesta di Rino: oggi capita
+// spesso di scoprire "a posteriori" che qualcosa non era davvero sincronizzato/allineato
+// - questa card lo dice subito, appena apri l'app). Chiusa di default (nessuna
+// persistenza tra sessioni, per scelta - resta sempre un riassunto di una riga finche'
+// non la apri tu). Le prime 3 righe sono un vero e proprio semaforo (contano per il
+// riassunto), la quarta (ultimo scan) e' solo informativa.
+function renderHealthCard() {
+  if (!el('health-summary-text')) return;
+  const items = [];
+
+  // 1) Sincronizzazione dati produzione
+  const prodMeta = state.productionMeta;
+  let prodStatus = 'orange', prodDetail = t('health_prod_never');
+  if (prodMeta && prodMeta.updatedAt) {
+    const ageHours = (Date.now() - new Date(prodMeta.updatedAt).getTime()) / 3600000;
+    const when = new Date(prodMeta.updatedAt).toLocaleString(t('locale'));
+    if (ageHours <= 24) {
+      prodStatus = 'green';
+      prodDetail = t('health_prod_synced').replace('{when}', when);
+    } else {
+      prodStatus = 'orange';
+      prodDetail = t('health_prod_stale').replace('{when}', when);
+    }
+  }
+  items.push({ status: prodStatus, label: t('health_prod_label'), detail: prodDetail, action: 'order-status' });
+
+  // 2) Tally List FI attiva (solo l'ultima, stessa logica di loadFiTally)
+  let tallyStatus = 'green', tallyDetail = t('health_tally_none');
+  if (state.fiTallyEntries && state.fiTallyEntries.length) {
+    const latestCertNo = latestTallyCertNo(state.fiTallyEntries);
+    const active = state.fiTallyEntries.filter(e => e.certNo === latestCertNo);
+    const pending = active.filter(e => !e.esito).length;
+    if (pending > 0) {
+      tallyStatus = 'orange';
+      tallyDetail = t('health_tally_pending').replace('{certNo}', latestCertNo).replace('{n}', pending);
+    } else {
+      tallyDetail = t('health_tally_done').replace('{certNo}', latestCertNo).replace('{n}', active.length);
+    }
+  }
+  items.push({ status: tallyStatus, label: t('health_tally_label'), detail: tallyDetail, action: 'fi-tally' });
+
+  // 3) Difetti aperti (stessa soglia di 5 giorni gia' usata in Statistiche)
+  const openDefects = (state.records || []).filter(r => isDefectCondition(r.condition) && r.status === 'open');
+  const agingDefects = openDefects.filter(r => r.scannedAt && (Date.now() - new Date(r.scannedAt).getTime()) / 86400000 >= 5);
+  let defStatus = 'green', defDetail = t('health_defects_none');
+  if (agingDefects.length) {
+    defStatus = 'red';
+    defDetail = t('health_defects_aging').replace('{open}', openDefects.length).replace('{aging}', agingDefects.length);
+  } else if (openDefects.length) {
+    defStatus = 'orange';
+    defDetail = t('health_defects_open').replace('{n}', openDefects.length);
+  }
+  items.push({ status: defStatus, label: t('health_defects_label'), detail: defDetail, action: 'dataset-defects' });
+
+  // 4) Ultimo scan registrato - solo informativo, non entra nel conteggio avvisi
+  const lastRecord = (state.records || []).slice().sort((a, b) => new Date(b.scannedAt) - new Date(a.scannedAt))[0];
+  const lastScanText = lastRecord
+    ? t('health_last_scan').replace('{who}', lastRecord.scannedBy || '-').replace('{when}', lastRecord.scannedAt ? new Date(lastRecord.scannedAt).toLocaleString(t('locale')) : '-')
+    : '';
+
+  const warnCount = items.filter(it => it.status !== 'green').length;
+  const worst = items.some(it => it.status === 'red') ? 'red' : (warnCount ? 'orange' : 'green');
+
+  el('health-summary-dot').className = 'dot dot-' + worst;
+  const summaryText = el('health-summary-text');
+  summaryText.textContent = warnCount ? t('health_summary_warn').replace('{n}', warnCount) : t('health_summary_ok');
+  summaryText.className = 'summary-text' + (worst === 'red' ? ' danger' : worst === 'orange' ? ' warn' : '');
+
+  const rows = el('health-rows');
+  rows.innerHTML = items.map(it => `
+    <div class="health-row" data-action="${it.action}">
+      <span class="dot dot-${it.status}"></span>
+      <div class="health-text"><div class="health-label">${escapeHtml(it.label)}</div><div class="health-detail">${escapeHtml(it.detail)}</div></div>
+      <span class="health-chevron">&rsaquo;</span>
+    </div>`).join('') + (lastScanText
+    ? `<div class="health-row info"><span class="dot"></span><div class="health-text"><div class="health-label">${escapeHtml(lastScanText)}</div></div></div>`
+    : '');
+  rows.querySelectorAll('.health-row[data-action]').forEach(row => {
+    row.addEventListener('click', () => {
+      const action = row.dataset.action;
+      if (action === 'order-status') el('order-status-btn').click();
+      else if (action === 'fi-tally') el('fi-tally-btn').click();
+      else if (action === 'dataset-defects') el('filter-defects').click();
+    });
+  });
+}
+el('health-summary-btn').addEventListener('click', () => {
+  const card = el('health-card');
+  const open = card.classList.toggle('open');
+  el('health-rows').classList.toggle('hidden', !open);
+});
+
 function renderDatasetList() {
+  renderHealthCard();
   const q = (el('search-input').value || '').toLowerCase().trim();
   const list = el('dataset-list');
   const filtered = state.records.filter(r => {
