@@ -1,5 +1,5 @@
 const API_BASE = 'https://qr-scanner-api.fanatics.workers.dev';
-const APP_VERSION = 84;
+const APP_VERSION = 85;
 
 const TRANSLATIONS = {
   it: {
@@ -2691,7 +2691,12 @@ async function loadFiTally() {
 
 el('fi-tally-show-detail-btn').addEventListener('click', () => {
   state.fiTallyExpanded = true;
-  renderFiTallyList(state.fiTallyEntries.filter(e => e.certNo === state.fiTallyEntries[0].certNo));
+  // Bug 06.08.2026: filtrava per state.fiTallyEntries[0].certNo (il primo elemento
+  // dell'array, ordine arbitrario da KV.list) invece che per l'ultima Tally List
+  // davvero in corso - stessa funzione gia' usata in loadFiTally per l'intestazione,
+  // qui non veniva riusata e mostrava un'altra lista (tutti i suoi accettati/scartati).
+  const latestCertNo = latestTallyCertNo(state.fiTallyEntries);
+  renderFiTallyList(state.fiTallyEntries.filter(e => e.certNo === latestCertNo));
 });
 
 function renderFiTallyList(entries) {
