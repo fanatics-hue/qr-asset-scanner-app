@@ -1,5 +1,5 @@
 const API_BASE = 'https://qr-scanner-api.fanatics.workers.dev';
-const APP_VERSION = 82;
+const APP_VERSION = 83;
 
 const TRANSLATIONS = {
   it: {
@@ -150,6 +150,7 @@ const TRANSLATIONS = {
     fi_tally_reason_ph: 'Motivo dello scarto',
     fi_tally_reason_required: 'Il motivo dello scarto è obbligatorio.',
     fi_tally_confirm_reject_btn: 'Conferma scarto',
+    fi_tally_undo_confirm: 'Annullare questo esito e riportare il tubo in sospeso?',
     fi_tally_summary: '{certNo} completata — {accepted} accettati, {rejected} scartati',
     fi_tally_show_detail: 'Mostra elenco dettagliato',
     fi_tally_weekly_title: 'Riepilogo settimanale',
@@ -370,6 +371,7 @@ const TRANSLATIONS = {
     fi_tally_reason_ph: 'Reason for rejection',
     fi_tally_reason_required: 'The rejection reason is required.',
     fi_tally_confirm_reject_btn: 'Confirm rejection',
+    fi_tally_undo_confirm: 'Undo this outcome and put the tube back to pending?',
     fi_tally_summary: '{certNo} completed — {accepted} accepted, {rejected} rejected',
     fi_tally_show_detail: 'Show detailed list',
     fi_tally_weekly_title: 'Weekly summary',
@@ -486,7 +488,7 @@ const HELP_CONTENT = {
       <div class="help-p">La striscia colorata a sinistra indica la condizione: verde = ottimo, blu = buono, arancio = da revisionare, rosso = danneggiato. Cerca per Pipe N°, Item N°, CS Heat o CRA Heat, oppure usa il filtro "Tutti / Solo difetti" per vedere solo le schede Da revisionare/Danneggiate. Solo l'admin può eliminare una scheda (cestino).</div>
     </div>
     <div class="card"><div class="card-header"><span class="section-title">Tally List FI</span></div>
-      <div class="help-p">Un pallino rosso sull'icona "⋮" Strumenti (e l'etichetta "Nuova" su questa voce) avvisa quando arriva una Tally List più recente di quella già vista - sparisce aprendo questa schermata. Pulsante 🏁 nel Dataset: mostra l'ultima Tally List di Final Inspection caricata dal tool desktop (Cert-No, Item, data), con l'elenco tubi da valutare. Tocca ✓ per Accettare (subito, nessuna conferma) o ✗ per Scartare (richiede di scrivere il motivo dello scarto) - qualunque ispettore loggato può farlo, si vede subito chi e quando. In cima all'elenco, allineata sopra la colonna dei ✓, c'è anche una casella "Accetta tutti i tubi in sospeso" per accettarli tutti in un colpo solo (chiede conferma prima, e non tocca i tubi già decisi). Se un tubo ha un difetto ancora aperto registrato in questa stessa app, compare un avviso arancione prima di decidere. Quando tutti i tubi della lista sono stati valutati, la schermata si riduce a un riepilogo compatto (accettati/scartati) fino all'arrivo della prossima Tally List; sotto trovi anche un riepilogo per settimana (lun-ven), un totale su tutto lo storico, e una mappa a quadratini colorati (una per Tally List, raggruppate per mese) che mostra a colpo d'occhio quali liste hanno avuto più scarti — verde=tutto accettato, rosso=molti scarti; toccando un quadratino compare il dettaglio sotto. In fondo trovi anche il totale Tally List, i tubi valutati, la settimana col tasso di accettazione migliore (evidenziata) e il tasso di scarto complessivo. La mappa include anche le Tally List più vecchie dal 2025 (quadratini grigi, presi dal foglio Excel "Weekly TL" — solo conteggio tubi, nessun accettato/scartato disponibile per quelle) e ovunque compare una nota con il totale ufficiale (3.702 tubi, 45.281,645 m, 59 settimane con TL). L'esito resta salvato per sempre (anche per riscontri futuri), e il tool desktop può riscaricarlo per tenerlo anche nell'archivio Excel.</div>
+      <div class="help-p">Un pallino rosso sull'icona "⋮" Strumenti (e l'etichetta "Nuova" su questa voce) avvisa quando arriva una Tally List più recente di quella già vista - sparisce aprendo questa schermata. Pulsante 🏁 nel Dataset: mostra l'ultima Tally List di Final Inspection caricata dal tool desktop (Cert-No, Item, data), con l'elenco tubi da valutare. Tocca ✓ per Accettare (subito, nessuna conferma) o ✗ per Scartare (richiede di scrivere il motivo dello scarto) - qualunque ispettore loggato può farlo, si vede subito chi e quando. Sbagliato? Tocca di nuovo la spunta già attiva (verde o rossa): dopo una conferma, il tubo torna "in sospeso" come prima di valutarlo. In cima all'elenco, allineata sopra la colonna dei ✓, c'è anche una casella "Accetta tutti i tubi in sospeso" per accettarli tutti in un colpo solo (chiede conferma prima, e non tocca i tubi già decisi). Se un tubo ha un difetto ancora aperto registrato in questa stessa app, compare un avviso arancione prima di decidere. Quando tutti i tubi della lista sono stati valutati, la schermata si riduce a un riepilogo compatto (accettati/scartati) fino all'arrivo della prossima Tally List; sotto trovi anche un riepilogo per settimana (lun-ven), un totale su tutto lo storico, e una mappa a quadratini colorati (una per Tally List, raggruppate per mese) che mostra a colpo d'occhio quali liste hanno avuto più scarti — verde=tutto accettato, rosso=molti scarti; toccando un quadratino compare il dettaglio sotto. In fondo trovi anche il totale Tally List, i tubi valutati, la settimana col tasso di accettazione migliore (evidenziata) e il tasso di scarto complessivo. La mappa include anche le Tally List più vecchie dal 2025 (quadratini grigi, presi dal foglio Excel "Weekly TL" — solo conteggio tubi, nessun accettato/scartato disponibile per quelle) e ovunque compare una nota con il totale ufficiale (3.702 tubi, 45.281,645 m, 59 settimane con TL). L'esito resta salvato per sempre (anche per riscontri futuri), e il tool desktop può riscaricarlo per tenerlo anche nell'archivio Excel.</div>
     </div>
     <div class="card"><div class="card-header"><span class="section-title">Cerca tubo</span></div>
       <div class="help-p">Pulsante 🔍 nel Dataset: consulta un Pipe N° (dati produzione: Item N°, CS Heat, CRA Heat, Length, step ITP, avanzamento) e ti dice subito se è già stato registrato, con chi e quando, senza creare o modificare nessuna scheda. Utile per un controllo veloce prima di decidere se serve davvero un nuovo rilievo. Se vuoi comunque registrarlo, il pulsante "+ Registra questo asset" in fondo apre "Nuovo asset" già precompilato.</div>
@@ -551,7 +553,7 @@ const HELP_CONTENT = {
       <div class="help-p">The colored stripe on the left shows the condition: green = excellent, blue = good, orange = needs review, red = damaged. Search by Pipe No., Item No., CS Heat or CRA Heat, or use the "All / Defects only" filter to see just the Needs review/Damaged records. Only admins can delete a record (trash icon).</div>
     </div>
     <div class="card"><div class="card-header"><span class="section-title">Tally List FI</span></div>
-      <div class="help-p">A red dot on the "⋮" Tools icon (and a "New" tag on this row) shows up when a Tally List newer than the one you've already seen arrives - it clears once you open this screen. 🏁 button in the Dataset: shows the latest Final Inspection Tally List uploaded from the desktop tool (Cert-No, Item, date), with the list of pipes to evaluate. Tap ✓ to Accept (right away, no confirmation) or ✗ to Reject (requires typing a reason) - any logged-in inspector can do this, and who/when is shown right away. At the top of the list, aligned above the ✓ column, there's also an "Accept all pending pipes" box to accept them all in one go (asks for confirmation first, and never touches pipes already decided). If a pipe has a defect still open in this same app, an orange warning appears before you decide. Once every pipe in the list has been evaluated, the screen collapses into a compact summary (accepted/rejected) until the next Tally List arrives; below it there's also a weekly (Mon-Fri) breakdown, an all-time total, and a grid of colored squares (one per Tally List, grouped by month) that shows at a glance which lists had more rejections — green=all accepted, red=lots of rejections; tap a square to see its detail below. At the bottom you'll also find the total Tally Lists, pipes evaluated, the week with the best acceptance rate (highlighted), and the overall rejection rate. The grid also includes older Tally Lists since 2025 (gray squares, sourced from the "Weekly TL" Excel sheet — pipe count only, no accepted/rejected detail available for those) and a note with the official total (3,702 pipes, 45,281.645 m, 59 weeks with a TL) appears everywhere it's relevant. The result is saved permanently (for future cross-checks too), and the desktop tool can re-download it to keep it in the Excel archive as well.</div>
+      <div class="help-p">A red dot on the "⋮" Tools icon (and a "New" tag on this row) shows up when a Tally List newer than the one you've already seen arrives - it clears once you open this screen. 🏁 button in the Dataset: shows the latest Final Inspection Tally List uploaded from the desktop tool (Cert-No, Item, date), with the list of pipes to evaluate. Tap ✓ to Accept (right away, no confirmation) or ✗ to Reject (requires typing a reason) - any logged-in inspector can do this, and who/when is shown right away. Made a mistake? Tap the already-active tick again (green or red): after a confirmation, the pipe goes back to "pending" as before. At the top of the list, aligned above the ✓ column, there's also an "Accept all pending pipes" box to accept them all in one go (asks for confirmation first, and never touches pipes already decided). If a pipe has a defect still open in this same app, an orange warning appears before you decide. Once every pipe in the list has been evaluated, the screen collapses into a compact summary (accepted/rejected) until the next Tally List arrives; below it there's also a weekly (Mon-Fri) breakdown, an all-time total, and a grid of colored squares (one per Tally List, grouped by month) that shows at a glance which lists had more rejections — green=all accepted, red=lots of rejections; tap a square to see its detail below. At the bottom you'll also find the total Tally Lists, pipes evaluated, the week with the best acceptance rate (highlighted), and the overall rejection rate. The grid also includes older Tally Lists since 2025 (gray squares, sourced from the "Weekly TL" Excel sheet — pipe count only, no accepted/rejected detail available for those) and a note with the official total (3,702 pipes, 45,281.645 m, 59 weeks with a TL) appears everywhere it's relevant. The result is saved permanently (for future cross-checks too), and the desktop tool can re-download it to keep it in the Excel archive as well.</div>
     </div>
     <div class="card"><div class="card-header"><span class="section-title">Pipe lookup</span></div>
       <div class="help-p">🔍 button in the Dataset: look up a Pipe N° (production data: Item No., CS Heat, CRA Heat, Length, ITP step, progress) and instantly see whether it's already been registered, by whom and when — without creating or changing any record. Handy for a quick check before deciding whether a new record is actually needed. If you do want to register it, the "+ Register this asset" button at the bottom opens "New asset" already pre-filled.</div>
@@ -2767,6 +2769,29 @@ function renderFiTallyList(entries) {
     btn.addEventListener('click', async () => {
       const id = btn.dataset.id;
       const esito = btn.dataset.esito;
+      const current = state.fiTallyEntries.find(x => x.id === id);
+      // Ritoccare il pulsante gia' attivo (spunta verde o rossa) e' l'unico modo per
+      // correggere un errore di flag: chiede conferma e riporta il tubo in sospeso,
+      // invece di limitarsi a re-inviare lo stesso esito (05.08.2026, richiesto da Rino).
+      if (current && current.esito === esito) {
+        if (!confirm(t('fi_tally_undo_confirm'))) return;
+        btn.disabled = true;
+        try {
+          const { entry } = await api('/api/fi-tally/' + encodeURIComponent(id) + '/flag', {
+            method: 'POST', body: JSON.stringify({ esito: null })
+          });
+          const idx = state.fiTallyEntries.findIndex(x => x.id === id);
+          if (idx >= 0) state.fiTallyEntries[idx] = entry;
+          renderFiTallyWeeklySummary();
+          renderFiTallyTotalSummary();
+          renderFiTallyChart();
+          renderFiTallyList(state.fiTallyEntries.filter(e => e.certNo === entry.certNo));
+        } catch (err) {
+          alert(t('err_generic') + err.message);
+        }
+        btn.disabled = false;
+        return;
+      }
       // "Scarta" ha conseguenze piu' serie di "Accetta" (esclude il tubo dalla Final
       // Inspection): richiede di scrivere il motivo prima di procedere, stessa logica
       // gia' usata per la nota di chiusura obbligatoria di un difetto - "Accetta" resta
