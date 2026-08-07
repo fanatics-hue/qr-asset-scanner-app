@@ -1,5 +1,5 @@
 const API_BASE = 'https://qr-scanner-api.fanatics.workers.dev';
-const APP_VERSION = 93;
+const APP_VERSION = 94;
 
 const TRANSLATIONS = {
   it: {
@@ -118,6 +118,7 @@ const TRANSLATIONS = {
     cr_label: 'CR',
     ncr_cr_comment_ph: 'Riferimento/nota NCR o CR',
     field_ncr_cr: 'NCR / CR',
+    defect_details_title: 'Dettagli difetto',
     close_note_ph: 'Causa e azione correttiva (obbligatorio)',
     cancel_btn: 'Annulla',
     confirm_close_btn: 'Conferma chiusura',
@@ -138,6 +139,9 @@ const TRANSLATIONS = {
     order_sheet_title: 'Progetto',
     tools_menu_title: 'Strumenti',
     tools_sheet_title: 'Strumenti',
+    tools_group_daily: 'Lavoro quotidiano',
+    tools_group_progress: 'Andamento',
+    tools_group_system: 'Sistema',
     order_new_ph: 'Nome nuovo ordine',
     order_new_btn: '+ Nuovo ordine',
     order_status_title: 'Stato Ordine',
@@ -406,6 +410,7 @@ const TRANSLATIONS = {
     cr_label: 'CR',
     ncr_cr_comment_ph: 'NCR or CR reference/note',
     field_ncr_cr: 'NCR / CR',
+    defect_details_title: 'Defect details',
     close_note_ph: 'Root cause and corrective action (required)',
     cancel_btn: 'Cancel',
     confirm_close_btn: 'Confirm closure',
@@ -426,6 +431,9 @@ const TRANSLATIONS = {
     order_sheet_title: 'Project',
     tools_menu_title: 'Tools',
     tools_sheet_title: 'Tools',
+    tools_group_daily: 'Daily work',
+    tools_group_progress: 'Progress',
+    tools_group_system: 'System',
     order_new_ph: 'New order name',
     order_new_btn: '+ New order',
     order_status_title: 'Order Status',
@@ -1311,8 +1319,8 @@ function renderToolsBadges() {
   if (updatedAt) {
     orderTag.classList.remove('hidden');
     const ageHours = (Date.now() - new Date(updatedAt).getTime()) / 3600000;
-    const ageClass = ageHours < 24 ? 'tools-row-tag-ok' : ageHours < 48 ? 'tools-row-tag-warn' : 'tools-row-tag-bad';
-    orderTag.classList.remove('tools-row-tag-ok', 'tools-row-tag-warn', 'tools-row-tag-bad');
+    const ageClass = ageHours < 24 ? 'tag-ok' : ageHours < 48 ? 'tag-warn' : 'tag-bad';
+    orderTag.classList.remove('tag-ok', 'tag-warn', 'tag-bad');
     orderTag.classList.add(ageClass);
     orderTag.textContent = t('tools_tag_updated_at').replace('{when}',
       new Date(updatedAt).toLocaleString(t('locale'), { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }));
@@ -1375,6 +1383,7 @@ function openConfirm(parsed) {
   el('f-scannedAt').textContent = new Date().toLocaleString(t('locale'));
   el('f-comment').value = '';
   el('f-ncr-cr-comment').value = '';
+  el('defect-details-toggle').closest('.accordion').classList.remove('collapsed');
   el('prod-progress-row').classList.add('hidden');
   el('pipe-ambiguous-hint').classList.add('hidden');
   el('dup-scan-hint').classList.add('hidden');
@@ -1406,6 +1415,7 @@ function openEditRecord(rec) {
   el('f-scannedAt').textContent = rec.scannedAt ? new Date(rec.scannedAt).toLocaleString(t('locale')) : '-';
   el('f-comment').value = rec.comment || '';
   el('f-ncr-cr-comment').value = rec.ncrCrComment || '';
+  el('defect-details-toggle').closest('.accordion').classList.remove('collapsed');
   el('prod-progress-row').classList.add('hidden');
   el('pipe-ambiguous-hint').classList.add('hidden');
   el('dup-scan-hint').classList.add('hidden');
@@ -1531,7 +1541,21 @@ function renderChips() {
       ncrCrWrap.appendChild(b);
     });
     el('ncr-cr-comment-row').classList.toggle('hidden', !(state.draft.ncr || state.draft.cr));
+    updateDefectDetailsSummary();
   }
+}
+
+// Titolo del pannello "Dettagli difetto" (07.08.2026, valutazione UI): riassume le scelte
+// gia' fatte anche da chiuso (es. "Saldatura, Da Riparare, NCR"), cosi' non serve riaprirlo
+// solo per ricordare cosa si e' selezionato - torna al testo generico se non c'e' ancora
+// nessuna selezione.
+function updateDefectDetailsSummary() {
+  const parts = [];
+  if (state.draft.defectType) parts.push(defectTypeLabel(state.draft.defectType));
+  if (state.draft.disposition) parts.push(dispositionLabel(state.draft.disposition));
+  if (state.draft.ncr) parts.push(t('ncr_label'));
+  if (state.draft.cr) parts.push(t('cr_label'));
+  el('defect-details-summary').textContent = parts.length ? parts.join(', ') : t('defect_details_title');
 }
 
 function updateSaveState() {
@@ -1549,6 +1573,9 @@ function updateSaveState() {
 });
 el('f-comment').addEventListener('input', () => { state.draft.comment = el('f-comment').value; });
 el('f-ncr-cr-comment').addEventListener('input', () => { state.draft.ncrCrComment = el('f-ncr-cr-comment').value; });
+el('defect-details-toggle').addEventListener('click', () => {
+  el('defect-details-toggle').closest('.accordion').classList.toggle('collapsed');
+});
 
 // Auto-compilazione da dati di produzione (Raw data COMP3B): basta il solo Pipe N. (come nel
 // foglio Excel "Ricerca da Elenco" - cerca su tutti gli Item, prima corrispondenza); se anche
@@ -2990,7 +3017,7 @@ function renderFiTallyList(entries) {
         ${whoLine}
       </div>
       ${isViewer()
-        ? `<span class="viewonly-tag">${escapeHtml(t('viewer_readonly_tag'))}</span>`
+        ? `<span class="tag tag-neutral">${escapeHtml(t('viewer_readonly_tag'))}</span>`
         : `<div class="fi-flag-btns">
         <button type="button" class="fi-flag-btn accept${e.esito === 'accepted' ? ' on' : ''}" data-id="${escapeHtml(e.id)}" data-esito="accepted">✓</button>
         <button type="button" class="fi-flag-btn reject${e.esito === 'rejected' ? ' on' : ''}" data-id="${escapeHtml(e.id)}" data-esito="rejected">✗</button>

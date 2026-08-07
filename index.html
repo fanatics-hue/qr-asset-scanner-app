@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=58">
+<link rel="stylesheet" href="styles.css?v=59">
 </head>
 <body>
 <div id="app">
@@ -98,17 +98,30 @@
         <div class="row" style="border-top:0.5px solid var(--border-light);padding-bottom:0"><label data-i18n="field_condition">Condizione *</label></div>
         <div class="chip-group" id="cond-chips"></div>
         <div id="defect-fields" class="hidden">
-          <div class="row" style="border-top:0.5px solid var(--border-light);padding-bottom:0"><label data-i18n="field_defect_type">Tipo difetto</label></div>
-          <div class="chip-group" id="defect-type-chips"></div>
-          <div class="row" style="border-top:0.5px solid var(--border-light);padding-bottom:0"><label data-i18n="field_disposition">Disposizione</label></div>
-          <div class="chip-group" id="disposition-chips"></div>
-          <!-- NCR/CR (07.08.2026): sezione separata dalla disposizione - una scheda puo'
-               avere sia una disposizione (es. "Riparato") sia un NCR/CR aperto sopra, non
-               sono alternativi tra loro, per questo non sono chip dentro "Disposizione". -->
-          <div class="row" style="border-top:0.5px solid var(--border-light);padding-bottom:0"><label data-i18n="ncr_cr_title">NCR / CR</label></div>
-          <div class="chip-group" id="ncr-cr-chips"></div>
-          <div id="ncr-cr-comment-row" class="row hidden" style="display:block;padding-bottom:12px">
-            <textarea id="f-ncr-cr-comment" class="field" rows="2" data-i18n-ph="ncr_cr_comment_ph"></textarea>
+          <!-- Pannello richiudibile "Dettagli difetto" (07.08.2026, valutazione UI): con
+               Disposizione passata a 8 opzioni + la nuova sezione NCR/CR la scheda difetto
+               era diventata lunga - il titolo riassume le scelte gia' fatte anche da chiuso,
+               cosi' non serve riaprirlo solo per ricordare cosa si e' selezionato. Aperto di
+               default (mai nascondere campi obbligatori dietro un tocco in piu' la prima volta). -->
+          <div class="accordion" style="border-top:0.5px solid var(--border-light)">
+            <button type="button" id="defect-details-toggle" class="accordion-head">
+              <span id="defect-details-summary" data-i18n="defect_details_title">Dettagli difetto</span>
+              <span id="defect-details-chev" class="accordion-chev">&#9652;</span>
+            </button>
+            <div id="defect-details-body" class="accordion-body">
+              <div class="row" style="padding-bottom:0"><label data-i18n="field_defect_type">Tipo difetto</label></div>
+              <div class="chip-group" id="defect-type-chips"></div>
+              <div class="row" style="border-top:0.5px solid var(--border-light);padding-bottom:0"><label data-i18n="field_disposition">Disposizione</label></div>
+              <div class="chip-group" id="disposition-chips"></div>
+              <!-- NCR/CR (07.08.2026): sezione separata dalla disposizione - una scheda puo'
+                   avere sia una disposizione (es. "Riparato") sia un NCR/CR aperto sopra, non
+                   sono alternativi tra loro, per questo non sono chip dentro "Disposizione". -->
+              <div class="row" style="border-top:0.5px solid var(--border-light);padding-bottom:0"><label data-i18n="ncr_cr_title">NCR / CR</label></div>
+              <div class="chip-group" id="ncr-cr-chips"></div>
+              <div id="ncr-cr-comment-row" class="row hidden" style="display:block;padding-bottom:12px">
+                <textarea id="f-ncr-cr-comment" class="field" rows="2" data-i18n-ph="ncr_cr_comment_ph"></textarea>
+              </div>
+            </div>
           </div>
         </div>
         <div class="row" style="border-top:0.5px solid var(--border-light);display:block;padding-bottom:12px">
@@ -469,10 +482,15 @@
   <div class="sheet-card">
     <div class="sheet-title" data-i18n="tools_sheet_title">Strumenti</div>
     <div class="tools-list">
-      <button id="fi-tally-btn" class="tools-row" type="button"><span class="tools-row-icon">&#127937;</span><span class="tools-row-name" data-i18n="fi_tally_title">Tally List FI</span><span id="fi-tally-new-tag" class="tools-row-new-tag hidden" data-i18n="tools_tag_new">Nuova</span></button>
+      <!-- Menu raggruppato per categoria (07.08.2026, valutazione UI): prima lista piatta
+           di 6 righe, ormai troppe per trovare al volo quella giusta. -->
+      <div class="tools-group-label" data-i18n="tools_group_daily">Lavoro quotidiano</div>
+      <button id="fi-tally-btn" class="tools-row" type="button"><span class="tools-row-icon">&#127937;</span><span class="tools-row-name" data-i18n="fi_tally_title">Tally List FI</span><span id="fi-tally-new-tag" class="tag tag-bad hidden" data-i18n="tools_tag_new">Nuova</span></button>
       <button id="lookup-btn" class="tools-row" type="button"><span class="tools-row-icon">&#128269;</span><span class="tools-row-name" data-i18n="lookup_title">Cerca tubo</span></button>
-      <button id="order-status-btn" class="tools-row" type="button"><span class="tools-row-icon">&#128678;</span><span class="tools-row-name" data-i18n="order_status_title">Stato Ordine</span><span id="order-status-new-tag" class="hidden">Aggiornato</span></button>
+      <div class="tools-group-label" data-i18n="tools_group_progress">Andamento</div>
+      <button id="order-status-btn" class="tools-row" type="button"><span class="tools-row-icon">&#128678;</span><span class="tools-row-name" data-i18n="order_status_title">Stato Ordine</span><span id="order-status-new-tag" class="tag hidden">Aggiornato</span></button>
       <button id="stats-btn" class="tools-row" type="button"><span class="tools-row-icon">&#128202;</span><span class="tools-row-name" data-i18n="stats_title">Statistiche</span></button>
+      <div class="tools-group-label" data-i18n="tools_group_system">Sistema</div>
       <button id="help-btn" class="tools-row" type="button"><span class="tools-row-icon">?</span><span class="tools-row-name" data-i18n="help_title">Guida</span></button>
       <button id="admin-gear" class="tools-row hidden" type="button"><span class="tools-row-icon">&#9881;</span><span class="tools-row-name" data-i18n="admin_title">Gestione ispettori</span></button>
     </div>
@@ -494,6 +512,6 @@
 </div>
 
 <script src="vendor/jspdf.umd.min.js"></script>
-<script src="app.js?v=93"></script>
+<script src="app.js?v=94"></script>
 </body>
 </html>
