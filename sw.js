@@ -1,4 +1,4 @@
-const CACHE = 'qr-scanner-v3';
+const CACHE = 'qr-scanner-v4';
 const ASSETS = [
   './',
   './index.html',
@@ -6,6 +6,7 @@ const ASSETS = [
   './app.js',
   './manifest.json',
   './assets/iqs-logo.jpg',
+  './vendor/jspdf.umd.min.js',
   'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js'
 ];
 
