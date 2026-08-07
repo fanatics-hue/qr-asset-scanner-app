@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=56">
+<link rel="stylesheet" href="styles.css?v=57">
 </head>
 <body>
 <div id="app">
@@ -140,7 +140,7 @@
       <div id="health-rows" class="hidden"></div>
     </div>
     <div class="dataset-title-row">
-      <div class="dataset-title-ic">&#9638;</div>
+      <a class="dataset-title-ic" href="https://fanatics-hue.github.io/iqs-profile/" target="_blank" rel="noopener"><img src="assets/iqs-logo.jpg" alt="IQS"></a>
       <div class="dataset-title-txt">
         <span data-i18n="dataset_title">Equipment Master Data</span>
         <span class="dataset-title-sub" id="dataset-title-count"></span>
@@ -449,7 +449,7 @@
     <div class="tools-list">
       <button id="fi-tally-btn" class="tools-row" type="button"><span class="tools-row-icon">&#127937;</span><span class="tools-row-name" data-i18n="fi_tally_title">Tally List FI</span><span id="fi-tally-new-tag" class="tools-row-new-tag hidden" data-i18n="tools_tag_new">Nuova</span></button>
       <button id="lookup-btn" class="tools-row" type="button"><span class="tools-row-icon">&#128269;</span><span class="tools-row-name" data-i18n="lookup_title">Cerca tubo</span></button>
-      <button id="order-status-btn" class="tools-row" type="button"><span class="tools-row-icon">&#128678;</span><span class="tools-row-name" data-i18n="order_status_title">Stato Ordine</span><span id="order-status-new-tag" class="tools-row-new-tag hidden" data-i18n="tools_tag_updated">Aggiornato</span></button>
+      <button id="order-status-btn" class="tools-row" type="button"><span class="tools-row-icon">&#128678;</span><span class="tools-row-name" data-i18n="order_status_title">Stato Ordine</span><span id="order-status-new-tag" class="tools-row-info-tag hidden">Aggiornato</span></button>
       <button id="stats-btn" class="tools-row" type="button"><span class="tools-row-icon">&#128202;</span><span class="tools-row-name" data-i18n="stats_title">Statistiche</span></button>
       <button id="help-btn" class="tools-row" type="button"><span class="tools-row-icon">?</span><span class="tools-row-name" data-i18n="help_title">Guida</span></button>
       <button id="admin-gear" class="tools-row hidden" type="button"><span class="tools-row-icon">&#9881;</span><span class="tools-row-name" data-i18n="admin_title">Gestione ispettori</span></button>
@@ -472,6 +472,6 @@
 </div>
 
 <script src="vendor/jspdf.umd.min.js"></script>
-<script src="app.js?v=88"></script>
+<script src="app.js?v=89"></script>
 </body>
 </html>

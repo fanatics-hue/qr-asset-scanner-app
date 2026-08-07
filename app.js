@@ -1,5 +1,5 @@
 const API_BASE = 'https://qr-scanner-api.fanatics.workers.dev';
-const APP_VERSION = 88;
+const APP_VERSION = 89;
 
 const TRANSLATIONS = {
   it: {
@@ -190,6 +190,7 @@ const TRANSLATIONS = {
     fi_tally_historical_note: 'Dal foglio "Weekly TL": {pipes} tubi rilasciati dal 2025 ({weeks} settimane con TL, {meters} m) — solo conteggio, nessun dettaglio accettato/scartato per le liste più vecchie. Settimana con più tubi: {bestWeek} ({bestWeekPipes}).',
     tools_tag_new: 'Nuova',
     tools_tag_updated: 'Aggiornato',
+    tools_tag_updated_at: 'Aggiornata {when}',
     os_total: 'Tubi tracciati',
     os_complete_pct: 'Completati (ultimo step)',
     os_funnel_title: 'Imbuto produzione',
@@ -463,6 +464,7 @@ const TRANSLATIONS = {
     fi_tally_historical_note: 'From the "Weekly TL" sheet: {pipes} pipes released since 2025 ({weeks} weeks with a TL, {meters} m) — count only, no accepted/rejected detail for older lists. Week with the most pipes: {bestWeek} ({bestWeekPipes}).',
     tools_tag_new: 'New',
     tools_tag_updated: 'Updated',
+    tools_tag_updated_at: 'Updated {when}',
     os_total: 'Pipes tracked',
     os_complete_pct: 'Completed (last step)',
     os_funnel_title: 'Production funnel',
@@ -757,6 +759,9 @@ function applyTranslations() {
   ['lang-toggle-login', 'lang-toggle-dataset'].forEach(id => { if (el(id)) el(id).textContent = other; });
   el('tab-dataset-count').textContent = state.records.length;
   el('dataset-title-count').textContent = t(state.records.length === 1 ? 'dataset_title_count_one' : 'dataset_title_count').replace('{n}', state.records.length);
+  // L'etichetta Stato Ordine e' testo dinamico (data/ora), non un data-i18n statico -
+  // va ricalcolata a parte qui, altrimenti il cambio lingua la lascerebbe nella lingua vecchia.
+  renderToolsBadges();
 }
 
 const darkMediaQuery = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
@@ -1257,7 +1262,20 @@ function startNewAssetsPolling() {
 function renderToolsBadges() {
   el('tools-menu-dot').classList.toggle('hidden', !(state.tallyHasUpdate || state.prodHasUpdate));
   el('fi-tally-new-tag').classList.toggle('hidden', !state.tallyHasUpdate);
-  el('order-status-new-tag').classList.toggle('hidden', !state.prodHasUpdate);
+  // Stato Ordine (07.08.2026, richiesta di Rino): a differenza di Tally List FI qui
+  // l'etichetta non sparisce mai aprendo la schermata - resta sempre visibile con
+  // data/ora dell'ultima sincronizzazione, rossa se non ancora vista, grigia se gia' vista.
+  const orderTag = el('order-status-new-tag');
+  const updatedAt = state.productionMeta && state.productionMeta.updatedAt;
+  if (updatedAt) {
+    orderTag.classList.remove('hidden');
+    orderTag.classList.toggle('tools-row-new-tag', !!state.prodHasUpdate);
+    orderTag.classList.toggle('tools-row-info-tag', !state.prodHasUpdate);
+    orderTag.textContent = t('tools_tag_updated_at').replace('{when}',
+      new Date(updatedAt).toLocaleString(t('locale'), { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }));
+  } else {
+    orderTag.classList.add('hidden');
+  }
 }
 async function checkToolsUpdates() {
   if (!state.session || !state.currentOrderId) return;

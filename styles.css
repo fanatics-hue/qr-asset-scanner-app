@@ -295,11 +295,16 @@ textarea.field { resize: vertical; font-family: inherit; }
    pesante su "Equipment Master Data", due parole lunghe). Icona colorata su sfondo tenue,
    stesso trattamento dei badge/chip gia' usati nel resto dell'app. */
 .dataset-title-row { display: flex; align-items: center; gap: 10px; padding: 10px 16px 6px; }
+/* Logo IQS al posto della vecchia icona ▦ (07.08.2026, richiesta di Rino) - chip bianco
+   arrotondato come quello gia' usato per il logo in login, altezza 36px cosi' la scritta
+   "IQS" del logo (rettangolare, non quadrato) resta leggibile invece di rimpicciolirsi
+   dentro un riquadro 30x30 pensato per un'icona a glifo singolo. */
 .dataset-title-ic {
-  width: 30px; height: 30px; border-radius: 9px; flex: none;
-  background: var(--blue-bg); color: var(--blue-c);
-  display: flex; align-items: center; justify-content: center; font-size: 15px;
+  height: 36px; border-radius: 9px; flex: none;
+  background: #fff; display: flex; align-items: center; justify-content: center;
+  padding: 3px 8px;
 }
+.dataset-title-ic img { height: 100%; width: auto; display: block; }
 .dataset-title-txt { display: flex; flex-direction: column; }
 .dataset-title-txt > span:first-child { font-family: var(--font-heading); font-size: 17px; font-weight: 700; color: var(--text-primary); }
 .dataset-title-sub { font-size: 11px; color: var(--text-tertiary); margin-top: 1px; }
@@ -672,6 +677,14 @@ textarea.field { resize: vertical; font-family: inherit; }
 .tools-row-name { font-size: 14.5px; color: var(--text-primary); font-family: var(--font-body); flex: 1; }
 .tools-row-new-tag {
   font-size: 10px; font-weight: 700; color: var(--red); background: var(--red-bg);
+  padding: 2px 8px; border-radius: 20px; white-space: nowrap; flex-shrink: 0;
+}
+/* Variante "gia' visto" della riga Stato Ordine (07.08.2026): a differenza di Tally List
+   FI, qui l'etichetta resta SEMPRE visibile con data/ora dell'ultimo aggiornamento invece
+   di sparire aprendo la schermata - rossa quando c'e' un aggiornamento non ancora visto,
+   grigia neutra quando e' gia' stato visto (stesso testo, solo il colore cambia). */
+.tools-row-info-tag {
+  font-size: 10px; font-weight: 700; color: var(--text-secondary); background: var(--border);
   padding: 2px 8px; border-radius: 20px; white-space: nowrap; flex-shrink: 0;
 }
 .tools-menu-wrap { position: relative; display: inline-block; }
