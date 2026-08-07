@@ -1,5 +1,5 @@
 const API_BASE = 'https://qr-scanner-api.fanatics.workers.dev';
-const APP_VERSION = 91;
+const APP_VERSION = 92;
 
 const TRANSLATIONS = {
   it: {
@@ -189,6 +189,7 @@ const TRANSLATIONS = {
     health_last_scan: 'Ultimo scan registrato: {who}, {when}',
     fi_tally_heat_date: 'Data',
     fi_tally_heat_result: 'Esito',
+    fi_tally_heat_meters: 'Metri',
     fi_tally_historical_note: 'Dal foglio "Weekly TL": {pipes} tubi rilasciati dal 2025 ({weeks} settimane con TL, {meters} m) — solo conteggio, nessun dettaglio accettato/scartato per le liste più vecchie. Settimana con più tubi: {bestWeek} ({bestWeekPipes}).',
     tools_tag_new: 'Nuova',
     tools_tag_updated: 'Aggiornato',
@@ -465,6 +466,7 @@ const TRANSLATIONS = {
     health_last_scan: 'Last scan: {who}, {when}',
     fi_tally_heat_date: 'Date',
     fi_tally_heat_result: 'Result',
+    fi_tally_heat_meters: 'Meters',
     fi_tally_historical_note: 'From the "Weekly TL" sheet: {pipes} pipes released since 2025 ({weeks} weeks with a TL, {meters} m) — count only, no accepted/rejected detail for older lists. Week with the most pipes: {bestWeek} ({bestWeekPipes}).',
     tools_tag_new: 'New',
     tools_tag_updated: 'Updated',
@@ -2729,10 +2731,19 @@ function renderFiTallyChart() {
       } else {
         const total = it.accepted + it.rejected;
         const rate = total ? ((it.rejected / total) * 100).toFixed(1) : '0.0';
+        // Metri totali (07.08.2026, stessa richiesta gia' applicata al riepilogo Tally
+        // List FI): qui serve rileggere le voci vere di questo Cert-No, "it" ha solo i
+        // conteggi aggregati, non l'elenco tubi necessario per sumTallyMeters().
+        const listEntries = state.fiTallyEntries.filter(e => e.certNo === it.label);
+        const m = sumTallyMeters(listEntries);
+        const metersRow = m.found
+          ? `<div class="fi-heat-detail-row"><span>${escapeHtml(t('fi_tally_heat_meters'))}</span><b>${fmtMeters(m.sumM)} m${m.found < m.total ? ' (' + m.found + '/' + m.total + ')' : ''}</b></div>`
+          : '';
         detail.innerHTML = `
           <div class="fi-heat-detail-title">${escapeHtml(it.label)}</div>
           <div class="fi-heat-detail-row"><span>${escapeHtml(t('fi_tally_heat_date'))}</span><b>${escapeHtml(it.dateStr || '-')}</b></div>
           <div class="fi-heat-detail-row"><span>${escapeHtml(t('fi_tally_heat_result'))}</span><b>✓ ${it.accepted} · ✗ ${it.rejected}</b></div>
+          ${metersRow}
           <div class="fi-heat-detail-row"><span>${escapeHtml(t('fi_tally_chart_rejection_rate'))}</span><b>${rate}%</b></div>
         `;
       }
