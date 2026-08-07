@@ -1,5 +1,5 @@
 const API_BASE = 'https://qr-scanner-api.fanatics.workers.dev';
-const APP_VERSION = 90;
+const APP_VERSION = 91;
 
 const TRANSLATIONS = {
   it: {
@@ -153,6 +153,8 @@ const TRANSLATIONS = {
     fi_tally_undo_confirm: 'Annullare questo esito e riportare il tubo in sospeso?',
     fi_tally_inspection_time_lbl: 'ore',
     fi_tally_summary: '{certNo} completata — {accepted} accettati, {rejected} scartati',
+    fi_tally_summary_meters: ', {meters} m',
+    fi_tally_summary_meters_partial: ', {meters} m (lunghezza trovata per {found}/{total} tubi)',
     fi_tally_show_detail: 'Mostra elenco dettagliato',
     fi_tally_weekly_title: 'Riepilogo settimanale',
     fi_tally_week_label: 'Settimana {week}/{year}',
@@ -427,6 +429,8 @@ const TRANSLATIONS = {
     fi_tally_undo_confirm: 'Undo this outcome and put the tube back to pending?',
     fi_tally_inspection_time_lbl: 'at',
     fi_tally_summary: '{certNo} completed — {accepted} accepted, {rejected} rejected',
+    fi_tally_summary_meters: ', {meters} m',
+    fi_tally_summary_meters_partial: ', {meters} m (length found for {found}/{total} pipes)',
     fi_tally_show_detail: 'Show detailed list',
     fi_tally_weekly_title: 'Weekly summary',
     fi_tally_week_label: 'Week {week}/{year}',
@@ -2836,6 +2840,29 @@ el('fi-tally-show-detail-btn').addEventListener('click', () => {
   renderFiTallyList(state.fiTallyEntries.filter(e => e.certNo === latestCertNo));
 });
 
+// Metri totali di una Tally List (07.08.2026, richiesta di Rino): la Tally List FI di
+// per se' non porta la lunghezza dei tubi (solo Pipe N./Grade/OD/WT, vedi parse_tally_list
+// nel tool desktop) - si recupera dai dati di produzione gia' caricati in app (stesso
+// incrocio Item+Pipe N. gia' usato per l'auto-compilazione di CS/CRA Heat in Nuovo asset).
+// Se manca il dato di produzione per qualche tubo il totale resta comunque calcolato sui
+// tubi trovati, ma lo dice chiaramente (mai un totale silenziosamente incompleto spacciato
+// per completo - stesso principio del registro Lessons Learned "il totale che torna non e'
+// una prova di correttezza").
+function sumTallyMeters(entries) {
+  let sumM = 0, found = 0;
+  entries.forEach(e => {
+    let match = e.itemNo ? state.productionMap.get(prodKey(e.itemNo, e.pipeNo)) : null;
+    if (!match) match = state.productionByPipe.get(normProdNum(e.pipeNo));
+    const len = match && match.length ? parseFloat(match.length) : NaN;
+    if (!isNaN(len)) { sumM += len; found++; }
+  });
+  return { sumM, found, total: entries.length };
+}
+
+function fmtMeters(n) {
+  return (n / 1000).toLocaleString(t('locale'), { minimumFractionDigits: 1, maximumFractionDigits: 3 });
+}
+
 function renderFiTallyList(entries) {
   const list = el('fi-tally-list');
   const banner = el('fi-tally-banner');
@@ -2850,8 +2877,13 @@ function renderFiTallyList(entries) {
   if (pending === 0 && entries.length && !state.fiTallyExpanded) {
     const accepted = entries.filter(e => e.esito === 'accepted').length;
     const rejected = entries.filter(e => e.esito === 'rejected').length;
+    const m = sumTallyMeters(entries);
+    const metersText = m.found === m.total
+      ? t('fi_tally_summary_meters').replace('{meters}', fmtMeters(m.sumM))
+      : (m.found > 0 ? t('fi_tally_summary_meters_partial').replace('{meters}', fmtMeters(m.sumM)).replace('{found}', m.found).replace('{total}', m.total) : '');
     el('fi-tally-summary-text').textContent = t('fi_tally_summary')
-      .replace('{certNo}', entries[0].certNo).replace('{accepted}', accepted).replace('{rejected}', rejected);
+      .replace('{certNo}', entries[0].certNo).replace('{accepted}', accepted).replace('{rejected}', rejected)
+      + metersText;
     summary.classList.remove('hidden');
     list.innerHTML = '';
     banner.classList.add('hidden');
