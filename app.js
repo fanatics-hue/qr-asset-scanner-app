@@ -1,5 +1,5 @@
 const API_BASE = 'https://qr-scanner-api.fanatics.workers.dev';
-const APP_VERSION = 86;
+const APP_VERSION = 87;
 
 const TRANSLATIONS = {
   it: {
