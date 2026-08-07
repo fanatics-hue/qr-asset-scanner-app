@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=55">
+<link rel="stylesheet" href="styles.css?v=56">
 </head>
 <body>
 <div id="app">
@@ -154,7 +154,7 @@
       <button class="filter-chip" id="filter-defects" data-i18n="filter_defects_only" type="button">Solo difetti</button>
     </div>
     <div class="pdf-export-row">
-      <button id="dataset-export-btn" class="pdf-export-btn">📄 <span data-i18n="pdf_export_btn">Esporta PDF</span></button>
+      <button id="dataset-export-btn" class="pdf-export-btn"><span class="pdf-badge">PDF</span><span data-i18n="pdf_export_btn">Esporta PDF</span></button>
     </div>
     <div class="dataset-list" id="dataset-list"></div>
     <nav class="tab-bar">
@@ -276,8 +276,8 @@
     <button id="stats-back" class="back-link">&lsaquo; <span data-i18n="dataset_title_short">Dataset</span></button>
     <div class="large-title" style="padding-left:0" data-i18n="stats_title">Statistiche</div>
     <div class="pdf-export-row">
-      <button id="stats-export-btn" class="pdf-export-btn">📄 <span data-i18n="pdf_export_btn">Esporta PDF</span></button>
-      <button id="general-status-export-btn" class="pdf-export-btn">📄 <span data-i18n="pdf_doctype_general">Stato Generale</span></button>
+      <button id="stats-export-btn" class="pdf-export-btn"><span class="pdf-badge">PDF</span><span data-i18n="pdf_export_btn">Esporta PDF</span></button>
+      <button id="general-status-export-btn" class="pdf-export-btn"><span class="pdf-badge">PDF</span><span data-i18n="pdf_doctype_general">Stato Generale</span></button>
     </div>
     <div class="stats-summary">
       <div class="stats-summary-card">
@@ -394,7 +394,7 @@
     <button id="order-status-back" class="back-link">&lsaquo; <span data-i18n="dataset_title_short">Dataset</span></button>
     <div class="large-title" style="padding-left:0" data-i18n="order_status_title">Stato Ordine</div>
     <div class="pdf-export-row">
-      <button id="order-status-export-btn" class="pdf-export-btn">📄 <span data-i18n="pdf_export_btn">Esporta PDF</span></button>
+      <button id="order-status-export-btn" class="pdf-export-btn"><span class="pdf-badge">PDF</span><span data-i18n="pdf_export_btn">Esporta PDF</span></button>
     </div>
 
     <div class="card os-item-header hidden" id="os-item-header">
@@ -472,6 +472,6 @@
 </div>
 
 <script src="vendor/jspdf.umd.min.js"></script>
-<script src="app.js?v=87"></script>
+<script src="app.js?v=88"></script>
 </body>
 </html>

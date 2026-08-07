@@ -205,17 +205,25 @@ html, body {
 .link-btn:hover:not(:disabled) { opacity: 0.75; }
 .link-btn:disabled { color: rgba(37,99,235,0.35); cursor: default; }
 
-/* Esporta PDF: riga di pulsanti pillola sotto il titolo - pillola blu piena (opzione A
-   scelta da Rino tra 4 alternative in anteprima, 07.08.2026), stesso trattamento delle
-   azioni primarie gia' presenti altrove nell'app. */
+/* Esporta PDF: riga di pulsanti sotto il titolo - pulsante neutro (opzione G scelta da
+   Rino, 07.08.2026, dopo che la pillola blu piena si confondeva con le altre pillole blu
+   di navigazione come "‹ Dataset"): il colore vive solo nel badge "PDF", il resto del
+   pulsante e' grigio come una card, cosi' non somiglia a nessun pulsante blu dell'app. */
 .pdf-export-row { display: flex; gap: 8px; flex-wrap: wrap; padding: 0 16px 4px; }
 .pdf-export-btn {
-  background: var(--blue); border: none; color: #fff;
-  font-size: 13.5px; font-weight: 700; padding: 9px 16px; border-radius: 999px;
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--bg-card); color: var(--text-primary);
+  border: 1px solid var(--border); font-size: 13px; font-weight: 600;
+  padding: 8px 14px 8px 10px; border-radius: 999px;
   cursor: pointer; transition: opacity 0.15s ease;
 }
-.pdf-export-btn:hover:not(:disabled) { opacity: 0.85; }
+.pdf-export-btn:hover:not(:disabled) { opacity: 0.7; }
 .pdf-export-btn:disabled { opacity: 0.4; cursor: default; }
+.pdf-badge {
+  width: 20px; height: 20px; border-radius: 5px; background: var(--red);
+  color: #fff; font-size: 9px; font-weight: 800; letter-spacing: -0.3px;
+  display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
 .confirm-title { font-family: var(--font-heading); font-weight: 700; font-size: 17px; }
 .confirm-scroll { flex: 1; overflow-y: auto; padding: 0 16px 24px; }
 
