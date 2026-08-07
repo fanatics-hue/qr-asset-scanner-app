@@ -1,5 +1,5 @@
 const API_BASE = 'https://qr-scanner-api.fanatics.workers.dev';
-const APP_VERSION = 92;
+const APP_VERSION = 93;
 
 const TRANSLATIONS = {
   it: {
@@ -102,10 +102,22 @@ const TRANSLATIONS = {
     defect_nde: 'NDE',
     defect_material: 'Materiale',
     defect_other: 'Altro',
-    disp_accept: 'Accetta',
-    disp_repair: 'Ripara',
-    disp_reject: 'Scarta',
+    disp_accept: 'Accettato',
+    disp_reject: 'Scartato',
     disp_concession: 'Deroga',
+    // "repair" non e' piu' selezionabile (sostituita da "Da Riparare"/"Riparato", 07.08.2026)
+    // ma l'etichetta resta per le schede vecchie gia' salvate con quella disposizione.
+    disp_repair: 'Ripara',
+    disp_to_repair: 'Da Riparare',
+    disp_repaired: 'Riparato',
+    disp_to_rework: 'Da Rilavorare',
+    disp_reworked: 'Rilavorato',
+    disp_hold: 'Sospeso',
+    ncr_cr_title: 'NCR / CR',
+    ncr_label: 'NCR',
+    cr_label: 'CR',
+    ncr_cr_comment_ph: 'Riferimento/nota NCR o CR',
+    field_ncr_cr: 'NCR / CR',
     close_note_ph: 'Causa e azione correttiva (obbligatorio)',
     cancel_btn: 'Annulla',
     confirm_close_btn: 'Conferma chiusura',
@@ -121,6 +133,7 @@ const TRANSLATIONS = {
     stats_aging: 'Aperti da +5gg',
     stats_by_type: 'Per tipo difetto',
     stats_by_disposition: 'Per disposizione',
+    stats_ncr_cr_title: 'NCR / CR',
     order_pill_label: 'Progetto',
     order_sheet_title: 'Progetto',
     tools_menu_title: 'Strumenti',
@@ -379,10 +392,20 @@ const TRANSLATIONS = {
     defect_nde: 'NDE',
     defect_material: 'Material',
     defect_other: 'Other',
-    disp_accept: 'Accept',
-    disp_repair: 'Repair',
-    disp_reject: 'Reject',
+    disp_accept: 'Accepted',
+    disp_reject: 'Rejected',
     disp_concession: 'Concession',
+    disp_repair: 'Repair',
+    disp_to_repair: 'To Repair',
+    disp_repaired: 'Repaired',
+    disp_to_rework: 'To Rework',
+    disp_reworked: 'Reworked',
+    disp_hold: 'On Hold',
+    ncr_cr_title: 'NCR / CR',
+    ncr_label: 'NCR',
+    cr_label: 'CR',
+    ncr_cr_comment_ph: 'NCR or CR reference/note',
+    field_ncr_cr: 'NCR / CR',
     close_note_ph: 'Root cause and corrective action (required)',
     cancel_btn: 'Cancel',
     confirm_close_btn: 'Confirm closure',
@@ -398,6 +421,7 @@ const TRANSLATIONS = {
     stats_aging: 'Open for +5 days',
     stats_by_type: 'By defect type',
     stats_by_disposition: 'By disposition',
+    stats_ncr_cr_title: 'NCR / CR',
     order_pill_label: 'Project',
     order_sheet_title: 'Project',
     tools_menu_title: 'Tools',
@@ -709,11 +733,19 @@ const BACKEND_ERR_MAP = {
 const CONDITION_CODES = ['excellent', 'good', 'needs-review', 'damaged'];
 const ITP_STEPS_FALLBACK = ['Milling', 'Welding Base', 'Welding Clad', 'Hydro', 'UT', 'RT', 'PT', 'FI (Final Inspection)'];
 const DEFECT_TYPE_CODES = ['weld', 'dimensional', 'visual', 'nde', 'material', 'other'];
-const DISPOSITION_CODES = ['accept', 'repair', 'reject', 'concession'];
+// 07.08.2026 (richiesta di Rino): da 4 a 8 disposizioni - "Da Riparare"/"Da Rilavorare"
+// sono stati ancora aperti (richiedono conferma di ri-collaudo alla chiusura, prima
+// succedeva solo per "repair"), "Riparato"/"Rilavorato" sono gia' risolti (nessuna
+// conferma). NCR/CR sono volutamente FUORI da questa lista - un flag a parte con un
+// commento proprio, vedi renderNcrCrSection.
+const DISPOSITION_CODES = ['to_repair', 'repaired', 'accept', 'reject', 'concession', 'to_rework', 'reworked', 'hold'];
 const condKey = (code) => 'cond_' + String(code || '').replace(/-/g, '');
 const defectTypeLabel = (code) => code ? t('defect_' + code) : '';
 const dispositionLabel = (code) => code ? t('disp_' + code) : '';
 const isDefectCondition = (c) => c === 'needs-review' || c === 'damaged';
+// Solo le disposizioni "ancora da fare" chiedono conferma di ri-collaudo alla chiusura -
+// stessa logica lato Worker (needsRetestConfirm), ripetuta qui per il controllo lato UI.
+const needsRetestConfirm = (disposition) => disposition === 'to_repair' || disposition === 'to_rework';
 
 const state = {
   screen: 'login',
@@ -1333,7 +1365,7 @@ function startManualEntry() {
 // ---------------- Confirm ----------------
 function openConfirm(parsed) {
   state.editingId = null;
-  state.draft = Object.assign({ itpStep: null, condition: null, comment: '', defectType: null, disposition: null }, parsed);
+  state.draft = Object.assign({ itpStep: null, condition: null, comment: '', defectType: null, disposition: null, ncr: false, cr: false, ncrCrComment: '' }, parsed);
   state.draft._autoFields = new Set(); // campi attualmente auto-compilati, mai toccati a mano dall'utente
   el('f-itemNo').value = parsed.itemNo || '';
   el('f-pipeNo').value = parsed.pipeNo || '';
@@ -1342,6 +1374,7 @@ function openConfirm(parsed) {
   el('f-length').value = parsed.length || '';
   el('f-scannedAt').textContent = new Date().toLocaleString(t('locale'));
   el('f-comment').value = '';
+  el('f-ncr-cr-comment').value = '';
   el('prod-progress-row').classList.add('hidden');
   el('pipe-ambiguous-hint').classList.add('hidden');
   el('dup-scan-hint').classList.add('hidden');
@@ -1362,6 +1395,7 @@ function openEditRecord(rec) {
     craHeat: rec.craHeat || '', length: rec.length || '',
     itpStep: rec.itpStep || null, condition: rec.condition || null, comment: rec.comment || '',
     defectType: rec.defectType || null, disposition: rec.disposition || null,
+    ncr: !!rec.ncr, cr: !!rec.cr, ncrCrComment: rec.ncrCrComment || '',
     _autoFields: new Set()
   };
   el('f-itemNo').value = rec.itemNo || '';
@@ -1371,6 +1405,7 @@ function openEditRecord(rec) {
   el('f-length').value = rec.length || '';
   el('f-scannedAt').textContent = rec.scannedAt ? new Date(rec.scannedAt).toLocaleString(t('locale')) : '-';
   el('f-comment').value = rec.comment || '';
+  el('f-ncr-cr-comment').value = rec.ncrCrComment || '';
   el('prod-progress-row').classList.add('hidden');
   el('pipe-ambiguous-hint').classList.add('hidden');
   el('dup-scan-hint').classList.add('hidden');
@@ -1483,6 +1518,19 @@ function renderChips() {
       b.addEventListener('click', () => { state.draft.disposition = code; renderChips(); });
       dispWrap.appendChild(b);
     });
+    // NCR/CR (07.08.2026): due chip indipendenti (non un solo selezionabile come le altre
+    // liste) - una scheda puo' avere sia un NCR sia una CR aperti insieme, non si escludono
+    // a vicenda. Il commento (riferimento/nota) compare solo se almeno una e' attiva.
+    const ncrCrWrap = el('ncr-cr-chips'); ncrCrWrap.innerHTML = '';
+    [['ncr', t('ncr_label')], ['cr', t('cr_label')]].forEach(([key, label]) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'chip' + (state.draft[key] ? ' selected itp' : '');
+      b.textContent = label;
+      b.addEventListener('click', () => { state.draft[key] = !state.draft[key]; renderChips(); });
+      ncrCrWrap.appendChild(b);
+    });
+    el('ncr-cr-comment-row').classList.toggle('hidden', !(state.draft.ncr || state.draft.cr));
   }
 }
 
@@ -1500,6 +1548,7 @@ function updateSaveState() {
   });
 });
 el('f-comment').addEventListener('input', () => { state.draft.comment = el('f-comment').value; });
+el('f-ncr-cr-comment').addEventListener('input', () => { state.draft.ncrCrComment = el('f-ncr-cr-comment').value; });
 
 // Auto-compilazione da dati di produzione (Raw data COMP3B): basta il solo Pipe N. (come nel
 // foglio Excel "Ricerca da Elenco" - cerca su tutti gli Item, prima corrispondenza); se anche
@@ -1932,6 +1981,12 @@ function openDetail(id) {
   if (rec.defectType) el('d-defect-type').textContent = defectTypeLabel(rec.defectType);
   el('d-disposition-row').classList.toggle('hidden', !rec.disposition);
   if (rec.disposition) el('d-disposition').textContent = dispositionLabel(rec.disposition);
+  const hasNcrCr = !!(rec.ncr || rec.cr);
+  el('d-ncr-cr-row').classList.toggle('hidden', !hasNcrCr);
+  if (hasNcrCr) {
+    const parts = [rec.ncr ? t('ncr_label') : null, rec.cr ? t('cr_label') : null].filter(Boolean);
+    el('d-ncr-cr').textContent = parts.join(' + ') + (rec.ncrCrComment ? ' — ' + rec.ncrCrComment : '');
+  }
   const isClosed = rec.status === 'closed';
   el('d-closedBy-row').classList.toggle('hidden', !isClosed);
   el('d-closedAt-row').classList.toggle('hidden', !isClosed);
@@ -2011,7 +2066,7 @@ el('d-status-toggle').addEventListener('click', async () => {
     el('d-close-note-input').value = '';
     // Disposizione "ripara": in piu' chiede conferma esplicita che il tubo e' stato
     // ri-collaudato dopo la riparazione, non solo scritto come intenzione nella nota.
-    const needsRetest = rec.disposition === 'repair';
+    const needsRetest = needsRetestConfirm(rec.disposition);
     el('d-retest-check').classList.toggle('hidden', !needsRetest);
     el('d-retest-checkbox').checked = false;
     el('d-close-note-prompt').classList.remove('hidden');
@@ -2025,7 +2080,7 @@ el('d-close-note-confirm').addEventListener('click', async () => {
   if (!rec) return;
   const note = el('d-close-note-input').value.trim();
   if (!note) { alert(t('err_close_note_required')); return; }
-  const needsRetest = rec.disposition === 'repair';
+  const needsRetest = needsRetestConfirm(rec.disposition);
   const retested = el('d-retest-checkbox').checked;
   if (needsRetest && !retested) { alert(t('err_retest_required')); return; }
   el('d-close-note-confirm').disabled = true;
@@ -2148,6 +2203,9 @@ function renderStats() {
       `<div class="stats-legend-item"><span>${escapeHtml(dispositionLabel(code))}: ${dispCounts[code]}</span></div>`
     ).join('');
   }
+
+  el('stats-ncr-count').textContent = allDefects.filter(r => r.ncr).length;
+  el('stats-cr-count').textContent = allDefects.filter(r => r.cr).length;
 
   const weeks = computeWeeklyStats(state.records);
   const maxTotal = Math.max(1, ...weeks.map(w => Object.values(w.counts).reduce((a, b) => a + b, 0)));
@@ -3563,6 +3621,12 @@ function exportStatistichePdf() {
   y = pdfBand(doc, y, t('pdf_band_by_disposition'));
   y = pdfTable(doc, y, [t('pdf_col_disposition'), t('pdf_col_count')], [140, 30],
     DISPOSITION_CODES.map(code => ({ cells: [dispositionLabel(code), dispCounts[code]] })));
+
+  y = pdfBand(doc, y, t('stats_ncr_cr_title'));
+  y = pdfKpiRow(doc, y, [
+    { n: allDefects.filter(r => r.ncr).length, l: t('ncr_label') },
+    { n: allDefects.filter(r => r.cr).length, l: t('cr_label') },
+  ]);
 
   pdfNote(doc, y, t('pdf_avg_close_note').replace('{days}', avgDays));
   pdfFinish(doc, t('pdf_filename_stats').replace('{order}', currentOrderName()).replace('{date}', new Date().toISOString().slice(0, 10)));
