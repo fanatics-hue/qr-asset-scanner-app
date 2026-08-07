@@ -1,5 +1,5 @@
 const API_BASE = 'https://qr-scanner-api.fanatics.workers.dev';
-const APP_VERSION = 89;
+const APP_VERSION = 90;
 
 const TRANSLATIONS = {
   it: {
@@ -1264,13 +1264,18 @@ function renderToolsBadges() {
   el('fi-tally-new-tag').classList.toggle('hidden', !state.tallyHasUpdate);
   // Stato Ordine (07.08.2026, richiesta di Rino): a differenza di Tally List FI qui
   // l'etichetta non sparisce mai aprendo la schermata - resta sempre visibile con
-  // data/ora dell'ultima sincronizzazione, rossa se non ancora vista, grigia se gia' vista.
+  // data/ora dell'ultima sincronizzazione, e il colore segnala quanto e' vecchia (non
+  // piu' "vista/non vista"): verde <24h, giallo 24-48h, rosso oltre 48h - stesso semaforo
+  // gia' usato per le fasi di avanzamento, cosi' un ritardo di sincronizzazione salta
+  // all'occhio esattamente come un ritardo di produzione.
   const orderTag = el('order-status-new-tag');
   const updatedAt = state.productionMeta && state.productionMeta.updatedAt;
   if (updatedAt) {
     orderTag.classList.remove('hidden');
-    orderTag.classList.toggle('tools-row-new-tag', !!state.prodHasUpdate);
-    orderTag.classList.toggle('tools-row-info-tag', !state.prodHasUpdate);
+    const ageHours = (Date.now() - new Date(updatedAt).getTime()) / 3600000;
+    const ageClass = ageHours < 24 ? 'tools-row-tag-ok' : ageHours < 48 ? 'tools-row-tag-warn' : 'tools-row-tag-bad';
+    orderTag.classList.remove('tools-row-tag-ok', 'tools-row-tag-warn', 'tools-row-tag-bad');
+    orderTag.classList.add(ageClass);
     orderTag.textContent = t('tools_tag_updated_at').replace('{when}',
       new Date(updatedAt).toLocaleString(t('locale'), { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }));
   } else {

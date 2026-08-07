@@ -679,14 +679,17 @@ textarea.field { resize: vertical; font-family: inherit; }
   font-size: 10px; font-weight: 700; color: var(--red); background: var(--red-bg);
   padding: 2px 8px; border-radius: 20px; white-space: nowrap; flex-shrink: 0;
 }
-/* Variante "gia' visto" della riga Stato Ordine (07.08.2026): a differenza di Tally List
-   FI, qui l'etichetta resta SEMPRE visibile con data/ora dell'ultimo aggiornamento invece
-   di sparire aprendo la schermata - rossa quando c'e' un aggiornamento non ancora visto,
-   grigia neutra quando e' gia' stato visto (stesso testo, solo il colore cambia). */
-.tools-row-info-tag {
-  font-size: 10px; font-weight: 700; color: var(--text-secondary); background: var(--border);
+/* Etichetta Stato Ordine (07.08.2026): a differenza di Tally List FI resta SEMPRE visibile
+   con data/ora dell'ultimo aggiornamento, e il colore riflette quanto e' vecchia la
+   sincronizzazione (non piu' "vista/non vista") - stesso semaforo verde/giallo/rosso gia'
+   usato per le fasi in Stato Ordine: verde <24h, giallo 24-48h, rosso oltre 48h. */
+.tools-row-tag-ok, .tools-row-tag-warn, .tools-row-tag-bad {
+  font-size: 10px; font-weight: 700;
   padding: 2px 8px; border-radius: 20px; white-space: nowrap; flex-shrink: 0;
 }
+.tools-row-tag-ok { color: var(--green); background: var(--green-bg); }
+.tools-row-tag-warn { color: var(--orange); background: var(--orange-bg); }
+.tools-row-tag-bad { color: var(--red); background: var(--red-bg); }
 .tools-menu-wrap { position: relative; display: inline-block; }
 .tools-menu-dot {
   position: absolute; top: -1px; right: -1px; width: 8px; height: 8px; border-radius: 50%;
