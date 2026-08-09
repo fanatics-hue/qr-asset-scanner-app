@@ -368,6 +368,9 @@ textarea.field { resize: vertical; font-family: inherit; }
 .list-row.new-flash { animation: new-flash 2.2s ease; }
 @keyframes new-flash { 0% { background: var(--blue-bg); } 100% { background: transparent; } }
 .badge-new { color: var(--blue-c); background: var(--blue-bg); font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 7px; }
+/* Icona "c'e' una foto" sulla riga Dataset (07.08.2026, richiesta di Rino) - opzione B tra
+   le due mostrate in anteprima, accanto al badge condizione. */
+.photo-icon { font-size: 10px; font-weight: 700; color: var(--text-tertiary); background: var(--border); padding: 3px 7px; border-radius: 6px; }
 
 .empty-state { text-align: center; color: var(--text-tertiary); padding: 60px 24px; font-size: 15px; }
 
