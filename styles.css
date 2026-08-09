@@ -147,6 +147,20 @@ html, body {
   margin: 8px 0 0;
   letter-spacing: -0.01em;
 }
+/* Marchio Field Inspector (09.08.2026): identita' propria dell'app, distinta dal logo
+   aziendale IQS gia' mostrato sopra - qui solo accanto al nome dell'app. */
+.app-mark { border-radius: 22%; display: inline-block; flex-shrink: 0; vertical-align: middle; }
+.app-mark-h1 { width: 26px; height: 26px; margin-right: 8px; margin-top: -3px; }
+.help-footer {
+  display: flex; align-items: center; gap: 10px;
+  padding: 18px 16px calc(18px + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--border-light);
+}
+.help-footer .app-mark { width: 30px; height: 30px; }
+.help-footer-text { display: flex; flex-direction: column; line-height: 1.2; }
+.help-footer-name { font-size: 13px; font-weight: 700; color: var(--text-primary); }
+.tm { font-size: 8px; vertical-align: super; margin-left: 1px; color: var(--text-tertiary); }
+.help-footer-ver { font-size: 11px; color: var(--text-tertiary); }
 /* Dettatura vocale (07.08.2026, idea "WOW" #2). */
 .field-label-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
 .field-label-row label { margin: 0; }

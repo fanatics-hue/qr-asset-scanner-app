@@ -3,10 +3,12 @@
   "short_name": "Field Inspector",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#F2F2F7",
+  "background_color": "#12161d",
   "theme_color": "#0A84FF",
   "icons": [
-    { "src": "assets/iqs-logo.jpg", "sizes": "192x192", "type": "image/jpeg" },
-    { "src": "assets/iqs-logo.jpg", "sizes": "512x512", "type": "image/jpeg" }
+    { "src": "assets/app-icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "assets/app-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "assets/app-icon-maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "assets/app-icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ]
 }
