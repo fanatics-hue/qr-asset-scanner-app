@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=59">
+<link rel="stylesheet" href="styles.css?v=60">
 </head>
 <body>
 <div id="app">
@@ -85,7 +85,17 @@
             <span data-i18n="photo_add">Aggiungi foto</span>
           </button>
           <div id="photo-preview-wrap" class="photo-preview-wrap hidden">
-            <img id="photo-preview" alt="">
+            <!-- Foto annotata (07.08.2026, idea "WOW" #3): tocchi il punto esatto del
+                 difetto sulla foto, resta un cerchio incollato all'immagine - il canvas
+                 sta esattamente sopra l'anteprima, alla stessa dimensione visualizzata. -->
+            <div class="photo-annotate-stage">
+              <img id="photo-preview" alt="">
+              <canvas id="photo-annotate-canvas"></canvas>
+            </div>
+            <div class="photo-annotate-bar">
+              <span class="photo-annotate-hint" data-i18n="photo_annotate_hint">Tocca la foto per segnare il difetto</span>
+              <button id="photo-annotate-undo" type="button" class="link-btn" data-i18n="photo_annotate_undo">Annulla ultimo segno</button>
+            </div>
             <button id="photo-remove-btn" class="photo-remove-btn" type="button">&times;</button>
           </div>
         </div>
@@ -125,7 +135,12 @@
           </div>
         </div>
         <div class="row" style="border-top:0.5px solid var(--border-light);display:block;padding-bottom:12px">
-          <label style="display:block;margin-bottom:6px" data-i18n="field_comments">Commenti</label>
+          <div class="field-label-row">
+            <label data-i18n="field_comments">Commenti</label>
+            <!-- Dettatura vocale (07.08.2026, idea "WOW" #2): utile con i guanti o in
+                 quota - nascosto da solo se il telefono/browser non supporta l'API. -->
+            <button type="button" class="voice-btn hidden" id="f-comment-voice-btn" data-target="f-comment" title="Dettatura vocale">&#127908;</button>
+          </div>
           <textarea id="f-comment" class="field" rows="3" data-i18n-ph="comments_ph"></textarea>
         </div>
       </div>
@@ -360,6 +375,12 @@
     <div class="lookup-sub" id="fi-tally-sub">-</div>
     <div class="empty-state hidden" id="fi-tally-empty" data-i18n="fi_tally_empty">Nessuna Tally List caricata dal tool desktop.</div>
     <div class="fi-tally-banner hidden" id="fi-tally-banner"></div>
+    <!-- Controllo automatico (07.08.2026, idea "WOW" #1): confronta la Tally List coi dati
+         di produzione al caricamento invece di scoprire le anomalie a mano dopo. -->
+    <div class="fi-xcheck-card hidden" id="fi-xcheck-card">
+      <div class="fi-xcheck-head" id="fi-xcheck-head"></div>
+      <div class="fi-xcheck-list" id="fi-xcheck-list"></div>
+    </div>
     <div class="fi-tally-summary hidden" id="fi-tally-summary">
       <div class="fi-tally-summary-icon">✅</div>
       <div class="fi-tally-summary-text" id="fi-tally-summary-text"></div>
@@ -420,6 +441,14 @@
     <div class="lookup-found-hint hidden" id="lookup-found-hint">
       <span id="lookup-found-text"></span>
       <button type="button" id="lookup-open-record-btn" class="lookup-open-link" data-i18n="lookup_open_record">Apri scheda ›</button>
+    </div>
+    <!-- Scheda tubo unificata (07.08.2026, idea "WOW" #6): oltre a produzione e Dataset
+         (gia' sopra) mostra anche l'esito Tally List FI per lo stesso Pipe N°, invece di
+         doverlo cercare in un'altra schermata. -->
+    <div class="card hidden" id="lookup-tally-card">
+      <div class="card-header"><span class="section-title" data-i18n="fi_tally_title">Tally List FI</span></div>
+      <div class="row"><label data-i18n="pdf_col_certno">Cert-No</label><span class="readonly" id="lk-tally-certno">-</span></div>
+      <div class="row"><label data-i18n="fi_tally_heat_result">Esito</label><span class="readonly" id="lk-tally-esito">-</span></div>
     </div>
     <button class="btn-primary hidden" id="lookup-register-btn" type="button" data-i18n="lookup_register_btn">+ Registra questo asset</button>
   </section>
@@ -512,6 +541,6 @@
 </div>
 
 <script src="vendor/jspdf.umd.min.js"></script>
-<script src="app.js?v=94"></script>
+<script src="app.js?v=95"></script>
 </body>
 </html>

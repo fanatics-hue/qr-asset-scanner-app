@@ -147,6 +147,16 @@ html, body {
   margin: 8px 0 0;
   letter-spacing: -0.01em;
 }
+/* Dettatura vocale (07.08.2026, idea "WOW" #2). */
+.field-label-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.field-label-row label { margin: 0; }
+.voice-btn {
+  width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--border);
+  background: var(--bg-card); color: var(--text-primary); font-size: 14px;
+  display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0;
+}
+.voice-btn.recording { background: var(--red-bg); border-color: var(--red); color: var(--red); animation: voice-pulse 1s infinite; }
+@keyframes voice-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
 .field {
   background: var(--bg-input);
   color: var(--text-primary);
@@ -442,6 +452,13 @@ textarea.field { resize: vertical; font-family: inherit; }
 #screen-lookup { flex: 1; padding: 0 16px 24px; overflow-y: auto; min-height: 0; }
 #screen-fi-tally { flex: 1; padding: 0 16px 24px; overflow-y: auto; min-height: 0; }
 .fi-tally-banner { padding: 9px 14px; font-size: 12.5px; font-weight: 700; border-radius: 10px; margin-bottom: 12px; background: var(--bg-input); color: var(--text-secondary); }
+/* Controllo automatico Tally List (07.08.2026): confronta la lista coi dati di produzione
+   gia' caricati (stesso incrocio Item+Pipe N. usato per i metri) e segnala da solo i tubi
+   non trovati o duplicati nella lista - non serve piu' scoprirlo a mano dopo. */
+.fi-xcheck-card { border: 1px solid rgba(248,113,113,.35); background: var(--red-bg); border-radius: 10px; padding: 10px 12px; margin-bottom: 12px; }
+.fi-xcheck-head { font-size: 12.5px; font-weight: 700; color: var(--red); margin-bottom: 6px; }
+.fi-xcheck-row { display: flex; justify-content: space-between; font-size: 11.5px; padding: 3px 0; color: var(--text-secondary); }
+.fi-xcheck-row b { color: var(--text-primary); font-weight: 600; }
 .fi-tally-row {
   display: flex; align-items: center; justify-content: space-between; gap: 10px;
   background: linear-gradient(180deg, var(--bg-card-top) 0%, var(--bg-card-bottom) 100%);
@@ -613,11 +630,19 @@ textarea.field { resize: vertical; font-family: inherit; }
 .photo-pick-btn:hover { border-color: var(--blue); color: var(--blue); }
 .photo-pick-btn svg { width: 18px; height: 18px; }
 .photo-preview-wrap { position: relative; display: inline-block; }
-.photo-preview-wrap img { max-width: 100%; max-height: 220px; border-radius: 10px; border: 1px solid var(--border); display: block; }
 .photo-remove-btn {
   position: absolute; top: -8px; right: -8px; width: 26px; height: 26px; border-radius: 50%;
-  background: var(--red); color: #fff; border: 2px solid var(--bg-card); font-size: 16px; line-height: 1; cursor: pointer;
+  background: var(--red); color: #fff; border: 2px solid var(--bg-card); font-size: 16px; line-height: 1; cursor: pointer; z-index: 2;
 }
+/* Foto annotata (07.08.2026, idea "WOW" #3): il canvas sta esattamente sopra l'anteprima,
+   stessa dimensione visualizzata (non quella naturale) - le coordinate del tocco si
+   convertono in frazioni 0-1 cosi' restano corrette a qualunque risoluzione la foto finisca
+   per avere quando viene appiattita nell'immagine finale al salvataggio. */
+.photo-annotate-stage { position: relative; display: inline-block; }
+.photo-annotate-stage img { max-width: 100%; max-height: 220px; border-radius: 10px; border: 1px solid var(--border); display: block; }
+.photo-annotate-stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; cursor: crosshair; touch-action: none; }
+.photo-annotate-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 6px; }
+.photo-annotate-hint { font-size: 11px; color: var(--text-tertiary); }
 .photo-detail-wrap {
   display: flex; flex-direction: column; align-items: center; gap: 10px;
   padding: 16px 14px;

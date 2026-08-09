@@ -1,5 +1,5 @@
 const API_BASE = 'https://qr-scanner-api.fanatics.workers.dev';
-const APP_VERSION = 94;
+const APP_VERSION = 95;
 
 const TRANSLATIONS = {
   it: {
@@ -39,6 +39,8 @@ const TRANSLATIONS = {
     update_now: 'Aggiorna',
     confirm_section_photo: 'Foto (opzionale)',
     photo_add: 'Aggiungi foto',
+    photo_annotate_hint: 'Tocca la foto per segnare il difetto',
+    photo_annotate_undo: 'Annulla ultimo segno',
     photo_loading: 'Carico foto...',
     err_photo: 'Impossibile elaborare la foto, riprova.',
     err_photo_load: 'Impossibile caricare la foto.',
@@ -207,6 +209,9 @@ const TRANSLATIONS = {
     fi_tally_heat_date: 'Data',
     fi_tally_heat_result: 'Esito',
     fi_tally_heat_meters: 'Metri',
+    fi_xcheck_head: '⚠ {n} anomalie trovate su {total} tubi',
+    fi_xcheck_not_found: 'Non trovato in produzione',
+    fi_xcheck_duplicate: 'Duplicato in questa lista',
     fi_tally_historical_note: 'Dal foglio "Weekly TL": {pipes} tubi rilasciati dal 2025 ({weeks} settimane con TL, {meters} m) — solo conteggio, nessun dettaglio accettato/scartato per le liste più vecchie. Settimana con più tubi: {bestWeek} ({bestWeekPipes}).',
     tools_tag_new: 'Nuova',
     tools_tag_updated: 'Aggiornato',
@@ -333,6 +338,8 @@ const TRANSLATIONS = {
     update_now: 'Update',
     confirm_section_photo: 'Photo (optional)',
     photo_add: 'Add photo',
+    photo_annotate_hint: 'Tap the photo to mark the defect',
+    photo_annotate_undo: 'Undo last mark',
     photo_loading: 'Loading photo...',
     err_photo: 'Could not process the photo, please try again.',
     err_photo_load: 'Could not load the photo.',
@@ -499,6 +506,9 @@ const TRANSLATIONS = {
     fi_tally_heat_date: 'Date',
     fi_tally_heat_result: 'Result',
     fi_tally_heat_meters: 'Meters',
+    fi_xcheck_head: '⚠ {n} anomalies found out of {total} pipes',
+    fi_xcheck_not_found: 'Not found in production data',
+    fi_xcheck_duplicate: 'Duplicated in this list',
     fi_tally_historical_note: 'From the "Weekly TL" sheet: {pipes} pipes released since 2025 ({weeks} weeks with a TL, {meters} m) — count only, no accepted/rejected detail for older lists. Week with the most pipes: {bestWeek} ({bestWeekPipes}).',
     tools_tag_new: 'New',
     tools_tag_updated: 'Updated',
@@ -1431,10 +1441,70 @@ function openEditRecord(rec) {
 // Compressa lato client (max 1600px, JPEG 72%) prima dell'invio: le foto da fotocamera
 // pesano diversi MB, inutile spedirle intere su rete di cantiere solo per un allegato.
 function resetPhotoField() {
-  if (state.draft) { state.draft.photoBase64 = null; state.draft.photoName = null; }
+  if (state.draft) {
+    state.draft.photoBase64 = null; state.draft.photoName = null;
+    state.draft._photoOriginalDataUrl = null; state.draft._photoMarkers = [];
+  }
   el('f-photo').value = '';
   el('photo-preview-wrap').classList.add('hidden');
   el('photo-pick-btn').classList.remove('hidden');
+}
+
+// Foto annotata (07.08.2026, idea "WOW" #3): il tocco piazza un cerchio rosso nel punto
+// esatto del difetto, "incollato" all'immagine prima di salvarla - una prova piu' forte di
+// una descrizione scritta, soprattutto quando la scheda finisce in un NCR. L'originale pulito
+// resta sempre in _photoOriginalDataUrl: il canvas sopra la preview e' solo l'anteprima dal
+// vivo dei segni, l'immagine finale (con i cerchi davvero incollati dentro) si ricalcola da
+// zero ogni volta a partire dall'originale + tutti i segni, mai sovrapponendo un flatten sopra
+// un altro (altrimenti ogni tocco perderebbe qualita' e i cerchi vecchi si sommerebbero).
+function redrawPhotoAnnotationOverlay() {
+  const img = el('photo-preview');
+  const canvas = el('photo-annotate-canvas');
+  if (!img.naturalWidth) return;
+  canvas.width = img.clientWidth;
+  canvas.height = img.clientHeight;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const markers = (state.draft && state.draft._photoMarkers) || [];
+  const r = Math.max(14, Math.min(canvas.width, canvas.height) * 0.06);
+  markers.forEach(m => {
+    ctx.beginPath();
+    ctx.arc(m.xFrac * canvas.width, m.yFrac * canvas.height, r, 0, Math.PI * 2);
+    ctx.strokeStyle = '#F87171';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+  });
+}
+
+function flattenPhotoAnnotations() {
+  return new Promise((resolve) => {
+    const original = state.draft._photoOriginalDataUrl;
+    const markers = state.draft._photoMarkers || [];
+    if (!original) { resolve(); return; }
+    if (!markers.length) {
+      state.draft.photoBase64 = original.split(',')[1];
+      resolve();
+      return;
+    }
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.naturalWidth; canvas.height = img.naturalHeight;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+      const r = Math.max(canvas.width, canvas.height) * 0.045;
+      markers.forEach(m => {
+        ctx.beginPath();
+        ctx.arc(m.xFrac * canvas.width, m.yFrac * canvas.height, r, 0, Math.PI * 2);
+        ctx.strokeStyle = '#F87171';
+        ctx.lineWidth = Math.max(3, canvas.width * 0.006);
+        ctx.stroke();
+      });
+      state.draft.photoBase64 = canvas.toDataURL('image/jpeg', 0.85).split(',')[1];
+      resolve();
+    };
+    img.src = original;
+  });
 }
 
 function compressImage(file) {
@@ -1467,11 +1537,34 @@ el('f-photo').addEventListener('change', async () => {
     const dataUrl = await compressImage(file);
     state.draft.photoBase64 = dataUrl.split(',')[1];
     state.draft.photoName = (state.draft.pipeNo || 'asset') + '-' + Date.now() + '.jpg';
+    state.draft._photoOriginalDataUrl = dataUrl;
+    state.draft._photoMarkers = [];
     el('photo-preview').src = dataUrl;
     el('photo-preview-wrap').classList.remove('hidden');
     el('photo-pick-btn').classList.add('hidden');
     el('photo-existing-note').classList.add('hidden');
   } catch (e) { alert(t('err_photo')); }
+});
+el('photo-preview').addEventListener('load', redrawPhotoAnnotationOverlay);
+window.addEventListener('resize', redrawPhotoAnnotationOverlay);
+// Tocco sulla foto: cerchio nel punto esatto (07.08.2026, idea "WOW" #3) - un solo tipo di
+// segno (niente frecce/testo separati), la scelta piu' semplice che copre davvero il bisogno
+// "indica dove guardare" senza una barra di strumenti da imparare.
+el('photo-annotate-canvas').addEventListener('click', async (e) => {
+  if (!state.draft || !state.draft._photoOriginalDataUrl) return;
+  const canvas = el('photo-annotate-canvas');
+  const rect = canvas.getBoundingClientRect();
+  const xFrac = (e.clientX - rect.left) / rect.width;
+  const yFrac = (e.clientY - rect.top) / rect.height;
+  state.draft._photoMarkers.push({ xFrac, yFrac });
+  redrawPhotoAnnotationOverlay();
+  await flattenPhotoAnnotations();
+});
+el('photo-annotate-undo').addEventListener('click', async () => {
+  if (!state.draft || !state.draft._photoMarkers || !state.draft._photoMarkers.length) return;
+  state.draft._photoMarkers.pop();
+  redrawPhotoAnnotationOverlay();
+  await flattenPhotoAnnotations();
 });
 el('photo-remove-btn').addEventListener('click', () => {
   resetPhotoField();
@@ -1572,6 +1665,38 @@ function updateSaveState() {
   });
 });
 el('f-comment').addEventListener('input', () => { state.draft.comment = el('f-comment').value; });
+
+// Dettatura vocale del commento (07.08.2026, idea "WOW" #2): utile con i guanti o in
+// quota - Web Speech API nativa del browser, nessun server coinvolto. Il pulsante resta
+// nascosto da solo se il telefono/browser non la supporta (es. alcuni Android datati),
+// invece di mostrare un pulsante che poi non funziona.
+const SpeechRecognitionCtor = window.SpeechRecognition || window.webkitSpeechRecognition;
+if (SpeechRecognitionCtor) {
+  const micBtn = el('f-comment-voice-btn');
+  micBtn.classList.remove('hidden');
+  let recognizing = false;
+  let recognition = null;
+  micBtn.addEventListener('click', () => {
+    const targetId = micBtn.dataset.target;
+    const targetEl = el(targetId);
+    if (recognizing) { recognition.stop(); return; }
+    recognition = new SpeechRecognitionCtor();
+    recognition.lang = state.lang === 'it' ? 'it-IT' : 'en-GB';
+    recognition.interimResults = false;
+    recognition.continuous = true;
+    const baseValue = targetEl.value ? targetEl.value.replace(/\s+$/, '') + ' ' : '';
+    recognition.onstart = () => { recognizing = true; micBtn.classList.add('recording'); };
+    recognition.onend = () => { recognizing = false; micBtn.classList.remove('recording'); };
+    recognition.onerror = () => { recognizing = false; micBtn.classList.remove('recording'); };
+    recognition.onresult = (event) => {
+      let transcript = '';
+      for (let i = 0; i < event.results.length; i++) transcript += event.results[i][0].transcript;
+      targetEl.value = baseValue + transcript;
+      targetEl.dispatchEvent(new Event('input'));
+    };
+    recognition.start();
+  });
+}
 el('f-ncr-cr-comment').addEventListener('input', () => { state.draft.ncrCrComment = el('f-ncr-cr-comment').value; });
 el('defect-details-toggle').addEventListener('click', () => {
   el('defect-details-toggle').closest('.accordion').classList.toggle('collapsed');
@@ -2496,6 +2621,7 @@ function renderLookup() {
     prodCard.classList.add('hidden');
     foundHint.classList.add('hidden');
     registerBtn.classList.add('hidden');
+    el('lookup-tally-card').classList.add('hidden');
     return;
   }
   empty.classList.add('hidden');
@@ -2536,7 +2662,27 @@ function renderLookup() {
     foundHint.classList.add('hidden');
   }
 
-  notFound.classList.toggle('hidden', !!(match || isAmbiguous || existing));
+  // Scheda tubo unificata (07.08.2026, idea "WOW" #6): terza fonte oltre a produzione e
+  // Dataset - l'esito Tally List FI per lo stesso Pipe N°, se presente. Se compare su piu'
+  // Tally List (raro ma possibile) mostra la piu' recente per data.
+  const tallyMatches = (state.fiTallyEntries || []).filter(e => normProdNum(e.pipeNo) === normPipe);
+  const tallyCard = el('lookup-tally-card');
+  let latestTally = null;
+  if (tallyMatches.length) {
+    latestTally = tallyMatches.slice().sort((a, b) => {
+      const da = parseDdMmYyyy(a.dateStr), db = parseDdMmYyyy(b.dateStr);
+      return (db ? db.getTime() : 0) - (da ? da.getTime() : 0);
+    })[0];
+    el('lk-tally-certno').textContent = latestTally.certNo || '-';
+    el('lk-tally-esito').textContent = latestTally.esito
+      ? t('fi_tally_who').replace('{esito}', t('fi_tally_esito_' + latestTally.esito)).replace('{by}', latestTally.flaggedBy || '-').replace('{when}', latestTally.flaggedAt ? new Date(latestTally.flaggedAt).toLocaleString(t('locale')) : '-')
+      : t('fi_tally_pending');
+    tallyCard.classList.remove('hidden');
+  } else {
+    tallyCard.classList.add('hidden');
+  }
+
+  notFound.classList.toggle('hidden', !!(match || isAmbiguous || existing || latestTally));
 }
 el('lookup-input').addEventListener('input', renderLookup);
 el('lookup-open-record-btn').addEventListener('click', () => {
@@ -2955,6 +3101,39 @@ function sumTallyMeters(entries) {
   return { sumM, found, total: entries.length };
 }
 
+// Controllo automatico Tally List (07.08.2026, idea "WOW" #1): confronta la lista coi dati
+// di produzione al caricamento (stesso incrocio Item+Pipe N. di sumTallyMeters sopra) invece
+// di scoprire le anomalie a mano dopo, come successo piu' volte in questa stessa giornata
+// (Cert-No sbagliato, PDF illeggibile, lista mostrata sbagliata). Due controlli reali con
+// i dati che l'app ha davvero a disposizione - niente "lunghezza diversa" (la Tally List non
+// porta una sua lunghezza da confrontare, solo OD/WT): tubo non trovato in produzione, e
+// tubo duplicato piu' volte nella stessa lista (stesso errore gia' visto nello strumento
+// Evidenzia IRN sul PC, colore rosa - vedi Lessons Learned LL-021).
+function crossCheckTally(entries) {
+  const countByPipe = new Map();
+  entries.forEach(e => {
+    const key = normProdNum(e.pipeNo);
+    countByPipe.set(key, (countByPipe.get(key) || 0) + 1);
+  });
+  const issues = [];
+  const flagged = new Set(); // una sola segnalazione per tubo, anche se compare su piu' righe
+  entries.forEach(e => {
+    const key = normProdNum(e.pipeNo);
+    if (countByPipe.get(key) > 1 && !flagged.has(key)) {
+      flagged.add(key);
+      issues.push({ pipeNo: e.pipeNo, type: 'duplicate' });
+    }
+  });
+  entries.forEach(e => {
+    const key = normProdNum(e.pipeNo);
+    if (flagged.has(key)) return; // gia' segnalato come duplicato, non serve ripeterlo
+    let match = e.itemNo ? state.productionMap.get(prodKey(e.itemNo, e.pipeNo)) : null;
+    if (!match) match = state.productionByPipe.get(normProdNum(e.pipeNo));
+    if (!match) { flagged.add(key); issues.push({ pipeNo: e.pipeNo, type: 'not_found' }); }
+  });
+  return issues;
+}
+
 function fmtMeters(n) {
   return (n / 1000).toLocaleString(t('locale'), { minimumFractionDigits: 1, maximumFractionDigits: 3 });
 }
@@ -2965,6 +3144,21 @@ function renderFiTallyList(entries) {
   const summary = el('fi-tally-summary');
   const bulkHeader = el('fi-tally-bulk-header');
   const pending = entries.filter(e => !e.esito).length;
+
+  // Controllo automatico (07.08.2026): sempre visibile, sia a lista aperta sia sul
+  // riepilogo compatto - un tubo non trovato/duplicato resta un problema anche dopo
+  // che tutti sono stati valutati, non solo mentre si sta ancora decidendo.
+  const xcheckCard = el('fi-xcheck-card');
+  const issues = crossCheckTally(entries);
+  if (issues.length) {
+    xcheckCard.classList.remove('hidden');
+    el('fi-xcheck-head').textContent = t('fi_xcheck_head').replace('{n}', issues.length).replace('{total}', entries.length);
+    el('fi-xcheck-list').innerHTML = issues.map(is =>
+      `<div class="fi-xcheck-row"><b>Pipe ${escapeHtml(is.pipeNo)}</b><span>${escapeHtml(t(is.type === 'duplicate' ? 'fi_xcheck_duplicate' : 'fi_xcheck_not_found'))}</span></div>`
+    ).join('');
+  } else {
+    xcheckCard.classList.add('hidden');
+  }
 
   // Tally List completamente valutata: la schermata "si chiude" da sola su un
   // riepilogo compatto invece di lasciare 46 righe tutte verdi/rosse in vista -
