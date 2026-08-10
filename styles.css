@@ -149,7 +149,10 @@ html, body {
 }
 /* Marchio Field Inspector (09.08.2026): identita' propria dell'app, distinta dal logo
    aziendale IQS gia' mostrato sopra - qui solo accanto al nome dell'app. */
-.app-mark { border-radius: 22%; display: inline-block; flex-shrink: 0; vertical-align: middle; }
+/* Tondo (10.08.2026, richiesta di Rino): il marchio ora e' un cerchio pieno con bordo ciano
+   invece di un quadrato arrotondato - il PNG stesso e' gia' un cerchio, 50% qui e' solo per
+   coerenza (non taglia nulla, il cerchio ci sta gia' dentro). */
+.app-mark { border-radius: 50%; display: inline-block; flex-shrink: 0; vertical-align: middle; }
 .app-mark-h1 { width: 26px; height: 26px; margin-right: 8px; margin-top: -3px; }
 .help-footer {
   display: flex; align-items: center; gap: 10px;
