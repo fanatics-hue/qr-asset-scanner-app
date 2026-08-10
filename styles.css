@@ -429,6 +429,12 @@ textarea.field { resize: vertical; font-family: inherit; }
 }
 .edit-pill-btn:hover { opacity: 0.85; }
 .edit-pill-icon { font-size: 12px; }
+/* Badge condizione + Esporta PDF nella stessa riga (10.08.2026): prima erano due blocchi
+   separati (badge nudo + .pdf-export-row, che ha un suo padding laterale pensato per
+   schermate senza padding proprio - qui #screen-detail lo ha gia', risultato un doppio
+   rientro che spostava il pulsante fuori asse rispetto al badge sopra). Stesso ritmo di
+   .status-row sotto, cosi' le due righe si leggono come un blocco unico e simmetrico. */
+.detail-badge-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .status-row { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
 .badge-status-open { color: var(--red); background: var(--red-bg); }
 .badge-status-closed { color: var(--green); background: var(--green-bg); }
