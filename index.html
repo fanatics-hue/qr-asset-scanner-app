@@ -13,7 +13,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=62">
+<link rel="stylesheet" href="styles.css?v=63">
 </head>
 <body>
 <div id="app">
@@ -81,7 +81,6 @@
       <div class="card">
         <div class="card-header"><span class="section-title" data-i18n="confirm_section_photo">Foto (opzionale)</span></div>
         <div class="photo-upload-row">
-          <div id="photo-existing-note" class="photo-existing-note hidden" data-i18n="photo_existing_note">Foto già presente — scegline una nuova solo se vuoi sostituirla.</div>
           <!-- Niente "capture" (07.08.2026, richiesta di Rino): con "capture=environment" il
                telefono apre SOLO la fotocamera, escludendo galleria/file - tolto cosi' il
                browser mostra la scelta normale (scatta oppure scegli una foto gia' salvata). -->
@@ -90,19 +89,41 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 8a2 2 0 0 1 2-2h1.5l1-1.5h7l1 1.5H18a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8z"/><circle cx="12" cy="13" r="3.5"/></svg>
             <span data-i18n="photo_add">Aggiungi foto</span>
           </button>
-          <div id="photo-preview-wrap" class="photo-preview-wrap hidden">
-            <!-- Foto annotata (07.08.2026, idea "WOW" #3): tocchi il punto esatto del
-                 difetto sulla foto, resta un cerchio incollato all'immagine - il canvas
-                 sta esattamente sopra l'anteprima, alla stessa dimensione visualizzata. -->
+
+          <!-- Più foto (09.08.2026, richiesta di Rino: "più foto + cerchio + freccia +
+               commento/testo sulla foto"): striscia di miniature (fino a PHOTO_MAX, oggi 4),
+               quella col bordo blu e' quella attiva nell'editor sotto; "+" per aggiungerne
+               un'altra finche' non si raggiunge il limite. Popolata da JS (renderPhotoThumbs). -->
+          <div id="photo-thumb-row" class="photo-thumb-row hidden"></div>
+
+          <div id="photo-editor" class="photo-editor hidden">
+            <!-- 3 strumenti invece del solo cerchio di prima: Cerchio (tocco), Freccia
+                 (trascina), Testo (tocco poi scrivi nel campo sotto, non un popup nativo). -->
+            <div class="photo-tool-row" id="photo-tool-row">
+              <button type="button" class="photo-tool-btn" data-tool="circle">
+                <span class="photo-tool-ic">&#9711;</span><span data-i18n="photo_tool_circle">Cerchio</span>
+              </button>
+              <button type="button" class="photo-tool-btn" data-tool="arrow">
+                <span class="photo-tool-ic">&#8599;</span><span data-i18n="photo_tool_arrow">Freccia</span>
+              </button>
+              <button type="button" class="photo-tool-btn" data-tool="text">
+                <span class="photo-tool-ic">Aa</span><span data-i18n="photo_tool_text">Testo</span>
+              </button>
+            </div>
             <div class="photo-annotate-stage">
               <img id="photo-preview" alt="">
               <canvas id="photo-annotate-canvas"></canvas>
             </div>
-            <div class="photo-annotate-bar">
-              <span class="photo-annotate-hint" data-i18n="photo_annotate_hint">Tocca la foto per segnare il difetto</span>
+            <div id="photo-text-input-row" class="photo-text-input-row hidden">
+              <input type="text" id="photo-text-input" class="field" maxlength="40" data-i18n-ph="photo_text_ph">
+              <button type="button" id="photo-text-confirm" class="photo-text-btn photo-text-btn-ok">&#10003;</button>
+              <button type="button" id="photo-text-cancel" class="photo-text-btn">&times;</button>
+            </div>
+            <div class="photo-annotate-bar" id="photo-annotate-bar">
+              <span class="photo-annotate-hint" id="photo-annotate-hint" data-i18n="photo_annotate_hint_circle">Tocca la foto per segnare il difetto</span>
               <button id="photo-annotate-undo" type="button" class="link-btn" data-i18n="photo_annotate_undo">Annulla ultimo segno</button>
             </div>
-            <button id="photo-remove-btn" class="photo-remove-btn" type="button">&times;</button>
+            <div class="photo-editor-not-editable hidden" id="photo-not-editable" data-i18n="photo_not_editable">Foto già salvata — rimuovila e ricaricala per modificare i segni.</div>
           </div>
         </div>
       </div>
@@ -270,10 +291,8 @@
     </div>
     <div class="card hidden" id="d-photo-card">
       <div class="card-header"><span class="section-title" data-i18n="confirm_section_photo">Foto (opzionale)</span></div>
-      <div class="photo-detail-wrap">
-        <span id="d-photo-status" data-i18n="photo_loading">Carico foto...</span>
-        <img id="d-photo-img" class="hidden" alt="">
-      </div>
+      <!-- Galleria (09.08.2026): puo' essere piu' di una foto, popolata da JS (loadDetailPhotos). -->
+      <div class="photo-detail-gallery" id="d-photo-gallery"></div>
     </div>
   </section>
 
@@ -554,6 +573,6 @@
 </div>
 
 <script src="vendor/jspdf.umd.min.js"></script>
-<script src="app.js?v=99"></script>
+<script src="app.js?v=100"></script>
 </body>
 </html>

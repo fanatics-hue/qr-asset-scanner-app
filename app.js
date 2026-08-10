@@ -1,5 +1,8 @@
 const API_BASE = 'https://qr-scanner-api.fanatics.workers.dev';
-const APP_VERSION = 99;
+const APP_VERSION = 100;
+// Più foto (09.08.2026): limite scelto con Rino, ragionevole per non appesantire i
+// caricamenti su rete di cantiere. Stesso limite ricontrollato lato Worker.
+const PHOTO_MAX = 4;
 
 const TRANSLATIONS = {
   it: {
@@ -40,7 +43,14 @@ const TRANSLATIONS = {
     confirm_section_photo: 'Foto (opzionale)',
     photo_add: 'Aggiungi foto',
     has_photo: 'Ha una foto allegata',
-    photo_annotate_hint: 'Tocca la foto per segnare il difetto',
+    photo_tool_circle: 'Cerchio',
+    photo_tool_arrow: 'Freccia',
+    photo_tool_text: 'Testo',
+    photo_text_ph: 'Breve etichetta...',
+    photo_annotate_hint_circle: 'Tocca la foto per segnare il difetto',
+    photo_annotate_hint_arrow: 'Trascina per disegnare una freccia',
+    photo_annotate_hint_text: 'Tocca il punto, poi scrivi qui sotto',
+    photo_not_editable: 'Foto già salvata — rimuovila e ricaricala per modificare i segni.',
     photo_annotate_undo: 'Annulla ultimo segno',
     photo_loading: 'Carico foto...',
     err_photo: 'Impossibile elaborare la foto, riprova.',
@@ -48,7 +58,6 @@ const TRANSLATIONS = {
     help_title: 'Guida',
     detail_edit: 'Modifica',
     confirm_title_edit: 'Modifica asset',
-    photo_existing_note: 'Foto già presente — scegline una nuova solo se vuoi sostituirla.',
     pipe_ambiguous_hint: 'Questo Pipe N° esiste su più Item: inserisci anche l\'Item N° per l\'auto-compilazione.',
     stats_title: 'Statistiche',
     stats_total: 'Schede totali',
@@ -340,7 +349,14 @@ const TRANSLATIONS = {
     confirm_section_photo: 'Photo (optional)',
     photo_add: 'Add photo',
     has_photo: 'Has a photo attached',
-    photo_annotate_hint: 'Tap the photo to mark the defect',
+    photo_tool_circle: 'Circle',
+    photo_tool_arrow: 'Arrow',
+    photo_tool_text: 'Text',
+    photo_text_ph: 'Short label...',
+    photo_annotate_hint_circle: 'Tap the photo to mark the defect',
+    photo_annotate_hint_arrow: 'Drag to draw an arrow',
+    photo_annotate_hint_text: 'Tap the spot, then type below',
+    photo_not_editable: 'Photo already saved — remove and re-add it to edit the marks.',
     photo_annotate_undo: 'Undo last mark',
     photo_loading: 'Loading photo...',
     err_photo: 'Could not process the photo, please try again.',
@@ -348,7 +364,6 @@ const TRANSLATIONS = {
     help_title: 'Help',
     detail_edit: 'Edit',
     confirm_title_edit: 'Edit asset',
-    photo_existing_note: 'Photo already attached — pick a new one only to replace it.',
     pipe_ambiguous_hint: 'This Pipe No. exists on more than one Item: enter the Item No. too for auto-fill.',
     stats_title: 'Statistics',
     stats_total: 'Total records',
@@ -626,7 +641,7 @@ const HELP_CONTENT = {
       <div class="help-p">Mentre hai l'app aperta, un controllo periodico segnala con un breve bip e un pallino rosso sul tab Dataset quando un collega dello stesso progetto registra un nuovo asset — mai per i tuoi stessi scan. Il pallino sparisce aprendo il Dataset, dove la scheda nuova lampeggia con un'etichetta "Nuovo" per qualche secondo. Non è una notifica push vera: funziona solo mentre l'app è effettivamente aperta, non a telefono chiuso.</div>
     </div>
     <div class="card"><div class="card-header"><span class="section-title">Foto</span></div>
-      <div class="help-p">Facoltativa, tocca "Aggiungi foto". Viene compressa in automatico e salvata nel repository dell'app. Dopo averla scelta, tocca il punto esatto del difetto sulla foto: resta un cerchio rosso incollato all'immagine (tocca ancora per aggiungerne altri, "Annulla ultimo segno" per togliere l'ultimo). La vede qualunque ispettore loggato riaprendo la scheda dal Dataset — tocca per aprirla a schermo intero. Nel Dataset, un'icona 📷 accanto al badge condizione segnala le schede che hanno una foto allegata, senza doverle aprire.</div>
+      <div class="help-p">Facoltative, fino a 4 per scheda — tocca "Aggiungi foto" per la prima, poi la "+" nella striscia di miniature per le altre. Ogni foto viene compressa in automatico e salvata nel repository dell'app; tocchi una miniatura per aprirla nell'editor sotto. Tre strumenti sopra la foto: <b>Cerchio</b> (tocco singolo), <b>Freccia</b> (trascina da un punto all'altro), <b>Testo</b> (tocca, poi scrivi la breve etichetta nel campo che appare sotto). "Annulla ultimo segno" toglie l'ultimo segno, qualunque tipo sia. La "×" su una miniatura la rimuove. Le foto già salvate (modifica di una scheda esistente) si vedono come miniature ma non si possono annotare di nuovo senza prima rimuoverle e ricaricarle. Chiunque sia loggato le vede riaprendo la scheda dal Dataset — tocca una foto per aprirla a schermo intero. Nel Dataset, un'icona 📷 (con un numero se sono più di una) accanto al badge condizione segnala le schede con foto allegate.</div>
     </div>
     <div class="card"><div class="card-header"><span class="section-title">Avviso automatico</span></div>
       <div class="help-p">Se salvi una scheda con condizione "Da revisionare" o "Danneggiato" parte in automatico un'email di avviso con i dettagli.</div>
@@ -691,7 +706,7 @@ const HELP_CONTENT = {
       <div class="help-p">While you have the app open, a periodic check plays a short beep and shows a red dot on the Dataset tab whenever a teammate on the same project logs a new asset — never for your own scans. The dot disappears when you open the Dataset, where the new record flashes with a "New" label for a few seconds. This isn't a real push notification: it only works while the app is actually open, not with the phone locked.</div>
     </div>
     <div class="card"><div class="card-header"><span class="section-title">Photo</span></div>
-      <div class="help-p">Optional, tap "Add photo". It's compressed automatically and saved to the app's repository. After picking it, tap the exact spot of the defect on the photo: a red circle stays attached to the image (tap again to add more, "Undo last mark" to remove the last one). Any logged-in inspector can see it by reopening the record from the Dataset — tap to open full screen. In the Dataset, a 📷 icon next to the condition badge flags records that have a photo attached, without opening them.</div>
+      <div class="help-p">Optional, up to 4 per record — tap "Add photo" for the first one, then the "+" in the thumbnail strip for more. Each photo is compressed automatically and saved to the app's repository; tap a thumbnail to open it in the editor below. Three tools above the photo: <b>Circle</b> (single tap), <b>Arrow</b> (drag from one point to another), <b>Text</b> (tap, then type the short label in the field that appears below). "Undo last mark" removes the last mark, whatever type it is. The "×" on a thumbnail removes that photo. Already-saved photos (editing an existing record) show as thumbnails but can't be annotated again without removing and re-adding them first. Any logged-in inspector can see them by reopening the record from the Dataset — tap a photo to open it full screen. In the Dataset, a 📷 icon (with a number if there's more than one) next to the condition badge flags records with photos attached.</div>
     </div>
     <div class="card"><div class="card-header"><span class="section-title">Automatic alert</span></div>
       <div class="help-p">Saving a record with condition "Needs review" or "Damaged" automatically triggers an alert email with the details.</div>
@@ -1383,6 +1398,14 @@ function startManualEntry() {
 }
 
 // ---------------- Confirm ----------------
+// Elenco foto di un record, con fallback per le schede create prima del 09.08.2026 (avevano
+// solo photoPath/photoUrl singolari, mai migrate - il Worker le legge gia' cosi').
+function recordPhotos(rec) {
+  if (rec && Array.isArray(rec.photos)) return rec.photos;
+  if (rec && rec.photoPath) return [{ path: rec.photoPath, url: rec.photoUrl || '' }];
+  return [];
+}
+
 function openConfirm(parsed) {
   state.editingId = null;
   state.draft = Object.assign({ itpStep: null, condition: null, comment: '', defectType: null, disposition: null, ncr: false, cr: false, ncrCrComment: '' }, parsed);
@@ -1400,7 +1423,6 @@ function openConfirm(parsed) {
   el('pipe-ambiguous-hint').classList.add('hidden');
   el('dup-scan-hint').classList.add('hidden');
   resetPhotoField();
-  el('photo-existing-note').classList.add('hidden');
   el('confirm-title').textContent = t('confirm_title');
   renderChips();
   updateSaveState();
@@ -1432,7 +1454,14 @@ function openEditRecord(rec) {
   el('pipe-ambiguous-hint').classList.add('hidden');
   el('dup-scan-hint').classList.add('hidden');
   resetPhotoField();
-  el('photo-existing-note').classList.toggle('hidden', !rec.photoPath);
+  // Foto gia' salvate (09.08.2026): ognuna diventa una miniatura non annotabile (nessun
+  // byte lato client, come il vecchio testo "Foto già presente") - restano cosi' finche'
+  // non vengono rimosse; rimuovendole e ricaricandole si torna ad averne i byte e a poterle
+  // annotare, esattamente come una foto nuova.
+  state.draft.photos = recordPhotos(rec).map(p => ({ existingPath: p.path, existingUrl: p.url }));
+  state.draft.activePhotoIndex = state.draft.photos.length ? 0 : -1;
+  renderPhotoThumbs();
+  renderPhotoEditor();
   el('confirm-title').textContent = t('confirm_title_edit');
   renderChips();
   updateSaveState();
@@ -1440,25 +1469,141 @@ function openEditRecord(rec) {
 }
 
 // ---------------- Foto ----------------
-// Compressa lato client (max 1600px, JPEG 72%) prima dell'invio: le foto da fotocamera
-// pesano diversi MB, inutile spedirle intere su rete di cantiere solo per un allegato.
+// Più foto (09.08.2026, fino a PHOTO_MAX): ogni voce di state.draft.photos e' o una foto
+// NUOVA { originalDataUrl, marks, base64, name } (annotabile, ha i byte lato client) o una
+// foto GIA' SALVATA { existingPath, existingUrl } (modifica di un record esistente - non
+// annotabile: non ne abbiamo i byte senza scaricarla, stesso limite del semplice testo
+// "Foto già presente" di prima). state.draft.activePhotoIndex indica quale miniatura e'
+// aperta nell'editor sotto, state.draft.annotateTool quale dei 3 strumenti e' selezionato.
 function resetPhotoField() {
   if (state.draft) {
-    state.draft.photoBase64 = null; state.draft.photoName = null;
-    state.draft._photoOriginalDataUrl = null; state.draft._photoMarkers = [];
+    state.draft.photos = [];
+    state.draft.activePhotoIndex = -1;
+    state.draft.annotateTool = 'circle';
+    state.draft._dragPreview = null;
+    state.draft._pendingTextPoint = null;
   }
   el('f-photo').value = '';
-  el('photo-preview-wrap').classList.add('hidden');
-  el('photo-pick-btn').classList.remove('hidden');
+  el('photo-text-input-row').classList.add('hidden');
+  renderPhotoThumbs();
+  renderPhotoEditor();
 }
 
-// Foto annotata (07.08.2026, idea "WOW" #3): il tocco piazza un cerchio rosso nel punto
-// esatto del difetto, "incollato" all'immagine prima di salvarla - una prova piu' forte di
-// una descrizione scritta, soprattutto quando la scheda finisce in un NCR. L'originale pulito
-// resta sempre in _photoOriginalDataUrl: il canvas sopra la preview e' solo l'anteprima dal
-// vivo dei segni, l'immagine finale (con i cerchi davvero incollati dentro) si ricalcola da
-// zero ogni volta a partire dall'originale + tutti i segni, mai sovrapponendo un flatten sopra
-// un altro (altrimenti ogni tocco perderebbe qualita' e i cerchi vecchi si sommerebbero).
+function activePhotoForEdit() {
+  const photos = (state.draft && state.draft.photos) || [];
+  return photos[state.draft ? state.draft.activePhotoIndex : -1];
+}
+
+function removePhoto(i) {
+  state.draft.photos.splice(i, 1);
+  if (state.draft.activePhotoIndex >= state.draft.photos.length) {
+    state.draft.activePhotoIndex = state.draft.photos.length - 1;
+  }
+  renderPhotoThumbs();
+  renderPhotoEditor();
+}
+
+function renderPhotoThumbs() {
+  const photos = (state.draft && state.draft.photos) || [];
+  const wrap = el('photo-thumb-row');
+  wrap.innerHTML = '';
+  const hasAny = photos.length > 0;
+  el('photo-pick-btn').classList.toggle('hidden', hasAny);
+  wrap.classList.toggle('hidden', !hasAny);
+  photos.forEach((p, i) => {
+    const div = document.createElement('div');
+    div.className = 'photo-thumb' + (i === state.draft.activePhotoIndex ? ' active' : '');
+    if (p.originalDataUrl) {
+      const img = document.createElement('img');
+      img.src = p.originalDataUrl;
+      div.appendChild(img);
+    } else {
+      const ic = document.createElement('div');
+      ic.className = 'photo-thumb-existing-ic';
+      ic.textContent = '\u{1F4F7}';
+      div.appendChild(ic);
+    }
+    const x = document.createElement('button');
+    x.type = 'button'; x.className = 'photo-thumb-x'; x.textContent = '×';
+    x.addEventListener('click', (e) => { e.stopPropagation(); removePhoto(i); });
+    div.appendChild(x);
+    div.addEventListener('click', () => { state.draft.activePhotoIndex = i; renderPhotoThumbs(); renderPhotoEditor(); });
+    wrap.appendChild(div);
+  });
+  if (photos.length < PHOTO_MAX) {
+    const add = document.createElement('button');
+    add.type = 'button'; add.className = 'photo-thumb-add'; add.textContent = '+';
+    add.addEventListener('click', () => el('f-photo').click());
+    wrap.appendChild(add);
+  }
+}
+
+function renderPhotoToolButtons() {
+  const tool = (state.draft && state.draft.annotateTool) || 'circle';
+  document.querySelectorAll('#photo-tool-row .photo-tool-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.tool === tool);
+  });
+  const hintKey = tool === 'arrow' ? 'photo_annotate_hint_arrow' : tool === 'text' ? 'photo_annotate_hint_text' : 'photo_annotate_hint_circle';
+  el('photo-annotate-hint').textContent = t(hintKey);
+}
+
+function renderPhotoEditor() {
+  const active = activePhotoForEdit();
+  const editor = el('photo-editor');
+  el('photo-text-input-row').classList.add('hidden');
+  if (!active) { editor.classList.add('hidden'); return; }
+  editor.classList.remove('hidden');
+  const editable = !!active.originalDataUrl;
+  el('photo-tool-row').classList.toggle('hidden', !editable);
+  editor.querySelector('.photo-annotate-stage').classList.toggle('hidden', !editable);
+  el('photo-annotate-bar').classList.toggle('hidden', !editable);
+  el('photo-not-editable').classList.toggle('hidden', editable);
+  if (editable) {
+    el('photo-preview').src = active.originalDataUrl;
+    renderPhotoToolButtons();
+  }
+}
+
+// Disegna un segno (cerchio/freccia/testo) sul canvas passato - stessa funzione usata sia
+// per l'anteprima dal vivo (canvas piccolo, dimensione visualizzata) sia per l'appiattimento
+// finale (canvas alla risoluzione naturale della foto) - solo r/lineWidth cambiano scala tra
+// i due casi, la geometria e' identica cosi' il segno appiattito combacia con quello visto.
+function drawMarkOnCtx(ctx, m, w, h, r, lineWidth) {
+  ctx.strokeStyle = '#F87171';
+  ctx.fillStyle = '#F87171';
+  ctx.lineWidth = lineWidth;
+  if (m.type === 'arrow') {
+    const x1 = m.xFrac * w, y1 = m.yFrac * h, x2 = m.x2Frac * w, y2 = m.y2Frac * h;
+    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+    const angle = Math.atan2(y2 - y1, x2 - x1);
+    const headLen = r * 0.9;
+    ctx.beginPath();
+    ctx.moveTo(x2, y2);
+    ctx.lineTo(x2 - headLen * Math.cos(angle - Math.PI / 7), y2 - headLen * Math.sin(angle - Math.PI / 7));
+    ctx.lineTo(x2 - headLen * Math.cos(angle + Math.PI / 7), y2 - headLen * Math.sin(angle + Math.PI / 7));
+    ctx.closePath(); ctx.fill();
+  } else if (m.type === 'text') {
+    const x = m.xFrac * w, y = m.yFrac * h;
+    const fontSize = Math.max(11, Math.round(r * 1.1));
+    ctx.font = '700 ' + fontSize + 'px ' + (getComputedStyle(document.body).fontFamily || 'sans-serif');
+    ctx.textBaseline = 'middle';
+    const textW = ctx.measureText(m.text).width;
+    const padX = fontSize * 0.35, padY = fontSize * 0.5;
+    ctx.fillStyle = 'rgba(0,0,0,.6)';
+    ctx.fillRect(x - padX, y - padY, textW + padX * 2, padY * 2);
+    ctx.fillStyle = '#F87171';
+    ctx.fillText(m.text, x, y);
+  } else {
+    const x = m.xFrac * w, y = m.yFrac * h;
+    ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.stroke();
+  }
+}
+
+// Foto annotata (07.08.2026, idea "WOW" #3; estesa 09.08.2026 con freccia/testo, richiesta di
+// Rino). L'originale pulito resta sempre in originalDataUrl: il canvas sopra la preview e'
+// solo l'anteprima dal vivo dei segni, l'immagine finale si ricalcola da zero ogni volta a
+// partire dall'originale + tutti i segni, mai sovrapponendo un flatten sopra un altro
+// (altrimenti ogni tocco perderebbe qualita' e i segni vecchi si sommerebbero).
 function redrawPhotoAnnotationOverlay() {
   const img = el('photo-preview');
   const canvas = el('photo-annotate-canvas');
@@ -1467,24 +1612,22 @@ function redrawPhotoAnnotationOverlay() {
   canvas.height = img.clientHeight;
   const ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  const markers = (state.draft && state.draft._photoMarkers) || [];
+  const active = activePhotoForEdit();
+  const marks = (active && active.marks) || [];
   const r = Math.max(14, Math.min(canvas.width, canvas.height) * 0.06);
-  markers.forEach(m => {
-    ctx.beginPath();
-    ctx.arc(m.xFrac * canvas.width, m.yFrac * canvas.height, r, 0, Math.PI * 2);
-    ctx.strokeStyle = '#F87171';
-    ctx.lineWidth = 3;
-    ctx.stroke();
-  });
+  marks.forEach(m => drawMarkOnCtx(ctx, m, canvas.width, canvas.height, r, 3));
+  if (state.draft && state.draft._dragPreview) {
+    drawMarkOnCtx(ctx, state.draft._dragPreview, canvas.width, canvas.height, r, 3);
+  }
 }
 
 function flattenPhotoAnnotations() {
   return new Promise((resolve) => {
-    const original = state.draft._photoOriginalDataUrl;
-    const markers = state.draft._photoMarkers || [];
-    if (!original) { resolve(); return; }
-    if (!markers.length) {
-      state.draft.photoBase64 = original.split(',')[1];
+    const active = activePhotoForEdit();
+    if (!active || !active.originalDataUrl) { resolve(); return; }
+    const marks = active.marks || [];
+    if (!marks.length) {
+      active.base64 = active.originalDataUrl.split(',')[1];
       resolve();
       return;
     }
@@ -1495,17 +1638,11 @@ function flattenPhotoAnnotations() {
       const ctx = canvas.getContext('2d');
       ctx.drawImage(img, 0, 0);
       const r = Math.max(canvas.width, canvas.height) * 0.045;
-      markers.forEach(m => {
-        ctx.beginPath();
-        ctx.arc(m.xFrac * canvas.width, m.yFrac * canvas.height, r, 0, Math.PI * 2);
-        ctx.strokeStyle = '#F87171';
-        ctx.lineWidth = Math.max(3, canvas.width * 0.006);
-        ctx.stroke();
-      });
-      state.draft.photoBase64 = canvas.toDataURL('image/jpeg', 0.85).split(',')[1];
+      marks.forEach(m => drawMarkOnCtx(ctx, m, canvas.width, canvas.height, r, Math.max(3, canvas.width * 0.006)));
+      active.base64 = canvas.toDataURL('image/jpeg', 0.85).split(',')[1];
       resolve();
     };
-    img.src = original;
+    img.src = active.originalDataUrl;
   });
 }
 
@@ -1535,45 +1672,112 @@ el('photo-pick-btn').addEventListener('click', () => el('f-photo').click());
 el('f-photo').addEventListener('change', async () => {
   const file = el('f-photo').files[0];
   if (!file) return;
+  if (!state.draft.photos) state.draft.photos = [];
+  if (state.draft.photos.length >= PHOTO_MAX) { el('f-photo').value = ''; return; }
   try {
     const dataUrl = await compressImage(file);
-    state.draft.photoBase64 = dataUrl.split(',')[1];
-    state.draft.photoName = (state.draft.pipeNo || 'asset') + '-' + Date.now() + '.jpg';
-    state.draft._photoOriginalDataUrl = dataUrl;
-    state.draft._photoMarkers = [];
-    el('photo-preview').src = dataUrl;
-    el('photo-preview-wrap').classList.remove('hidden');
-    el('photo-pick-btn').classList.add('hidden');
-    el('photo-existing-note').classList.add('hidden');
+    state.draft.photos.push({
+      originalDataUrl: dataUrl,
+      marks: [],
+      base64: dataUrl.split(',')[1],
+      name: (state.draft.pipeNo || 'asset') + '-' + Date.now() + '.jpg'
+    });
+    state.draft.activePhotoIndex = state.draft.photos.length - 1;
+    state.draft.annotateTool = 'circle';
+    el('f-photo').value = '';
+    renderPhotoThumbs();
+    renderPhotoEditor();
   } catch (e) { alert(t('err_photo')); }
 });
 el('photo-preview').addEventListener('load', redrawPhotoAnnotationOverlay);
 window.addEventListener('resize', redrawPhotoAnnotationOverlay);
-// Tocco sulla foto: cerchio nel punto esatto (07.08.2026, idea "WOW" #3) - un solo tipo di
-// segno (niente frecce/testo separati), la scelta piu' semplice che copre davvero il bisogno
-// "indica dove guardare" senza una barra di strumenti da imparare.
-el('photo-annotate-canvas').addEventListener('click', async (e) => {
-  if (!state.draft || !state.draft._photoOriginalDataUrl) return;
-  const canvas = el('photo-annotate-canvas');
-  const rect = canvas.getBoundingClientRect();
+
+document.querySelectorAll('#photo-tool-row .photo-tool-btn').forEach(b => {
+  b.addEventListener('click', () => {
+    if (!state.draft) return;
+    state.draft.annotateTool = b.dataset.tool;
+    el('photo-text-input-row').classList.add('hidden');
+    renderPhotoToolButtons();
+  });
+});
+
+// Cerchio: tocco singolo (come prima, 07.08.2026). Freccia: trascina da un punto all'altro -
+// un tocco troppo piccolo (< 2% della foto) viene ignorato, per non creare una freccia
+// invisibile per sbaglio. Testo: tocco, poi si scrive nel campo che appare sotto (non un
+// popup nativo del telefono, resta coerente con lo stile dell'app).
+let photoDragStart = null;
+el('photo-annotate-canvas').addEventListener('pointerdown', (e) => {
+  const active = activePhotoForEdit();
+  if (!active || !active.originalDataUrl) return;
+  if ((state.draft.annotateTool || 'circle') !== 'arrow') return;
+  const rect = el('photo-annotate-canvas').getBoundingClientRect();
+  photoDragStart = { xFrac: (e.clientX - rect.left) / rect.width, yFrac: (e.clientY - rect.top) / rect.height };
+  try { el('photo-annotate-canvas').setPointerCapture(e.pointerId); } catch (e2) { /* non essenziale */ }
+});
+el('photo-annotate-canvas').addEventListener('pointermove', (e) => {
+  if (!photoDragStart) return;
+  const rect = el('photo-annotate-canvas').getBoundingClientRect();
+  state.draft._dragPreview = {
+    type: 'arrow', xFrac: photoDragStart.xFrac, yFrac: photoDragStart.yFrac,
+    x2Frac: (e.clientX - rect.left) / rect.width, y2Frac: (e.clientY - rect.top) / rect.height
+  };
+  redrawPhotoAnnotationOverlay();
+});
+el('photo-annotate-canvas').addEventListener('pointerup', async (e) => {
+  const active = activePhotoForEdit();
+  const tool = state.draft ? (state.draft.annotateTool || 'circle') : 'circle';
+  const rect = el('photo-annotate-canvas').getBoundingClientRect();
   const xFrac = (e.clientX - rect.left) / rect.width;
   const yFrac = (e.clientY - rect.top) / rect.height;
-  state.draft._photoMarkers.push({ xFrac, yFrac });
+
+  if (tool === 'arrow') {
+    const start = photoDragStart;
+    photoDragStart = null;
+    state.draft._dragPreview = null;
+    if (!active || !active.originalDataUrl || !start) { redrawPhotoAnnotationOverlay(); return; }
+    if (Math.hypot(xFrac - start.xFrac, yFrac - start.yFrac) > 0.02) {
+      active.marks.push({ type: 'arrow', xFrac: start.xFrac, yFrac: start.yFrac, x2Frac: xFrac, y2Frac: yFrac });
+      await flattenPhotoAnnotations();
+    }
+    redrawPhotoAnnotationOverlay();
+    return;
+  }
+  photoDragStart = null;
+  if (!active || !active.originalDataUrl) return;
+
+  if (tool === 'text') {
+    state.draft._pendingTextPoint = { xFrac, yFrac };
+    el('photo-text-input-row').classList.remove('hidden');
+    el('photo-text-input').value = '';
+    el('photo-text-input').focus();
+    return;
+  }
+
+  active.marks.push({ type: 'circle', xFrac, yFrac });
   redrawPhotoAnnotationOverlay();
   await flattenPhotoAnnotations();
+});
+el('photo-text-confirm').addEventListener('click', async () => {
+  const active = activePhotoForEdit();
+  const point = state.draft && state.draft._pendingTextPoint;
+  const text = el('photo-text-input').value.trim();
+  el('photo-text-input-row').classList.add('hidden');
+  if (!active || !point || !text) { if (state.draft) state.draft._pendingTextPoint = null; return; }
+  active.marks.push({ type: 'text', xFrac: point.xFrac, yFrac: point.yFrac, text });
+  state.draft._pendingTextPoint = null;
+  redrawPhotoAnnotationOverlay();
+  await flattenPhotoAnnotations();
+});
+el('photo-text-cancel').addEventListener('click', () => {
+  if (state.draft) state.draft._pendingTextPoint = null;
+  el('photo-text-input-row').classList.add('hidden');
 });
 el('photo-annotate-undo').addEventListener('click', async () => {
-  if (!state.draft || !state.draft._photoMarkers || !state.draft._photoMarkers.length) return;
-  state.draft._photoMarkers.pop();
+  const active = activePhotoForEdit();
+  if (!active || !active.marks || !active.marks.length) return;
+  active.marks.pop();
   redrawPhotoAnnotationOverlay();
   await flattenPhotoAnnotations();
-});
-el('photo-remove-btn').addEventListener('click', () => {
-  resetPhotoField();
-  if (state.editingId) {
-    const rec = state.records.find(r => r.id === state.editingId);
-    el('photo-existing-note').classList.toggle('hidden', !(rec && rec.photoPath));
-  }
 });
 
 function renderChips() {
@@ -1793,20 +1997,32 @@ el('confirm-cancel').addEventListener('click', () => {
   showScreen('dataset');
 });
 
+// Costruisce il corpo pulito da mandare al Worker: le foto esistenti (modifica) restano
+// {existingPath, existingUrl}, quelle nuove diventano {base64, name} - lo stato interno di
+// editing (originalDataUrl/marks, usati solo per disegnare/riappiattire lato client) non
+// serve al server e raddoppierebbe inutilmente il peso della richiesta se venisse spedito.
+function buildRecordPayload(draft) {
+  const photos = (draft.photos || []).map(p => p.existingPath
+    ? { existingPath: p.existingPath, existingUrl: p.existingUrl || '' }
+    : { base64: p.base64, name: p.name });
+  return { ...draft, photos };
+}
+
 el('confirm-save').addEventListener('click', async () => {
   if (!state.draft || !state.draft.itpStep || !state.draft.condition) return;
   el('confirm-save').disabled = true;
   el('confirm-save').textContent = t('confirm_save_saving');
   try {
+    const payload = buildRecordPayload(state.draft);
     if (state.editingId) {
-      const { record } = await api('/api/records/' + encodeURIComponent(state.editingId), { method: 'PUT', body: JSON.stringify(state.draft) });
+      const { record } = await api('/api/records/' + encodeURIComponent(state.editingId), { method: 'PUT', body: JSON.stringify(payload) });
       const idx = state.records.findIndex(r => r.id === state.editingId);
       if (idx >= 0) state.records[idx] = record; else state.records.unshift(record);
       state.editingId = null;
       renderDatasetList();
     } else {
       try {
-        const { record } = await api('/api/records', { method: 'POST', body: JSON.stringify(state.draft) });
+        const { record } = await api('/api/records', { method: 'POST', body: JSON.stringify(payload) });
         state.records.unshift(record);
         renderDatasetList();
       } catch (err) {
@@ -1814,7 +2030,7 @@ el('confirm-save').addEventListener('click', async () => {
         // di far perdere il rilievo all'ispettore. Un errore del server (es. campi mancanti)
         // resta invece un errore vero, va corretto e reinviato.
         if (err instanceof TypeError) {
-          await queueRecordOffline(state.draft);
+          await queueRecordOffline(payload);
           alert(t('saved_offline_note'));
         } else {
           throw err;
@@ -2009,7 +2225,7 @@ function renderDatasetList() {
       </div>
       <div class="right">
         ${isNew ? `<span class="badge-new">${escapeHtml(t('badge_new'))}</span>` : ''}
-        ${r.photoPath ? `<span class="photo-icon" title="${escapeHtml(t('has_photo'))}">&#128247;</span>` : ''}
+        ${(() => { const n = recordPhotos(r).length; return n ? `<span class="photo-icon" title="${escapeHtml(t('has_photo'))}">&#128247;${n > 1 ? ' ' + n : ''}</span>` : ''; })()}
         ${r._pending
           ? `<span class="badge badge-queued">${escapeHtml(t('status_queued'))}</span>`
           : `<span class="badge badge-${r.condition}">${escapeHtml(condLabel(r.condition))}</span>`}
@@ -2081,30 +2297,45 @@ el('theme-toggle-dataset').addEventListener('click', toggleTheme);
 applyTheme();
 
 // ---------------- Detail ----------------
-// Foto caricata tramite l'API (autenticata con la sessione dell'ispettore), non con un
-// link diretto al repo GitHub: cosi' la vede qualunque ispettore loggato nell'app, non solo
-// chi ha un account GitHub con accesso al repo privato.
-let detailPhotoObjectUrl = null;
-async function loadDetailPhoto(id) {
-  if (detailPhotoObjectUrl) { URL.revokeObjectURL(detailPhotoObjectUrl); detailPhotoObjectUrl = null; }
-  el('d-photo-img').classList.add('hidden');
-  el('d-photo-status').textContent = t('photo_loading');
-  el('d-photo-status').classList.remove('hidden');
-  try {
-    const headers = {};
-    if (state.session && state.session.token) headers['Authorization'] = 'Bearer ' + state.session.token;
-    const resp = await fetch(API_BASE + '/api/records/' + encodeURIComponent(id) + '/photo', { headers });
-    if (!resp.ok) throw new Error('photo fetch failed');
-    const blob = await resp.blob();
-    detailPhotoObjectUrl = URL.createObjectURL(blob);
-    el('d-photo-img').src = detailPhotoObjectUrl;
-    el('d-photo-img').classList.remove('hidden');
-    el('d-photo-status').classList.add('hidden');
-  } catch (e) {
-    el('d-photo-status').textContent = t('err_photo_load');
-  }
+// Foto caricate tramite l'API (autenticata con la sessione dell'ispettore), non con un
+// link diretto al repo GitHub: cosi' le vede qualunque ispettore loggato nell'app, non solo
+// chi ha un account GitHub con accesso al repo privato. Galleria (09.08.2026): ogni foto e'
+// recuperata per indice (/photo/N), non piu' una sola per record.
+let detailPhotoObjectUrls = [];
+async function loadDetailPhotos(rec) {
+  detailPhotoObjectUrls.forEach(u => URL.revokeObjectURL(u));
+  detailPhotoObjectUrls = [];
+  const gallery = el('d-photo-gallery');
+  gallery.innerHTML = '';
+  const photos = recordPhotos(rec);
+  photos.forEach((p, i) => {
+    const item = document.createElement('div');
+    item.className = 'photo-detail-item';
+    const status = document.createElement('span');
+    status.textContent = t('photo_loading');
+    item.appendChild(status);
+    gallery.appendChild(item);
+    (async () => {
+      try {
+        const headers = {};
+        if (state.session && state.session.token) headers['Authorization'] = 'Bearer ' + state.session.token;
+        const resp = await fetch(API_BASE + '/api/records/' + encodeURIComponent(rec.id) + '/photo/' + i, { headers });
+        if (!resp.ok) throw new Error('photo fetch failed');
+        const blob = await resp.blob();
+        const objUrl = URL.createObjectURL(blob);
+        detailPhotoObjectUrls.push(objUrl);
+        const img = document.createElement('img');
+        img.src = objUrl;
+        img.alt = '';
+        img.addEventListener('click', () => window.open(objUrl, '_blank'));
+        item.innerHTML = '';
+        item.appendChild(img);
+      } catch (e) {
+        status.textContent = t('err_photo_load');
+      }
+    })();
+  });
 }
-el('d-photo-img').addEventListener('click', () => { if (detailPhotoObjectUrl) window.open(detailPhotoObjectUrl, '_blank'); });
 
 function openDetail(id) {
   const rec = state.records.find(r => r.id === id);
@@ -2126,9 +2357,9 @@ function openDetail(id) {
   } else {
     el('d-comment-card').classList.add('hidden');
   }
-  if (rec.photoPath) {
+  if (recordPhotos(rec).length) {
     el('d-photo-card').classList.remove('hidden');
-    loadDetailPhoto(rec.id);
+    loadDetailPhotos(rec);
   } else {
     el('d-photo-card').classList.add('hidden');
   }

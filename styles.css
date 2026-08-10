@@ -637,7 +637,6 @@ textarea.field { resize: vertical; font-family: inherit; }
 
 /* ---------- Foto ---------- */
 .photo-upload-row { padding: 10px 14px 14px; }
-.photo-existing-note { font-size: 12px; color: var(--text-tertiary); margin-bottom: 8px; }
 .photo-pick-btn {
   display: flex; align-items: center; justify-content: center; gap: 8px;
   border: 1px dashed var(--border); background: var(--bg-input); color: var(--text-secondary);
@@ -646,26 +645,68 @@ textarea.field { resize: vertical; font-family: inherit; }
 }
 .photo-pick-btn:hover { border-color: var(--blue); color: var(--blue); }
 .photo-pick-btn svg { width: 18px; height: 18px; }
-.photo-preview-wrap { position: relative; display: inline-block; }
-.photo-remove-btn {
-  position: absolute; top: -8px; right: -8px; width: 26px; height: 26px; border-radius: 50%;
-  background: var(--red); color: #fff; border: 2px solid var(--bg-card); font-size: 16px; line-height: 1; cursor: pointer; z-index: 2;
+
+/* Più foto (09.08.2026): striscia di miniature, quella attiva ha il bordo blu. Ogni
+   miniatura ha una "×" per rimuoverla; l'ultima cella è "+" finché non si raggiunge il
+   limite (PHOTO_MAX in app.js). Le foto già salvate (modifica) non hanno i byte lato
+   client, quindi mostrano solo un'icona generica invece di una vera anteprima. */
+.photo-thumb-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+.photo-thumb {
+  position: relative; width: 60px; height: 60px; border-radius: 10px; overflow: hidden;
+  border: 2px solid var(--border); background: var(--bg-input); cursor: pointer; flex: none;
 }
-/* Foto annotata (07.08.2026, idea "WOW" #3): il canvas sta esattamente sopra l'anteprima,
-   stessa dimensione visualizzata (non quella naturale) - le coordinate del tocco si
-   convertono in frazioni 0-1 cosi' restano corrette a qualunque risoluzione la foto finisca
-   per avere quando viene appiattita nell'immagine finale al salvataggio. */
+.photo-thumb.active { border-color: var(--blue); }
+.photo-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.photo-thumb-existing-ic {
+  width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
+  color: var(--text-tertiary); font-size: 20px;
+}
+.photo-thumb-x {
+  position: absolute; top: 2px; right: 2px; width: 18px; height: 18px; border-radius: 50%;
+  background: rgba(0,0,0,.55); color: #fff; font-size: 12px; line-height: 1;
+  display: flex; align-items: center; justify-content: center; border: none; cursor: pointer; z-index: 2;
+}
+.photo-thumb-add {
+  width: 60px; height: 60px; border-radius: 10px; flex: none;
+  border: 1.5px dashed var(--border); background: none; color: var(--text-tertiary);
+  font-size: 22px; display: flex; align-items: center; justify-content: center; cursor: pointer;
+}
+.photo-thumb-add:hover { border-color: var(--blue); color: var(--blue); }
+
+.photo-editor { position: relative; }
+/* 3 strumenti (09.08.2026): Cerchio (tocco, come prima), Freccia (trascina), Testo (tocco +
+   campo sotto). Un solo strumento attivo alla volta, di default Cerchio. */
+.photo-tool-row { display: flex; gap: 6px; margin-bottom: 8px; }
+.photo-tool-btn {
+  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: 6px 4px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-input);
+  color: var(--text-secondary); font-size: 10.5px; font-family: var(--font-body); cursor: pointer;
+}
+.photo-tool-btn.active { border-color: var(--blue); color: var(--blue); background: var(--blue-bg); }
+.photo-tool-ic { font-size: 15px; line-height: 1; }
+
+/* Foto annotata (07.08.2026, idea "WOW" #3; estesa 09.08.2026 con freccia/testo): il canvas
+   sta esattamente sopra l'anteprima, stessa dimensione visualizzata (non quella naturale) -
+   le coordinate del tocco si convertono in frazioni 0-1 cosi' restano corrette a qualunque
+   risoluzione la foto finisca per avere quando viene appiattita nell'immagine finale. */
 .photo-annotate-stage { position: relative; display: inline-block; }
 .photo-annotate-stage img { max-width: 100%; max-height: 220px; border-radius: 10px; border: 1px solid var(--border); display: block; }
 .photo-annotate-stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; cursor: crosshair; touch-action: none; }
+.photo-text-input-row { display: flex; gap: 8px; margin-top: 8px; align-items: center; }
+.photo-text-input-row .field { flex: 1; padding: 8px 12px; font-size: 14px; }
+.photo-text-btn {
+  width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--border);
+  background: var(--bg-input); color: var(--text-secondary); font-size: 14px; cursor: pointer; flex: none;
+}
+.photo-text-btn-ok { border-color: var(--blue); color: var(--blue); background: var(--blue-bg); }
 .photo-annotate-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 6px; }
 .photo-annotate-hint { font-size: 11px; color: var(--text-tertiary); }
-.photo-detail-wrap {
-  display: flex; flex-direction: column; align-items: center; gap: 10px;
-  padding: 16px 14px;
-}
-.photo-detail-wrap span { color: var(--text-tertiary); font-size: 13px; }
-.photo-detail-wrap img { max-width: 100%; max-height: 320px; border-radius: 10px; border: 1px solid var(--border); cursor: pointer; }
+.photo-editor-not-editable { font-size: 12px; color: var(--text-tertiary); margin-top: 6px; }
+
+.photo-detail-gallery { display: flex; flex-wrap: wrap; gap: 10px; padding: 16px 14px; }
+.photo-detail-item { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.photo-detail-item span { color: var(--text-tertiary); font-size: 12px; }
+.photo-detail-item img { max-width: 100%; max-height: 220px; border-radius: 10px; border: 1px solid var(--border); cursor: pointer; }
 
 /* ---------- Doppio scan ---------- */
 .dup-scan-hint { padding: 8px 14px; font-size: 12px; font-weight: 600; color: var(--red); background: var(--red-bg); }
