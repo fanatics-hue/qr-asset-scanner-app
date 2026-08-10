@@ -1,5 +1,5 @@
 const API_BASE = 'https://qr-scanner-api.fanatics.workers.dev';
-const APP_VERSION = 100;
+const APP_VERSION = 101;
 // Più foto (09.08.2026): limite scelto con Rino, ragionevole per non appesantire i
 // caricamenti su rete di cantiere. Stesso limite ricontrollato lato Worker.
 const PHOTO_MAX = 4;
@@ -263,6 +263,11 @@ const TRANSLATIONS = {
     pdf_doctype_order: 'Stato Ordine',
     pdf_doctype_dataset: 'Dataset Scansioni',
     pdf_doctype_stats: 'Statistiche',
+    pdf_doctype_record: 'Scheda Tubo',
+    pdf_band_general_data: 'Dati Generali',
+    pdf_band_defect: 'Difetto',
+    pdf_band_history: 'Cronologia',
+    pdf_field_status: 'Stato',
     pdf_band_summary: 'Riepilogo',
     pdf_band_tally_all: 'Tally List FI — tutte le liste',
     pdf_band_defects_disposition: 'Difetti Dataset — disposizione',
@@ -308,6 +313,7 @@ const TRANSLATIONS = {
     pdf_filename_order: '{order} Stato Ordine {date}.pdf',
     pdf_filename_dataset: '{order} Dataset Scansioni {date}.pdf',
     pdf_filename_stats: '{order} Statistiche {date}.pdf',
+    pdf_filename_record: '{order} Scheda {pipe} {date}.pdf',
     pdf_export_btn: 'Esporta PDF',
     locale: 'it-IT'
   },
@@ -567,6 +573,11 @@ const TRANSLATIONS = {
     pdf_doctype_order: 'Order Status',
     pdf_doctype_dataset: 'Scan Dataset',
     pdf_doctype_stats: 'Statistics',
+    pdf_doctype_record: 'Pipe Record',
+    pdf_band_general_data: 'General Data',
+    pdf_band_defect: 'Defect',
+    pdf_band_history: 'History',
+    pdf_field_status: 'Status',
     pdf_band_summary: 'Summary',
     pdf_band_tally_all: 'Tally List FI — all lists',
     pdf_band_defects_disposition: 'Dataset defects — disposition',
@@ -612,6 +623,7 @@ const TRANSLATIONS = {
     pdf_filename_order: '{order} Order Status {date}.pdf',
     pdf_filename_dataset: '{order} Scan Dataset {date}.pdf',
     pdf_filename_stats: '{order} Statistics {date}.pdf',
+    pdf_filename_record: '{order} Record {pipe} {date}.pdf',
     pdf_export_btn: 'Export PDF',
     locale: 'en-GB'
   }
@@ -650,7 +662,7 @@ const HELP_CONTENT = {
       <div class="help-p">Ogni scheda "Da revisionare"/"Danneggiato" nasce con stato "Aperto". Nel dettaglio, "Segna come chiuso" chiede sempre causa e azione correttiva (obbligatorio) prima di confermare — resta scritta nella Cronologia della scheda insieme a chi/quando l'ha emessa, modificata e chiusa. Se la Disposizione è "Da Riparare" o "Da Rilavorare" (i due stati "ancora da fare"), compare anche una casella obbligatoria da spuntare per confermare che il tubo è stato ri-collaudato e trovato conforme — senza spuntarla non si può chiudere; per le altre disposizioni (Riparato/Rilavorato/Accettato/Scartato/Deroga/Sospeso, già "fatte" o senza bisogno di ri-collaudo) non cambia nulla. Un difetto aperto da più giorni mostra un contatore rosso "● Ng" accanto al badge.</div>
     </div>
     <div class="card"><div class="card-header"><span class="section-title">Modifica</span></div>
-      <div class="help-p">Qualunque ispettore loggato (non solo l'admin) può correggere una scheda già salvata: apri il dettaglio → "Modifica" in alto a destra, cambia i campi necessari e "Salva". La foto esistente resta se non ne scegli una nuova.</div>
+      <div class="help-p">Qualunque ispettore loggato (non solo l'admin) può correggere una scheda già salvata: apri il dettaglio → "Modifica" in alto a destra, cambia i campi necessari e "Salva". Le foto esistenti restano se non ne aggiungi/togli. Nella stessa schermata Dettaglio, il pulsante "📄 Esporta PDF" genera un PDF in stile IQS con tutti i campi di quella scheda (dati generali, difetto/disposizione/NCR-CR se presenti, cronologia apertura/chiusura con nota, commenti) e le foto allegate incorporate nel documento.</div>
     </div>
     <div class="card"><div class="card-header"><span class="section-title">WhatsApp</span></div>
       <div class="help-p">Il pulsante verde apre WhatsApp con il messaggio già pronto, sia durante l'inserimento che riaprendo la scheda.</div>
@@ -715,7 +727,7 @@ const HELP_CONTENT = {
       <div class="help-p">Every "Needs review"/"Damaged" record starts as "Open". In the detail screen, "Mark as closed" always asks for root cause and corrective action (required) before confirming — it's kept in the record's Timeline together with who/when issued, edited and closed it. If the Disposition is "To Repair" or "To Rework" (the two "still pending" states), an extra required checkbox appears confirming the pipe was retested and found conforming — you can't close without checking it; the other dispositions (Repaired/Reworked/Accepted/Rejected/Concession/On Hold, already "done" or not needing a retest) are unaffected. A defect open for several days shows a red "● Nd" counter next to the badge.</div>
     </div>
     <div class="card"><div class="card-header"><span class="section-title">Edit</span></div>
-      <div class="help-p">Any logged-in inspector (not just admin) can correct an already-saved record: open the detail screen → "Edit" top right, change what's needed, "Save". The existing photo stays unless you pick a new one.</div>
+      <div class="help-p">Any logged-in inspector (not just admin) can correct an already-saved record: open the detail screen → "Edit" top right, change what's needed, "Save". Existing photos stay unless you add/remove some. On the same Detail screen, the "📄 Export PDF" button generates an IQS-style PDF with every field of that record (general data, defect/disposition/NCR-CR if present, open/close history with the closure note, comments) plus any attached photos embedded in the document.</div>
     </div>
     <div class="card"><div class="card-header"><span class="section-title">WhatsApp</span></div>
       <div class="help-p">The green button opens WhatsApp with the message ready to send, both while entering data and when reopening a record.</div>
@@ -2488,6 +2500,14 @@ el('detail-edit-btn').addEventListener('click', () => {
   const rec = state.records.find(r => r.id === state.selectedId);
   if (rec) openEditRecord(rec);
 });
+el('detail-export-btn').addEventListener('click', async () => {
+  const rec = state.records.find(r => r.id === state.selectedId);
+  if (!rec) return;
+  const btn = el('detail-export-btn');
+  btn.disabled = true;
+  try { await exportRecordPdf(rec); } catch (err) { alert(t('err_generic') + err.message); }
+  finally { btn.disabled = false; }
+});
 
 // ---------------- Admin ----------------
 el('admin-gear').addEventListener('click', async () => {
@@ -4052,6 +4072,145 @@ function exportDatasetPdf() {
   if (!filtered.length) y = pdfNote(doc, y, t('dataset_empty'));
 
   pdfFinish(doc, t('pdf_filename_dataset').replace('{order}', currentOrderName()).replace('{date}', new Date().toISOString().slice(0, 10)));
+}
+
+// Righe etichetta:valore (stile ".row" dell'app) invece della tabella con intestazione di
+// pdfTable - piu' adatta a un elenco di campi di UNA scheda che a righe ripetute.
+function pdfDetailRows(doc, y, pairs) {
+  const rowH = 7;
+  pairs.forEach(([label, value]) => {
+    if (y + rowH > PDF_PAGE_H - PDF_MARGIN - 12) { doc.addPage(); y = PDF_MARGIN; }
+    doc.setDrawColor(...PDF_LINE);
+    doc.setLineWidth(0.15);
+    doc.line(PDF_MARGIN, y + rowH - 1, PDF_MARGIN + PDF_CONTENT_W, y + rowH - 1);
+    doc.setTextColor(...PDF_INK_SOFT);
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    doc.text(String(label), PDF_MARGIN, y + 4.5);
+    doc.setTextColor(...PDF_INK);
+    doc.setFontSize(8.5);
+    doc.setFont('helvetica', 'bold');
+    doc.text(String(value), PDF_MARGIN + PDF_CONTENT_W, y + 4.5, { align: 'right' });
+    doc.setFont('helvetica', 'normal');
+    y += rowH;
+  });
+  return y + 3;
+}
+
+// Scarica ogni foto tramite la stessa proxy autenticata della Galleria Dettaglio e le
+// incolla nel PDF, 2 per riga, proporzioni originali mantenute. Una foto che non si riesce
+// a scaricare diventa un riquadro vuoto con una nota, invece di far fallire tutto l'export.
+async function pdfAddPhotos(doc, y, recordId, count) {
+  const gap = 4;
+  const colW = (PDF_CONTENT_W - gap) / 2;
+  const maxH = 70;
+  let col = 0, rowMaxH = 0;
+  for (let i = 0; i < count; i++) {
+    let dataUrl = null, fmt = 'JPEG', w = colW, h = maxH * 0.55;
+    try {
+      const headers = {};
+      if (state.session && state.session.token) headers['Authorization'] = 'Bearer ' + state.session.token;
+      const resp = await fetch(API_BASE + '/api/records/' + encodeURIComponent(recordId) + '/photo/' + i, { headers });
+      if (!resp.ok) throw new Error('photo fetch failed');
+      const blob = await resp.blob();
+      fmt = blob.type === 'image/png' ? 'PNG' : 'JPEG';
+      dataUrl = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+      const dims = await new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => resolve({ w: img.naturalWidth, h: img.naturalHeight });
+        img.onerror = () => resolve(null);
+        img.src = dataUrl;
+      });
+      if (dims && dims.w && dims.h) {
+        h = Math.min(maxH, colW * (dims.h / dims.w));
+        w = colW;
+      }
+    } catch (e) { dataUrl = null; }
+
+    if (col === 0) {
+      if (y + maxH + gap > PDF_PAGE_H - PDF_MARGIN - 12) { doc.addPage(); y = PDF_MARGIN; }
+      rowMaxH = 0;
+    }
+    const x = PDF_MARGIN + col * (colW + gap);
+    if (dataUrl) {
+      try { doc.addImage(dataUrl, fmt, x, y, w, h); } catch (e) { dataUrl = null; }
+    }
+    if (!dataUrl) {
+      doc.setDrawColor(...PDF_LINE);
+      doc.setLineWidth(0.3);
+      doc.rect(x, y, colW, maxH * 0.55);
+      doc.setTextColor(...PDF_INK_SOFT);
+      doc.setFontSize(7);
+      doc.text(t('err_photo_load'), x + 2, y + maxH * 0.28);
+      h = maxH * 0.55;
+    }
+    rowMaxH = Math.max(rowMaxH, h);
+    col++;
+    if (col === 2) { y += rowMaxH + gap; col = 0; }
+  }
+  if (col === 1) y += rowMaxH + gap;
+  return y + 2;
+}
+
+// --- Scheda singolo tubo (bottone "Esporta PDF" nella schermata Dettaglio) - tutti i campi
+// visibili in Dettaglio, incluse le foto (scaricate al momento, vedi pdfAddPhotos). Async a
+// differenza degli altri 4 export (che leggono solo dati gia' in memoria) proprio per le foto.
+async function exportRecordPdf(rec) {
+  const doc = pdfNewDoc();
+  let y = pdfHeader(doc, t('pdf_doctype_record'), rec.pipeNo || '-',
+    currentOrderName() + '  ·  ' + new Date().toLocaleDateString(t('locale')));
+
+  y = pdfBand(doc, y, t('pdf_band_general_data'));
+  y = pdfDetailRows(doc, y, [
+    ['Item N°', rec.itemNo || '-'],
+    ['CS Heat', rec.csHeat || '-'],
+    ['CRA Heat', rec.craHeat || '-'],
+    ['Length', rec.length || '-'],
+    ['ITP Step', rec.itpStep || '-'],
+    [t('pdf_col_condition'), condLabel(rec.condition)],
+    [t('field_scannedBy'), rec.scannedBy || '-'],
+    [t('field_scannedOn'), rec.scannedAt ? new Date(rec.scannedAt).toLocaleString(t('locale')) : '-'],
+  ]);
+
+  if (isDefectCondition(rec.condition)) {
+    y = pdfBand(doc, y, t('pdf_band_defect'));
+    const defRows = [[t('pdf_field_status'), rec.status === 'closed' ? t('status_closed') : t('status_open')]];
+    if (rec.defectType) defRows.push([t('field_defect_type'), defectTypeLabel(rec.defectType)]);
+    if (rec.disposition) defRows.push([t('field_disposition'), dispositionLabel(rec.disposition)]);
+    if (rec.ncr || rec.cr) {
+      const parts = [rec.ncr ? t('ncr_label') : null, rec.cr ? t('cr_label') : null].filter(Boolean);
+      defRows.push([t('field_ncr_cr'), parts.join(' + ')]);
+    }
+    y = pdfDetailRows(doc, y, defRows);
+    if (rec.ncrCrComment) y = pdfNote(doc, y, rec.ncrCrComment);
+
+    if (rec.status === 'closed' || rec.closureNote) {
+      y = pdfBand(doc, y, t('pdf_band_history'));
+      y = pdfDetailRows(doc, y, [
+        [t('field_closedBy'), rec.closedBy || '-'],
+        [t('field_closedOn'), rec.closedAt ? new Date(rec.closedAt).toLocaleString(t('locale')) : '-'],
+      ]);
+      if (rec.closureNote) y = pdfNote(doc, y, rec.closureNote);
+    }
+  }
+
+  if (rec.comment) {
+    y = pdfBand(doc, y, t('field_comments'));
+    y = pdfNote(doc, y, rec.comment);
+  }
+
+  const photos = recordPhotos(rec);
+  if (photos.length) {
+    y = pdfBand(doc, y, t('confirm_section_photo'));
+    y = await pdfAddPhotos(doc, y, rec.id, photos.length);
+  }
+
+  pdfFinish(doc, t('pdf_filename_record').replace('{order}', currentOrderName()).replace('{pipe}', rec.pipeNo || rec.id).replace('{date}', new Date().toISOString().slice(0, 10)));
 }
 
 // --- 4. Statistiche ---
