@@ -1,5 +1,5 @@
 const API_BASE = 'https://qr-scanner-api.fanatics.workers.dev';
-const APP_VERSION = 105;
+const APP_VERSION = 106;
 // Più foto (09.08.2026): limite scelto con Rino, ragionevole per non appesantire i
 // caricamenti su rete di cantiere. Stesso limite ricontrollato lato Worker.
 const PHOTO_MAX = 4;
@@ -317,6 +317,8 @@ const TRANSLATIONS = {
     excel_filename: '{order} Export Completo {date}.xlsx',
     pdf_export_btn: 'Esporta PDF',
     excel_export_btn: 'Esporta Excel',
+    bool_yes: 'Sì',
+    bool_no: 'No',
     locale: 'it-IT'
   },
   en: {
@@ -629,6 +631,8 @@ const TRANSLATIONS = {
     excel_filename: '{order} Full Export {date}.xlsx',
     pdf_export_btn: 'Export PDF',
     excel_export_btn: 'Export Excel',
+    bool_yes: 'Yes',
+    bool_no: 'No',
     locale: 'en-GB'
   }
 };
@@ -4241,38 +4245,125 @@ async function exportRecordPdf(rec) {
   pdfFinish(doc, t('pdf_filename_record').replace('{order}', currentOrderName()).replace('{pipe}', rec.pipeNo || rec.id).replace('{date}', new Date().toISOString().slice(0, 10)));
 }
 
-// --- Export Excel completo (solo admin, 10.08.2026) ---
-// Non un altro documento in stile IQS come i PDF sopra: un vero .xlsx multi-foglio con TUTTI
-// i dati grezzi, ogni campo (anche quelli non mostrati in nessuna schermata) per un'analisi
-// fuori dall'app (pivot, filtri) - vedi vendor/xlsx.mini.min.js (SheetJS, solo lettura/
-// scrittura xlsx, non la build "full" che include anche i formati legacy inutili qui).
-// json_to_sheet deriva le colonne da solo dalle chiavi degli oggetti - niente mappatura
-// manuale campo per campo come nei PDF, cosi' un campo nuovo aggiunto in futuro ai record
-// finisce nel foglio in automatico, senza dover ricordarsi di aggiornare anche questa funzione.
+// --- Export Excel completo (solo admin, 10.08.2026; qualita' dati rivista lo stesso giorno
+// dopo che Rino ha aperto il file vero e non gli e' piaciuto) ---
+// Prima versione: json_to_sheet() diretto sugli oggetti grezzi - comodo da scrivere ma un
+// foglio illeggibile (intestazioni "csHeat"/"itpStep" invece di "CS Heat"/"ITP Step", codici
+// interni "damaged"/"weld"/"hold" invece delle etichette che si vedono nell'app, date come
+// testo ISO invece di date Excel vere, colonne ridondanti come photoUrl/photoPath ora che
+// c'e' "Foto"). Riscritta con una mappatura esplicita per ogni foglio - stesse etichette e
+// stesse funzioni di traduzione gia' usate nell'app/nei PDF (condLabel/defectTypeLabel/
+// dispositionLabel), cosi' l'Excel dice esattamente quello che dice l'app, non i nomi dei
+// campi lato Worker. In cambio di scriverla a mano, un campo nuovo aggiunto in futuro ai
+// record NON finisce piu' nel foglio da solo - va aggiunto qui esplicitamente.
+function xlsxDate(iso) { return iso ? new Date(iso) : ''; }
+function xlsxBool(v) { return v ? t('bool_yes') : t('bool_no'); }
+// Larghezza colonne + autofilter (dropdown di Excel sull'intestazione) sono le uniche due
+// rifiniture che la build gratuita di SheetJS scrive davvero nel file - verificato dal vivo
+// (round-trip write+read): grassetto sull'intestazione e riquadro bloccato in alto non
+// sopravvivono al salvataggio in questa build (funzioni della versione a pagamento).
+function xlsxSheet(rows, colWidths, dateCols) {
+  // cellDates:true (10.08.2026): senza, json_to_sheet trasforma gli oggetti Date in numeri
+  // seriali con tipo 'n' invece di 'd' - il controllo cell.t==='d' sotto per applicare il
+  // formato italiano non trovava piu' nulla da formattare (bug trovato dal vivo, la data
+  // restava in formato USA "8/11/26" nonostante il resto della funzione fosse corretto).
+  const ws = XLSX.utils.json_to_sheet(rows, { cellDates: true });
+  ws['!cols'] = colWidths.map(w => ({ wch: w }));
+  if (rows.length) {
+    ws['!autofilter'] = { ref: 'A1:' + XLSX.utils.encode_col(colWidths.length - 1) + (rows.length + 1) };
+    // Formato data italiano esplicito sulle colonne data (10.08.2026): senza questo, SheetJS
+    // scrive le date con formato USA (m/d/yy) - "8/11/26" per l'11 agosto si legge come 8
+    // novembre a un occhio italiano. Verificato dal vivo che il formato custom sopravvive
+    // al salvataggio anche nella build gratuita (a differenza di grassetto/riquadro bloccato).
+    (dateCols || []).forEach(h => {
+      const colIdx = Object.keys(rows[0]).indexOf(h);
+      if (colIdx < 0) return;
+      const colLetter = XLSX.utils.encode_col(colIdx);
+      for (let r = 2; r <= rows.length + 1; r++) {
+        const cell = ws[colLetter + r];
+        if (cell && cell.t === 'd') cell.z = 'dd/mm/yyyy hh:mm';
+      }
+    });
+  }
+  return ws;
+}
 async function exportAllDataExcel() {
   const wb = XLSX.utils.book_new();
 
-  const recordsRows = (state.records || []).filter(r => !r._pending).map(r => {
-    const flat = { ...r };
-    // Le foto sono un array di {path,url}: json_to_sheet le scriverebbe come "[object
-    // Object]" - qui diventano una lista di link separati da "; " in un'unica cella.
-    flat.photos = Array.isArray(r.photos) ? r.photos.map(p => p.url).join('; ') : '';
-    return flat;
-  });
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(recordsRows), 'Dataset');
+  const recordsRows = (state.records || []).filter(r => !r._pending).map(r => ({
+    'ID Scheda': r.id,
+    'Item N°': r.itemNo || '',
+    'Pipe N°': r.pipeNo || '',
+    'CS Heat': r.csHeat || '',
+    'CRA Heat': r.craHeat || '',
+    'Lunghezza': r.length || '',
+    'ITP Step': r.itpStep || '',
+    'Condizione': condLabel(r.condition),
+    'Stato': r.status ? (r.status === 'closed' ? t('status_closed') : t('status_open')) : '',
+    'Tipo Difetto': defectTypeLabel(r.defectType),
+    'Disposizione': dispositionLabel(r.disposition),
+    'NCR': xlsxBool(r.ncr),
+    'CR': xlsxBool(r.cr),
+    'Nota NCR/CR': r.ncrCrComment || '',
+    'Commenti': r.comment || '',
+    'Emesso da': r.scannedBy || '',
+    'Emesso il': xlsxDate(r.scannedAt),
+    'Modificato da': r.editedBy || '',
+    'Modificato il': xlsxDate(r.editedAt),
+    'Chiuso da': r.closedBy || '',
+    'Chiuso il': xlsxDate(r.closedAt),
+    'Nota di Chiusura': r.closureNote || '',
+    'Ri-collaudo Confermato': xlsxBool(r.retestConfirmed),
+    'Foto': Array.isArray(r.photos) ? r.photos.map(p => p.url).join('; ') : ''
+  }));
+  XLSX.utils.book_append_sheet(wb, xlsxSheet(recordsRows,
+    [22, 9, 9, 10, 10, 10, 18, 14, 10, 14, 14, 6, 6, 22, 30, 14, 16, 14, 16, 14, 16, 26, 10, 40],
+    ['Emesso il', 'Modificato il', 'Chiuso il']), 'Dataset');
 
   if (state.fiTallyEntries && state.fiTallyEntries.length) {
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(state.fiTallyEntries), 'Tally List FI');
+    const tallyRows = state.fiTallyEntries.map(e => ({
+      'Cert-No': e.certNo || '',
+      'Item N°': e.itemNo || '',
+      'Data': e.dateStr || '',
+      'Ora Ispezione': e.inspectionTime || '',
+      'Pipe N°': e.pipeNo || '',
+      'Grade': e.grade || '',
+      'OD': e.od || '',
+      'WT': e.wt || '',
+      'Esito': e.esito === 'accepted' ? t('fi_tally_esito_accepted') : e.esito === 'rejected' ? t('fi_tally_esito_rejected') : t('fi_tally_pending'),
+      'Motivo Scarto': e.reason || '',
+      'Valutato da': e.flaggedBy || '',
+      'Valutato il': xlsxDate(e.flaggedAt)
+    }));
+    XLSX.utils.book_append_sheet(wb, xlsxSheet(tallyRows, [18, 9, 12, 12, 9, 14, 10, 10, 12, 26, 14, 16], ['Valutato il']), 'Tally List FI');
   }
 
   if (state.productionRecords && state.productionRecords.length) {
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(state.productionRecords), 'Dati Produzione');
+    const prodRows = state.productionRecords.map(p => ({
+      'Item N°': p.itemNo || '',
+      'Pipe N°': p.pipeNo || '',
+      'CS Heat': p.csHeat || '',
+      'CRA Heat': p.craHeat || '',
+      'Lunghezza': p.length || '',
+      'Fase Attuale': p.currentStep || '',
+      'N° Fase': p.currentStepNum != null ? p.currentStepNum : '',
+      'Avanzamento %': (typeof p.progress === 'number') ? Math.round(p.progress * 100) : ''
+    }));
+    XLSX.utils.book_append_sheet(wb, xlsxSheet(prodRows, [9, 9, 10, 10, 10, 18, 8, 14]), 'Dati Produzione');
   }
 
   try {
     const usersData = await api('/api/admin/users');
     if (usersData.users && usersData.users.length) {
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(usersData.users), 'Ispettori');
+      const userRows = usersData.users.map(u => ({
+        'Utente': u.username || '',
+        'Nome': u.name || '',
+        'Ruolo': u.role === 'admin' ? t('admin_role_admin') : u.role === 'viewer' ? t('admin_role_viewer') : t('admin_role_inspector'),
+        'Disattivato': xlsxBool(u.disabled),
+        'Creato il': xlsxDate(u.createdAt),
+        'Disattivato il': xlsxDate(u.disabledAt)
+      }));
+      XLSX.utils.book_append_sheet(wb, xlsxSheet(userRows, [14, 18, 12, 12, 16, 16], ['Creato il', 'Disattivato il']), 'Ispettori');
     }
   } catch (e) { /* non essenziale - il resto dell'export non deve fermarsi per questo */ }
 
