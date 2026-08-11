@@ -1,5 +1,5 @@
 const API_BASE = 'https://qr-scanner-api.fanatics.workers.dev';
-const APP_VERSION = 104;
+const APP_VERSION = 105;
 // Più foto (09.08.2026): limite scelto con Rino, ragionevole per non appesantire i
 // caricamenti su rete di cantiere. Stesso limite ricontrollato lato Worker.
 const PHOTO_MAX = 4;
@@ -314,7 +314,9 @@ const TRANSLATIONS = {
     pdf_filename_dataset: '{order} Dataset Scansioni {date}.pdf',
     pdf_filename_stats: '{order} Statistiche {date}.pdf',
     pdf_filename_record: '{order} Scheda {pipe} {date}.pdf',
+    excel_filename: '{order} Export Completo {date}.xlsx',
     pdf_export_btn: 'Esporta PDF',
+    excel_export_btn: 'Esporta Excel',
     locale: 'it-IT'
   },
   en: {
@@ -624,7 +626,9 @@ const TRANSLATIONS = {
     pdf_filename_dataset: '{order} Scan Dataset {date}.pdf',
     pdf_filename_stats: '{order} Statistics {date}.pdf',
     pdf_filename_record: '{order} Record {pipe} {date}.pdf',
+    excel_filename: '{order} Full Export {date}.xlsx',
     pdf_export_btn: 'Export PDF',
+    excel_export_btn: 'Export Excel',
     locale: 'en-GB'
   }
 };
@@ -680,7 +684,7 @@ const HELP_CONTENT = {
       <div class="help-p">Un pallino rosso sull'icona "⋮" Strumenti (e l'etichetta "Aggiornato" su questa voce) avvisa quando i dati di produzione sono stati risincronizzati dal tool desktop - sparisce aprendo questa schermata. Pulsante 🚨 nel Dataset: mostra l'avanzamento dell'Item ancora in lavorazione (dal foglio "Riepilogo per Fase" del file Excel di produzione). In alto: Item N°, riferimento PO, scadenza contrattuale e giorni residui. Per ogni fase: completati/totale, pezzi rimanenti, data prevista e scarto in giorni vs scadenza contrattuale, con badge OK (verde, in anticipo/puntuale), RITARDO (rosso, previsione oltre la scadenza) o N/D (grigio, dato insufficiente). Il "collo di bottiglia" in cima è la fase con più pezzi ancora da fare. Mostra anche i difetti aperti per step e, in fondo, la nota che spiega come viene calcolata la previsione. Se la produzione non è mai stata sincronizzata la sezione resta vuota; se manca il foglio "Riepilogo per Fase" nel file Excel, l'app mostra in automatico un imbuto più semplice su tutti i tubi tracciati. Il pulsante "📄 Esporta PDF" genera un PDF in stile IQS con lo stesso avanzamento per fase.</div>
     </div>
     <div class="card"><div class="card-header"><span class="section-title">Statistiche</span></div>
-      <div class="help-p">Pulsante 📊 nel Dataset: schede totali, difetti aperti, % chiusura, giorni medi di chiusura, quanti difetti restano aperti da oltre 5 giorni, un grafico settimanale (ultime 8 settimane) e la ripartizione per tipo difetto/disposizione. Per vedere i singoli difetti uno per uno, usa il filtro "Solo difetti" nel Dataset invece di cercarli qui. Due pulsanti PDF in stile IQS: "📄 Esporta PDF" per queste statistiche, "📄 Stato Generale" per un riepilogo separato che aggrega tutte le Tally List FI (buoni/scartati/in sospeso) insieme alla disposizione dei difetti (riparazioni/accetta/concessione/scarta).</div>
+      <div class="help-p">Pulsante 📊 nel Dataset: schede totali, difetti aperti, % chiusura, giorni medi di chiusura, quanti difetti restano aperti da oltre 5 giorni, un grafico settimanale (ultime 8 settimane) e la ripartizione per tipo difetto/disposizione. Per vedere i singoli difetti uno per uno, usa il filtro "Solo difetti" nel Dataset invece di cercarli qui. Due pulsanti PDF in stile IQS: "📄 Esporta PDF" per queste statistiche, "📄 Stato Generale" per un riepilogo separato che aggrega tutte le Tally List FI (buoni/scartati/in sospeso) insieme alla disposizione dei difetti (riparazioni/accetta/concessione/scarta). Solo per l'admin, un terzo pulsante "📊 Esporta Excel" scarica un file .xlsx con più fogli (Dataset completo, Tally List FI, Dati Produzione, Ispettori) e tutti i campi grezzi, pensato per un'analisi approfondita fuori dall'app.</div>
     </div>
     <div class="card"><div class="card-header"><span class="section-title">Gestione ispettori (solo admin)</span></div>
       <div class="help-p">Icona ingranaggio nel Dataset: aggiungi ispettori con username/nome/password. Scegli il ruolo con i due tasti "Ispettore"/"Visitatore": un Visitatore vede tutto (Dataset, Tally List FI, Statistiche, ecc.) ma non può registrare nuovi asset, modificare o chiudere difetti, né flaggare la Tally List FI — vede l'etichetta "Modalità sola consultazione" e i pulsanti di scrittura restano nascosti. "Disattiva" non cancella l'account — lo sposta nello "Storico ispettori" (resta la traccia di chi ha lavorato sull'ordine) e blocca subito l'accesso, anche se l'ispettore aveva ancora una sessione aperta sul telefono; "Riattiva" lo riporta attivo. L'icona del cestino (attiva o nello storico, mai sul tuo account admin) elimina invece l'account per sempre, senza lasciare traccia — a differenza di "Disattiva" non si può annullare, chiede conferma prima di procedere. A fine ordine, "Fine ordine: disattiva tutti" disattiva in un colpo solo l'intera squadra (mai il tuo account admin).</div>
@@ -745,7 +749,7 @@ const HELP_CONTENT = {
       <div class="help-p">A red dot on the "⋮" Tools icon (and an "Updated" tag on this row) shows up when production data has been re-synced from the desktop tool - it clears once you open this screen. 🚨 button in the Dataset: shows progress for the Item still in production (from the "Riepilogo per Fase" sheet of the production Excel file). At the top: Item No., PO reference, contractual due date and days remaining. For each phase: completed/total, pipes remaining, forecast date and deviation in days vs the contractual due date, with an OK (green, ahead/on time), DELAY (red, forecast past the due date) or N/A (grey, not enough data) badge. The "bottleneck" at the top is the phase with the most pipes still to go. Also shows open defects by step and, at the bottom, the note explaining how the forecast is calculated. If production data has never been synced this stays empty; if the "Riepilogo per Fase" sheet isn't in the Excel file, the app automatically falls back to a simpler funnel across all tracked pipes. The "📄 Export PDF" button generates an IQS-style PDF with the same phase progress.</div>
     </div>
     <div class="card"><div class="card-header"><span class="section-title">Statistics</span></div>
-      <div class="help-p">📊 button in the Dataset: total records, open defects, % closed, average days to close, how many defects have been open for more than 5 days, an 8-week chart, and a breakdown by defect type/disposition. To browse individual defects, use the "Defects only" filter in the Dataset instead of looking for them here. Two IQS-style PDF buttons: "📄 Export PDF" for these statistics, "📄 General Status" for a separate summary aggregating every Tally List FI (good/rejected/pending) alongside the defect disposition breakdown (repair/accept/concession/reject).</div>
+      <div class="help-p">📊 button in the Dataset: total records, open defects, % closed, average days to close, how many defects have been open for more than 5 days, an 8-week chart, and a breakdown by defect type/disposition. To browse individual defects, use the "Defects only" filter in the Dataset instead of looking for them here. Two IQS-style PDF buttons: "📄 Export PDF" for these statistics, "📄 General Status" for a separate summary aggregating every Tally List FI (good/rejected/pending) alongside the defect disposition breakdown (repair/accept/concession/reject). Admin only, a third button "📊 Export Excel" downloads a multi-sheet .xlsx (full Dataset, Tally List FI, Production Data, Inspectors) with every raw field, meant for deeper analysis outside the app.</div>
     </div>
     <div class="card"><div class="card-header"><span class="section-title">Inspector management (admin only)</span></div>
       <div class="help-p">Gear icon in the Dataset: add inspectors with username/name/password. Pick the role with the "Inspector"/"Viewer" buttons: a Viewer sees everything (Dataset, Tally List FI, Statistics, etc.) but can't register new assets, edit or close defects, or flag the Tally List FI — they see a "Read-only mode" label and write buttons stay hidden. "Deactivate" doesn't delete the account — it moves it into "Inspector history" (keeping a record of who worked on the order) and immediately blocks access, even if the inspector still had an open session on their phone; "Reactivate" brings it back. The trash icon (active or in history, never on your own admin account) deletes the account permanently instead, with no trace left — unlike "Deactivate" this can't be undone, and it asks for confirmation first. At the end of an order, "End of order: deactivate all" deactivates the whole team in one go (never your own admin account).</div>
@@ -967,6 +971,7 @@ el('login-btn').addEventListener('click', async () => {
     const data = await api('/api/login', { method: 'POST', body: JSON.stringify({ username, password }) });
     saveSession(data);
     el('admin-gear').classList.toggle('hidden', data.role !== 'admin');
+    el('export-excel-btn').classList.toggle('hidden', data.role !== 'admin');
     await afterLogin();
   } catch (err) {
     el('login-error').textContent = err.message;
@@ -3778,6 +3783,7 @@ el('a-bulk-deactivate-btn').addEventListener('click', async () => {
   loadSession();
   if (state.session && state.session.token) {
     el('admin-gear').classList.toggle('hidden', state.session.role !== 'admin');
+    el('export-excel-btn').classList.toggle('hidden', state.session.role !== 'admin');
     try {
       await afterLogin();
       return;
@@ -4234,6 +4240,51 @@ async function exportRecordPdf(rec) {
 
   pdfFinish(doc, t('pdf_filename_record').replace('{order}', currentOrderName()).replace('{pipe}', rec.pipeNo || rec.id).replace('{date}', new Date().toISOString().slice(0, 10)));
 }
+
+// --- Export Excel completo (solo admin, 10.08.2026) ---
+// Non un altro documento in stile IQS come i PDF sopra: un vero .xlsx multi-foglio con TUTTI
+// i dati grezzi, ogni campo (anche quelli non mostrati in nessuna schermata) per un'analisi
+// fuori dall'app (pivot, filtri) - vedi vendor/xlsx.mini.min.js (SheetJS, solo lettura/
+// scrittura xlsx, non la build "full" che include anche i formati legacy inutili qui).
+// json_to_sheet deriva le colonne da solo dalle chiavi degli oggetti - niente mappatura
+// manuale campo per campo come nei PDF, cosi' un campo nuovo aggiunto in futuro ai record
+// finisce nel foglio in automatico, senza dover ricordarsi di aggiornare anche questa funzione.
+async function exportAllDataExcel() {
+  const wb = XLSX.utils.book_new();
+
+  const recordsRows = (state.records || []).filter(r => !r._pending).map(r => {
+    const flat = { ...r };
+    // Le foto sono un array di {path,url}: json_to_sheet le scriverebbe come "[object
+    // Object]" - qui diventano una lista di link separati da "; " in un'unica cella.
+    flat.photos = Array.isArray(r.photos) ? r.photos.map(p => p.url).join('; ') : '';
+    return flat;
+  });
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(recordsRows), 'Dataset');
+
+  if (state.fiTallyEntries && state.fiTallyEntries.length) {
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(state.fiTallyEntries), 'Tally List FI');
+  }
+
+  if (state.productionRecords && state.productionRecords.length) {
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(state.productionRecords), 'Dati Produzione');
+  }
+
+  try {
+    const usersData = await api('/api/admin/users');
+    if (usersData.users && usersData.users.length) {
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(usersData.users), 'Ispettori');
+    }
+  } catch (e) { /* non essenziale - il resto dell'export non deve fermarsi per questo */ }
+
+  XLSX.writeFile(wb, t('excel_filename').replace('{order}', currentOrderName()).replace('{date}', new Date().toISOString().slice(0, 10)));
+}
+
+el('export-excel-btn').addEventListener('click', async () => {
+  const btn = el('export-excel-btn');
+  btn.disabled = true;
+  try { await exportAllDataExcel(); } catch (err) { alert(t('err_generic') + err.message); }
+  finally { btn.disabled = false; }
+});
 
 // --- 4. Statistiche ---
 function exportStatistichePdf() {

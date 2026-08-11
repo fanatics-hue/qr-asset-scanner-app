@@ -251,6 +251,9 @@ html, body {
   color: #fff; font-size: 9px; font-weight: 800; letter-spacing: -0.3px;
   display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
 }
+/* Badge verde invece di rosso per distinguere a colpo d'occhio l'export Excel dai PDF
+   (10.08.2026, stesso pulsante ".pdf-export-btn", solo il badge cambia colore/testo). */
+.xlsx-badge { background: var(--green); width: 24px; font-size: 8px; }
 .confirm-title { font-family: var(--font-heading); font-weight: 700; font-size: 17px; }
 .confirm-scroll { flex: 1; overflow-y: auto; padding: 0 16px 24px; }
 
