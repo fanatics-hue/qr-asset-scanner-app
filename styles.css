@@ -550,8 +550,18 @@ textarea.field { resize: vertical; font-family: inherit; }
 #fi-tally-heatmap { padding: 6px 14px 2px; }
 .fi-heat-month-row { display: flex; align-items: center; gap: 8px; padding: 4px 0; }
 .fi-heat-month-label { width: 56px; flex-shrink: 0; font-size: 10.5px; color: var(--text-tertiary); text-align: right; }
-.fi-heat-cells { display: flex; gap: 3px; flex-wrap: wrap; flex: 1; }
-.fi-heat-cell { width: 14px; height: 14px; border-radius: 3px; flex-shrink: 0; cursor: pointer; border: none; padding: 0; }
+.fi-heat-cells { display: flex; gap: 4px; flex-wrap: wrap; flex: 1; }
+/* Numero tubi sempre visibile dentro il quadratino (10.08.2026, richiesta di Rino: prima si
+   vedeva solo toccando, e i verdi al 100% erano tutti identici qualunque fosse la lista -
+   il numero risolve senza dover reinventare la scala colori, che resta il tasso di
+   accettazione com'era). Ingrandito da 14px a 22px per starci dentro leggibile. */
+.fi-heat-cell {
+  width: 22px; height: 22px; border-radius: 5px; flex-shrink: 0; cursor: pointer; border: none; padding: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 8.5px; font-weight: 800; font-variant-numeric: tabular-nums;
+  color: #0c1f14; font-family: var(--font-body);
+}
+.fi-heat-cell.historical { color: #EDEFF3; }
 .fi-heat-cell.selected { outline: 1.5px solid var(--text-primary); outline-offset: 1px; }
 .fi-heat-detail { margin: 0 14px 10px; background: var(--bg-input); border-radius: 9px; padding: 10px 12px; font-size: 12px; }
 .fi-heat-detail-title { font-weight: 700; margin-bottom: 3px; color: var(--text-primary); }

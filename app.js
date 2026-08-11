@@ -1,5 +1,5 @@
 const API_BASE = 'https://qr-scanner-api.fanatics.workers.dev';
-const APP_VERSION = 103;
+const APP_VERSION = 104;
 // Più foto (09.08.2026): limite scelto con Rino, ragionevole per non appesantire i
 // caricamenti su rete di cantiere. Stesso limite ricontrollato lato Worker.
 const PHOTO_MAX = 4;
@@ -3147,13 +3147,31 @@ function groupTallyByCertNo(entries) {
   return Array.from(map.values());
 }
 
-// Colore di un quadratino della heatmap in base al tasso di accettazione della singola
-// Tally List (1 = tutto accettato).
-function fiHeatColor(rate) {
-  if (rate >= 1) return 'var(--green)';
-  if (rate >= 0.95) return 'var(--fi-heat-mid)';
-  if (rate >= 0.85) return 'var(--orange)';
-  return 'var(--red)';
+// Intensita' del quadratino in base al numero di tubi della lista (10.08.2026, richiesta di
+// Rino: "verde più intenso = lista più grande" - prima tutte le liste al 100% erano identiche,
+// non si distingueva una lista da 5 tubi da una da 130). Sotto i 25-49 tubi resta il colore
+// "base" (quello di sempre); sopra/sotto si schiarisce/scurisce con color-mix() - risolve
+// automaticamente in entrambi i temi chiaro/scuro perche' parte dalla variabile CSS gia'
+// corretta per il tema attivo, non da un valore fisso.
+function fiHeatIntensity(total) {
+  if (total < 10) return { pct: 55, mix: 'white', text: '#0c1f14' };
+  if (total < 25) return { pct: 75, mix: 'white', text: '#0c1f14' };
+  if (total < 50) return null;
+  if (total < 100) return { pct: 80, mix: 'black', text: '#EDEFF3' };
+  return { pct: 60, mix: 'black', text: '#EDEFF3' };
+}
+
+// Colore di un quadratino della heatmap: tinta = tasso di accettazione della singola Tally
+// List (1 = tutto accettato, invariato), intensita' = numero di tubi (vedi sopra). Ritorna
+// {background, color} da applicare come style inline.
+function fiHeatColor(rate, total) {
+  const base = rate >= 1 ? '--green' : rate >= 0.95 ? '--fi-heat-mid' : rate >= 0.85 ? '--orange' : '--red';
+  const intensity = fiHeatIntensity(total);
+  if (!intensity) return { background: `var(${base})`, color: '#0c1f14' };
+  return {
+    background: `color-mix(in srgb, var(${base}) ${intensity.pct}%, ${intensity.mix} ${100 - intensity.pct}%)`,
+    color: intensity.text
+  };
 }
 
 // Heatmap raggruppata per mese (un quadratino per Tally List, colore = tasso di
@@ -3193,8 +3211,12 @@ function renderFiTallyChart() {
       <span class="fi-heat-month-label">${escapeHtml(m.label)}</span>
       <div class="fi-heat-cells">
         ${m.items.map(it => {
-          const color = it.type === 'historical' ? 'var(--fi-heat-historical)' : fiHeatColor(it.accepted / ((it.accepted + it.rejected) || 1));
-          return `<button type="button" class="fi-heat-cell" style="background:${color}" data-id="${escapeHtml(it.id)}" aria-label="${escapeHtml(it.label)}"></button>`;
+          if (it.type === 'historical') {
+            return `<button type="button" class="fi-heat-cell historical" style="background:var(--fi-heat-historical)" data-id="${escapeHtml(it.id)}" aria-label="${escapeHtml(it.label)}">${it.total || ''}</button>`;
+          }
+          const total = it.accepted + it.rejected;
+          const c = fiHeatColor(total ? it.accepted / total : 0, total);
+          return `<button type="button" class="fi-heat-cell" style="background:${c.background};color:${c.color}" data-id="${escapeHtml(it.id)}" aria-label="${escapeHtml(it.label)}">${total}</button>`;
         }).join('')}
       </div>
     </div>`).join('');
