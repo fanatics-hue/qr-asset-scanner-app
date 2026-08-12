@@ -182,8 +182,9 @@
         <button id="theme-toggle-dataset" class="theme-toggle" data-i18n-title="theme_toggle_title" title="Tema chiaro/scuro">&#9789;</button>
       </div>
       <button id="order-pill" class="order-pill-inline" type="button" data-i18n-title="order_pill_label" title="Progetto">
+        <svg class="pill-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/></svg>
         <span id="order-pill-name">-</span>
-        <span class="order-pill-icon">▾</span>
+        <span class="order-pill-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
       </button>
       <div class="toggles">
         <span class="tools-menu-wrap">
@@ -213,8 +214,8 @@
       <input id="search-input" class="field" type="text" data-i18n-ph="search_ph">
     </div>
     <div class="filter-row">
-      <button class="filter-chip active" id="filter-all" data-i18n="filter_all" type="button">Tutti</button>
-      <button class="filter-chip" id="filter-defects" data-i18n="filter_defects_only" type="button">Solo difetti</button>
+      <button class="filter-chip active" id="filter-all" type="button"><svg class="chip-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg><span data-i18n="filter_all">Tutti</span></button>
+      <button class="filter-chip" id="filter-defects" type="button"><svg class="chip-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l9 16H3z"/><line x1="12" y1="10" x2="12" y2="14"/><line x1="12" y1="17" x2="12" y2="17"/></svg><span data-i18n="filter_defects_only">Solo difetti</span></button>
     </div>
     <div class="pdf-export-row">
       <button id="dataset-export-btn" class="pdf-export-btn"><span class="pdf-badge">PDF</span><span data-i18n="pdf_export_btn">Esporta PDF</span></button>
@@ -301,6 +302,7 @@
 
   <!-- ADMIN -->
   <section id="screen-admin" class="hidden">
+    <div class="screen-band"><img class="screen-band-logo" src="assets/iqs-logo.jpg" alt="IQS"><span class="screen-band-order"></span></div>
     <button id="admin-back" class="back-link">&lsaquo; <span data-i18n="dataset_title_short">Dataset</span></button>
     <div class="large-title" style="padding-left:0" data-i18n="admin_title">Gestione ispettori</div>
     <div class="card">
@@ -331,6 +333,7 @@
 
   <!-- GUIDA -->
   <section id="screen-help" class="hidden">
+    <div class="screen-band"><img class="screen-band-logo" src="assets/iqs-logo.jpg" alt="IQS"><span class="screen-band-order"></span></div>
     <button id="help-back" class="back-link">&lsaquo; <span data-i18n="dataset_title_short">Dataset</span></button>
     <div class="large-title" style="padding-left:0" data-i18n="help_title">Guida</div>
     <div class="help-scroll" id="help-content"></div>
@@ -345,6 +348,7 @@
 
   <!-- STATISTICHE -->
   <section id="screen-stats" class="hidden">
+    <div class="screen-band"><img class="screen-band-logo" src="assets/iqs-logo.jpg" alt="IQS"><span class="screen-band-order"></span></div>
     <button id="stats-back" class="back-link">&lsaquo; <span data-i18n="dataset_title_short">Dataset</span></button>
     <div class="large-title" style="padding-left:0" data-i18n="stats_title">Statistiche</div>
     <div class="pdf-export-row">
@@ -408,6 +412,7 @@
 
   <!-- TALLY LIST FI -->
   <section id="screen-fi-tally" class="hidden">
+    <div class="screen-band"><img class="screen-band-logo" src="assets/iqs-logo.jpg" alt="IQS"><span class="screen-band-order"></span></div>
     <button id="fi-tally-back" class="back-link">&lsaquo; <span data-i18n="dataset_title_short">Dataset</span></button>
     <div class="large-title" style="padding-left:0" data-i18n="fi_tally_title">Tally List FI</div>
     <div class="lookup-sub" id="fi-tally-sub">-</div>
@@ -461,6 +466,7 @@
 
   <!-- CERCA TUBO -->
   <section id="screen-lookup" class="hidden">
+    <div class="screen-band"><img class="screen-band-logo" src="assets/iqs-logo.jpg" alt="IQS"><span class="screen-band-order"></span></div>
     <button id="lookup-back" class="back-link">&lsaquo; <span data-i18n="dataset_title_short">Dataset</span></button>
     <div class="large-title" style="padding-left:0" data-i18n="lookup_title">Cerca tubo</div>
     <div class="lookup-sub" data-i18n="lookup_title_sub">Solo consultazione — nessun salvataggio</div>
@@ -493,6 +499,7 @@
 
   <!-- STATO ORDINE -->
   <section id="screen-order-status" class="hidden">
+    <div class="screen-band"><img class="screen-band-logo" src="assets/iqs-logo.jpg" alt="IQS"><span class="screen-band-order"></span></div>
     <button id="order-status-back" class="back-link">&lsaquo; <span data-i18n="dataset_title_short">Dataset</span></button>
     <div class="large-title" style="padding-left:0" data-i18n="order_status_title">Stato Ordine</div>
     <div class="pdf-export-row">
@@ -552,14 +559,14 @@
       <!-- Menu raggruppato per categoria (07.08.2026, valutazione UI): prima lista piatta
            di 6 righe, ormai troppe per trovare al volo quella giusta. -->
       <div class="tools-group-label" data-i18n="tools_group_daily">Lavoro quotidiano</div>
-      <button id="fi-tally-btn" class="tools-row" type="button"><span class="tools-row-icon">&#127937;</span><span class="tools-row-name" data-i18n="fi_tally_title">Tally List FI</span><span id="fi-tally-new-tag" class="tag tag-bad hidden" data-i18n="tools_tag_new">Nuova</span></button>
-      <button id="lookup-btn" class="tools-row" type="button"><span class="tools-row-icon">&#128269;</span><span class="tools-row-name" data-i18n="lookup_title">Cerca tubo</span></button>
+      <button id="fi-tally-btn" class="tools-row" type="button"><span class="tools-row-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1"/><path d="M9 12l2 2 4-4"/></svg></span><span class="tools-row-name" data-i18n="fi_tally_title">Tally List FI</span><span id="fi-tally-new-tag" class="tag tag-bad hidden"><svg class="tag-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="8" x2="12" y2="13"/><line x1="12" y1="16" x2="12" y2="16"/></svg><span data-i18n="tools_tag_new">Nuova</span></span></button>
+      <button id="lookup-btn" class="tools-row" type="button"><span class="tools-row-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="10.5" cy="10.5" r="6.5"/><line x1="20" y1="20" x2="15.2" y2="15.2"/></svg></span><span class="tools-row-name" data-i18n="lookup_title">Cerca tubo</span></button>
       <div class="tools-group-label" data-i18n="tools_group_progress">Andamento</div>
-      <button id="order-status-btn" class="tools-row" type="button"><span class="tools-row-icon">&#128678;</span><span class="tools-row-name" data-i18n="order_status_title">Stato Ordine</span><span id="order-status-new-tag" class="tag hidden">Aggiornato</span></button>
-      <button id="stats-btn" class="tools-row" type="button"><span class="tools-row-icon">&#128202;</span><span class="tools-row-name" data-i18n="stats_title">Statistiche</span></button>
+      <button id="order-status-btn" class="tools-row" type="button"><span class="tools-row-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15a8 8 0 0 1 16 0"/><line x1="12" y1="15" x2="16" y2="10"/><circle cx="12" cy="15" r="1"/></svg></span><span class="tools-row-name" data-i18n="order_status_title">Stato Ordine</span><span id="order-status-new-tag" class="tag hidden"><svg class="tag-ic ic-ok" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"/></svg><svg class="tag-ic ic-warn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="8" x2="12" y2="13"/><line x1="12" y1="16" x2="12" y2="16"/></svg><span class="tag-txt">Aggiornato</span></span></button>
+      <button id="stats-btn" class="tools-row" type="button"><span class="tools-row-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="20" x2="5" y2="13"/><line x1="12" y1="20" x2="12" y2="7"/><line x1="19" y1="20" x2="19" y2="16"/></svg></span><span class="tools-row-name" data-i18n="stats_title">Statistiche</span></button>
       <div class="tools-group-label" data-i18n="tools_group_system">Sistema</div>
-      <button id="help-btn" class="tools-row" type="button"><span class="tools-row-icon">?</span><span class="tools-row-name" data-i18n="help_title">Guida</span></button>
-      <button id="admin-gear" class="tools-row hidden" type="button"><span class="tools-row-icon">&#9881;</span><span class="tools-row-name" data-i18n="admin_title">Gestione ispettori</span></button>
+      <button id="help-btn" class="tools-row" type="button"><span class="tools-row-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.2 9.3a2.8 2.8 0 1 1 3.9 2.6c-.9.4-1.4 1-1.4 1.9"/><line x1="12" y1="17" x2="12" y2="17"/></svg></span><span class="tools-row-name" data-i18n="help_title">Guida</span></button>
+      <button id="admin-gear" class="tools-row hidden" type="button"><span class="tools-row-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3 2.7-5 6-5s6 2 6 5"/><circle cx="17" cy="9" r="2.4"/><path d="M15.5 20c.2-2.3 2-4 4.5-4"/></svg></span><span class="tools-row-name" data-i18n="admin_title">Gestione ispettori</span></button>
     </div>
     <button id="tools-sheet-close" class="link-btn" data-i18n="cancel_btn">Annulla</button>
   </div>
@@ -580,6 +587,6 @@
 
 <script src="vendor/jspdf.umd.min.js"></script>
 <script src="vendor/xlsx.mini.min.js"></script>
-<script src="app.js?v=106"></script>
+<script src="app.js?v=107"></script>
 </body>
 </html>

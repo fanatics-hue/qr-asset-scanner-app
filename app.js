@@ -1,5 +1,5 @@
 const API_BASE = 'https://qr-scanner-api.fanatics.workers.dev';
-const APP_VERSION = 106;
+const APP_VERSION = 107;
 // Più foto (09.08.2026): limite scelto con Rino, ragionevole per non appesantire i
 // caricamenti su rete di cantiere. Stesso limite ricontrollato lato Worker.
 const PHOTO_MAX = 4;
@@ -29,6 +29,9 @@ const TRANSLATIONS = {
     dataset_title_count_one: '{n} scheda registrata',
     search_ph: 'Cerca per Pipe N°, Item N°...',
     dataset_empty: 'Nessun asset ancora scansionato',
+    dataset_empty_sub: 'Scansiona il primo asset per iniziare',
+    dataset_empty_search: 'Nessun risultato',
+    dataset_empty_search_sub: 'Controlla il Pipe N°, l\'Item N° o il filtro attivo',
     tab_scan: 'Nuovo asset',
     tab_dataset_prefix: 'Dataset',
     field_scannedBy: 'Emesso da',
@@ -345,6 +348,9 @@ const TRANSLATIONS = {
     dataset_title_count_one: '{n} record tracked',
     search_ph: 'Search by Pipe No., Item No...',
     dataset_empty: 'No assets scanned yet',
+    dataset_empty_sub: 'Scan your first asset to get started',
+    dataset_empty_search: 'No results',
+    dataset_empty_search_sub: 'Check the Pipe No., Item No. or the active filter',
     tab_scan: 'New asset',
     tab_dataset_prefix: 'Dataset',
     field_scannedBy: 'Issued by',
@@ -1022,6 +1028,7 @@ function currentOrderName() {
 
 function renderOrderPill() {
   if (el('order-pill-name')) el('order-pill-name').textContent = currentOrderName();
+  document.querySelectorAll('.screen-band-order').forEach(elx => { elx.textContent = currentOrderName(); });
 }
 
 function renderOrderSheet() {
@@ -1370,7 +1377,7 @@ function renderToolsBadges() {
     const ageClass = ageHours < 24 ? 'tag-ok' : ageHours < 48 ? 'tag-warn' : 'tag-bad';
     orderTag.classList.remove('tag-ok', 'tag-warn', 'tag-bad');
     orderTag.classList.add(ageClass);
-    orderTag.textContent = t('tools_tag_updated_at').replace('{when}',
+    orderTag.querySelector('.tag-txt').textContent = t('tools_tag_updated_at').replace('{when}',
       new Date(updatedAt).toLocaleString(t('locale'), { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }));
   } else {
     orderTag.classList.add('hidden');
@@ -2225,7 +2232,21 @@ function renderDatasetList() {
   el('tab-dataset-count').textContent = filtered.length;
   el('dataset-title-count').textContent = t(filtered.length === 1 ? 'dataset_title_count_one' : 'dataset_title_count').replace('{n}', filtered.length);
   if (!filtered.length) {
-    list.innerHTML = `<div class="empty-state">${escapeHtml(t('dataset_empty'))}</div>`;
+    // Ricerca/filtro senza risultati e dataset davvero vuoto sono due situazioni diverse
+    // (07.08.2026 polish): prima mostravano lo stesso messaggio "Nessun asset ancora
+    // scansionato" anche cercando qualcosa di inesistente, che confondeva ("ma li ho gia'
+    // scansionati!"). Icona diversa (lente per la ricerca, cartella per il vero vuoto).
+    const isSearching = !!q || state.datasetFilter === 'defects';
+    const icon = isSearching
+      ? '<circle cx="10.5" cy="10.5" r="6.5"/><line x1="20" y1="20" x2="15.2" y2="15.2"/>'
+      : '<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/>';
+    const msg = t(isSearching ? 'dataset_empty_search' : 'dataset_empty');
+    const sub = t(isSearching ? 'dataset_empty_search_sub' : 'dataset_empty_sub');
+    list.innerHTML = `<div class="empty-state">
+      <div class="empty-state-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${icon}</svg></div>
+      <div class="empty-state-msg">${escapeHtml(msg)}</div>
+      <div class="empty-state-sub">${escapeHtml(sub)}</div>
+    </div>`;
     updateSyncBanner();
     return;
   }
