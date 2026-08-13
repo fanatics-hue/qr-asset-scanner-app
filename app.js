@@ -1,5 +1,5 @@
 const API_BASE = 'https://qr-scanner-api.fanatics.workers.dev';
-const APP_VERSION = 112;
+const APP_VERSION = 113;
 // Più foto (09.08.2026): limite scelto con Rino, ragionevole per non appesantire i
 // caricamenti su rete di cantiere. Stesso limite ricontrollato lato Worker.
 const PHOTO_MAX = 4;
@@ -88,7 +88,7 @@ const TRANSLATIONS = {
     admin_online_now: 'Online ora',
     admin_last_active: 'Ultimo accesso: {when}',
     admin_never_logged_in: "Mai effettuato l'accesso",
-    presence_online: '{n} online: {names}',
+    presence_label: 'Online',
     viewer_banner: 'Modalità sola consultazione',
     viewer_readonly_tag: 'sola lettura',
     remove: 'Rimuovi',
@@ -411,7 +411,7 @@ const TRANSLATIONS = {
     admin_online_now: 'Online now',
     admin_last_active: 'Last active: {when}',
     admin_never_logged_in: 'Never logged in',
-    presence_online: '{n} online: {names}',
+    presence_label: 'Online',
     viewer_banner: 'Read-only mode',
     viewer_readonly_tag: 'read-only',
     remove: 'Remove',
@@ -1432,8 +1432,7 @@ function renderPresenceLine(online) {
   const line = el('presence-line');
   if (!online || !online.length) { line.classList.add('hidden'); return; }
   line.classList.remove('hidden');
-  const names = online.map(u => u.name).join(', ');
-  el('presence-text').textContent = t('presence_online').replace('{n}', online.length).replace('{names}', names);
+  el('presence-text').textContent = online.map(u => u.name).join(', ');
 }
 let toolsUpdatePoll = null;
 function startToolsUpdatePolling() {
