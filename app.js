@@ -1,5 +1,5 @@
 const API_BASE = 'https://qr-scanner-api.fanatics.workers.dev';
-const APP_VERSION = 115;
+const APP_VERSION = 116;
 // Più foto (09.08.2026): limite scelto con Rino, ragionevole per non appesantire i
 // caricamenti su rete di cantiere. Stesso limite ricontrollato lato Worker.
 const PHOTO_MAX = 4;
@@ -102,6 +102,9 @@ const TRANSLATIONS = {
     access_log_today: 'Oggi',
     access_log_yesterday: 'Ieri',
     access_log_empty: 'Nessun accesso registrato',
+    access_log_single: '1 accesso alle {when}',
+    access_log_multi: '{n} accessi tra le {from} e le {to}',
+    access_log_show_more: 'Mostra accessi più vecchi ›',
     admin_disabled_on: 'Disattivato il {date}',
     err_save: 'Errore salvataggio: ',
     err_generic: 'Errore: ',
@@ -429,6 +432,9 @@ const TRANSLATIONS = {
     access_log_today: 'Today',
     access_log_yesterday: 'Yesterday',
     access_log_empty: 'No access recorded yet',
+    access_log_single: '1 access at {when}',
+    access_log_multi: '{n} accesses between {from} and {to}',
+    access_log_show_more: 'Show older accesses ›',
     admin_disabled_on: 'Deactivated on {date}',
     err_save: 'Save error: ',
     err_generic: 'Error: ',
@@ -843,6 +849,8 @@ const state = {
   fiTallyEntries: [],
   fiTallyExpanded: false,
   tallyHasUpdate: false,
+  accessLogEntries: [],
+  accessLogExpanded: false,
   prodHasUpdate: false,
   editingId: null,
   orders: [],
@@ -3711,45 +3719,75 @@ async function loadUsers() {
 }
 
 // Storico accessi (13.08.2026, richiesta Rino - "quando" un ispettore usa l'app, non solo
-// online/ultimo accesso): ogni login e' una riga, raggruppate per giorno di calendario
-// (Oggi/Ieri/data) - non filtra per utente in questa prima versione, tutto insieme in
-// ordine cronologico decrescente (gia' cosi' dal Worker).
+// online/ultimo accesso). Raggruppato per giorno+persona (feedback Rino stesso giorno: una
+// riga per ogni singolo accesso rischiava di allungare troppo la lista con piu' rientri
+// ravvicinati) - "3 accessi tra le 07:15 e le 18:22" invece di 3 righe separate. Mostra solo
+// gli ultimi 7 giorni di default, un link espande il resto (gia' scaricato, nessuna nuova
+// chiamata) - i dati del Worker restano comunque quelli veri, qui e' solo la vista.
 async function loadAccessLog() {
   try {
     const data = await api('/api/admin/access-log');
-    renderAccessLog(data.entries || []);
+    state.accessLogEntries = data.entries || [];
+    state.accessLogExpanded = false;
+    renderAccessLog();
   } catch (err) {
     el('a-access-log').innerHTML = `<div class="row">${escapeHtml(err.message)}</div>`;
   }
 }
-function accessLogDayLabel(d) {
+function accessLogDayKey(d) {
+  const day = new Date(d); day.setHours(0, 0, 0, 0);
+  return day.getTime();
+}
+function accessLogDayLabel(dayKey) {
   const today = new Date(); today.setHours(0, 0, 0, 0);
   const yesterday = new Date(today); yesterday.setDate(yesterday.getDate() - 1);
-  const day = new Date(d); day.setHours(0, 0, 0, 0);
-  if (day.getTime() === today.getTime()) return t('access_log_today');
-  if (day.getTime() === yesterday.getTime()) return t('access_log_yesterday');
-  return day.toLocaleDateString(t('locale'), { day: '2-digit', month: '2-digit' });
+  if (dayKey === today.getTime()) return t('access_log_today');
+  if (dayKey === yesterday.getTime()) return t('access_log_yesterday');
+  return new Date(dayKey).toLocaleDateString(t('locale'), { day: '2-digit', month: '2-digit' });
 }
-function renderAccessLog(entries) {
+function renderAccessLog() {
   const wrap = el('a-access-log');
+  const entries = state.accessLogEntries || [];
   if (!entries.length) { wrap.innerHTML = `<div class="row">${escapeHtml(t('access_log_empty'))}</div>`; return; }
+  const groups = new Map(); // dayKey -> Map(username -> {name, role, times[]})
+  entries.forEach(e => {
+    const dayKey = accessLogDayKey(e.at);
+    if (!groups.has(dayKey)) groups.set(dayKey, new Map());
+    const dayGroups = groups.get(dayKey);
+    if (!dayGroups.has(e.username)) dayGroups.set(e.username, { name: e.name, role: e.role, times: [] });
+    dayGroups.get(e.username).times.push(new Date(e.at));
+  });
+  const dayKeys = [...groups.keys()].sort((a, b) => b - a);
+  const sevenDaysAgo = accessLogDayKey(Date.now() - 6 * 24 * 3600000);
+  const visibleDayKeys = state.accessLogExpanded ? dayKeys : dayKeys.filter(k => k >= sevenDaysAgo);
   const roleClass = { admin: 'adm', inspector: 'insp', viewer: 'view' };
   const roleLabel = { admin: t('admin_role_admin'), inspector: t('admin_role_inspector'), viewer: t('admin_role_viewer') };
-  let lastDay = null;
+  const fmtTime = d => d.toLocaleTimeString(t('locale'), { hour: '2-digit', minute: '2-digit' });
   let html = '';
-  entries.forEach(e => {
-    const at = new Date(e.at);
-    const dayLbl = accessLogDayLabel(at);
-    if (dayLbl !== lastDay) { html += `<div class="day-sep">${escapeHtml(dayLbl)}</div>`; lastDay = dayLbl; }
-    const initial = (e.name || '?').trim().charAt(0).toUpperCase();
-    const time = at.toLocaleTimeString(t('locale'), { hour: '2-digit', minute: '2-digit' });
-    html += `<div class="log-row">
-      <div class="log-avatar">${escapeHtml(initial)}</div>
-      <div class="log-body"><div class="log-name">${escapeHtml(e.name)}<span class="role-tag ${roleClass[e.role] || 'view'}">${escapeHtml(roleLabel[e.role] || e.role)}</span></div></div>
-      <div class="log-when">${escapeHtml(time)}</div>
-    </div>`;
+  visibleDayKeys.forEach(dayKey => {
+    html += `<div class="day-sep">${escapeHtml(accessLogDayLabel(dayKey))}</div>`;
+    const people = [...groups.get(dayKey).entries()].sort((a, b) => Math.max(...b[1].times) - Math.max(...a[1].times));
+    people.forEach(([, g]) => {
+      const times = g.times.slice().sort((a, b) => a - b);
+      const initial = (g.name || '?').trim().charAt(0).toUpperCase();
+      const sub = times.length > 1
+        ? t('access_log_multi').replace('{n}', times.length).replace('{from}', fmtTime(times[0])).replace('{to}', fmtTime(times[times.length - 1]))
+        : t('access_log_single').replace('{when}', fmtTime(times[0]));
+      html += `<div class="log-row">
+        <div class="log-avatar">${escapeHtml(initial)}</div>
+        <div class="log-body">
+          <div class="log-name">${escapeHtml(g.name)}<span class="role-tag ${roleClass[g.role] || 'view'}">${escapeHtml(roleLabel[g.role] || g.role)}</span></div>
+          <div class="log-sub">${escapeHtml(sub)}</div>
+        </div>
+      </div>`;
+    });
   });
+  if (visibleDayKeys.length < dayKeys.length) {
+    html += `<a href="#" class="more-link" id="access-log-more">${escapeHtml(t('access_log_show_more'))}</a>`;
+  }
   wrap.innerHTML = html;
+  const moreLink = el('access-log-more');
+  if (moreLink) moreLink.addEventListener('click', (e) => { e.preventDefault(); state.accessLogExpanded = true; renderAccessLog(); });
 }
 
 // Tracciamento accessi (13.08.2026, richiesta Rino da admin - "chi sta usando l'app",
