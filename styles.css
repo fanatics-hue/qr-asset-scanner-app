@@ -634,6 +634,9 @@ textarea.field { resize: vertical; font-family: inherit; }
 #screen-admin { flex: 1; padding: 0 16px 24px; overflow-y: auto; min-height: 0; }
 .user-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; border-top: 1px solid var(--border-light); }
 .user-row:first-child { border-top: none; }
+.u-last { font-size: 11px; color: var(--text-tertiary); margin-top: 3px; display: flex; align-items: center; gap: 5px; }
+.live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); flex-shrink: 0; box-shadow: 0 0 0 3px var(--green-bg); }
+.live-dot.off { background: var(--text-tertiary); box-shadow: none; opacity: .5; }
 .danger-link { color: var(--red); background: none; border: none; font-size: 14px; cursor: pointer; }
 .bulk-deactivate-btn {
   display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%;

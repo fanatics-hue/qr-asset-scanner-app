@@ -1,5 +1,5 @@
 const API_BASE = 'https://qr-scanner-api.fanatics.workers.dev';
-const APP_VERSION = 109;
+const APP_VERSION = 110;
 // Più foto (09.08.2026): limite scelto con Rino, ragionevole per non appesantire i
 // caricamenti su rete di cantiere. Stesso limite ricontrollato lato Worker.
 const PHOTO_MAX = 4;
@@ -85,6 +85,9 @@ const TRANSLATIONS = {
     admin_role_inspector: 'Ispettore',
     admin_role_viewer: 'Visitatore',
     admin_role_label: 'Ruolo',
+    admin_online_now: 'Online ora',
+    admin_last_active: 'Ultimo accesso: {when}',
+    admin_never_logged_in: "Mai effettuato l'accesso",
     viewer_banner: 'Modalità sola consultazione',
     viewer_readonly_tag: 'sola lettura',
     remove: 'Rimuovi',
@@ -404,6 +407,9 @@ const TRANSLATIONS = {
     admin_role_inspector: 'Inspector',
     admin_role_viewer: 'Viewer',
     admin_role_label: 'Role',
+    admin_online_now: 'Online now',
+    admin_last_active: 'Last active: {when}',
+    admin_never_logged_in: 'Never logged in',
     viewer_banner: 'Read-only mode',
     viewer_readonly_tag: 'read-only',
     remove: 'Remove',
@@ -3679,6 +3685,18 @@ async function loadUsers() {
   }
 }
 
+// Tracciamento accessi (13.08.2026, richiesta Rino da admin - "chi sta usando l'app",
+// sia ispettori che visitatori): worker.js aggiorna lastActiveAt su login e (throttled)
+// su ogni richiesta autenticata - qui solo la resa visiva, "online" = attivo negli
+// ultimi 5 minuti, stessa soglia che il Worker usa per il throttle di scrittura x 2,5.
+function renderLastActive(iso) {
+  if (!iso) return `<span class="live-dot off"></span>${escapeHtml(t('admin_never_logged_in'))}`;
+  const ms = Date.now() - new Date(iso).getTime();
+  if (ms < 5 * 60 * 1000) return `<span class="live-dot"></span>${escapeHtml(t('admin_online_now'))}`;
+  const when = new Date(iso).toLocaleString(t('locale'), { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+  return `<span class="live-dot off"></span>${escapeHtml(t('admin_last_active').replace('{when}', when))}`;
+}
+
 // Disattivare (non cancellare) lascia una traccia di chi ha lavorato su un ordine chiuso -
 // vedi worker.js getSession() per la revoca immediata dell'accesso lato server.
 function renderUsers(users) {
@@ -3697,6 +3715,7 @@ function renderUsers(users) {
         <div>
           <div style="font-weight:600">${escapeHtml(u.name)} <span style="color:var(--text-secondary);font-weight:400">(${escapeHtml(u.username)})</span></div>
           <div style="font-size:12px;color:var(--text-secondary)">${u.role === 'admin' ? escapeHtml(t('admin_role_admin')) : u.role === 'viewer' ? escapeHtml(t('admin_role_viewer')) : escapeHtml(t('admin_role_inspector'))}</div>
+          <div class="u-last">${renderLastActive(u.lastActiveAt)}</div>
         </div>
         <div style="display:flex;align-items:center;gap:10px">
           <button class="danger-link" data-username="${escapeHtml(u.username)}">${escapeHtml(t('deactivate'))}</button>
