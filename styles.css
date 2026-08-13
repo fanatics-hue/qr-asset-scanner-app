@@ -637,6 +637,27 @@ textarea.field { resize: vertical; font-family: inherit; }
 .u-last { font-size: 11px; color: var(--text-tertiary); margin-top: 3px; display: flex; align-items: center; gap: 5px; }
 .live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); flex-shrink: 0; box-shadow: 0 0 0 3px var(--green-bg); }
 .live-dot.off { background: var(--text-tertiary); box-shadow: none; opacity: .5; }
+
+/* Storico accessi (13.08.2026) - righe raggruppate per giorno, stesso linguaggio di
+   .user-row ma con avatar a iniziale e pillola di ruolo invece delle azioni admin. */
+.day-sep {
+  font-size: 10px; text-transform: uppercase; letter-spacing: .05em; color: var(--text-tertiary);
+  font-weight: 700; padding: 10px 14px 6px; background: var(--bg-input);
+}
+.log-row { display: flex; align-items: center; gap: 10px; padding: 11px 14px; border-top: 1px solid var(--border-light); }
+.log-row:first-child, .day-sep:first-child + .log-row { border-top: none; }
+.log-avatar {
+  width: 28px; height: 28px; border-radius: 50%; background: var(--bg-input); border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center; font-size: 11.5px; font-weight: 800;
+  color: var(--text-secondary); flex-shrink: 0;
+}
+.log-body { flex: 1; min-width: 0; }
+.log-name { font-size: 13.5px; font-weight: 600; }
+.role-tag { font-size: 9.5px; font-weight: 800; padding: 1px 7px; border-radius: 9px; margin-left: 6px; vertical-align: 1px; }
+.role-tag.insp { color: var(--blue-c); background: var(--blue-bg); }
+.role-tag.view { color: var(--text-secondary); background: var(--border); }
+.role-tag.adm { color: var(--green); background: var(--green-bg); }
+.log-when { font-size: 11.5px; color: var(--text-tertiary); white-space: nowrap; flex-shrink: 0; }
 .danger-link { color: var(--red); background: none; border: none; font-size: 14px; cursor: pointer; }
 .bulk-deactivate-btn {
   display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%;

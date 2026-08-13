@@ -1,5 +1,5 @@
 const API_BASE = 'https://qr-scanner-api.fanatics.workers.dev';
-const APP_VERSION = 114;
+const APP_VERSION = 115;
 // Più foto (09.08.2026): limite scelto con Rino, ragionevole per non appesantire i
 // caricamenti su rete di cantiere. Stesso limite ricontrollato lato Worker.
 const PHOTO_MAX = 4;
@@ -98,6 +98,10 @@ const TRANSLATIONS = {
     admin_active_title: 'Ispettori attivi',
     admin_history_title: 'Storico ispettori',
     admin_history_empty: 'Nessun ispettore disattivato',
+    admin_access_log_title: 'Storico accessi',
+    access_log_today: 'Oggi',
+    access_log_yesterday: 'Ieri',
+    access_log_empty: 'Nessun accesso registrato',
     admin_disabled_on: 'Disattivato il {date}',
     err_save: 'Errore salvataggio: ',
     err_generic: 'Errore: ',
@@ -421,6 +425,10 @@ const TRANSLATIONS = {
     admin_active_title: 'Active inspectors',
     admin_history_title: 'Inspector history',
     admin_history_empty: 'No deactivated inspectors',
+    admin_access_log_title: 'Access history',
+    access_log_today: 'Today',
+    access_log_yesterday: 'Yesterday',
+    access_log_empty: 'No access recorded yet',
     admin_disabled_on: 'Deactivated on {date}',
     err_save: 'Save error: ',
     err_generic: 'Error: ',
@@ -2565,6 +2573,7 @@ el('detail-export-btn').addEventListener('click', async () => {
 // ---------------- Admin ----------------
 el('admin-gear').addEventListener('click', async () => {
   await loadUsers();
+  await loadAccessLog();
   showScreen('admin');
 });
 el('admin-back').addEventListener('click', () => showScreen('dataset'));
@@ -3699,6 +3708,48 @@ async function loadUsers() {
   } catch (err) {
     el('a-user-list').innerHTML = `<div class="row">${escapeHtml(err.message)}</div>`;
   }
+}
+
+// Storico accessi (13.08.2026, richiesta Rino - "quando" un ispettore usa l'app, non solo
+// online/ultimo accesso): ogni login e' una riga, raggruppate per giorno di calendario
+// (Oggi/Ieri/data) - non filtra per utente in questa prima versione, tutto insieme in
+// ordine cronologico decrescente (gia' cosi' dal Worker).
+async function loadAccessLog() {
+  try {
+    const data = await api('/api/admin/access-log');
+    renderAccessLog(data.entries || []);
+  } catch (err) {
+    el('a-access-log').innerHTML = `<div class="row">${escapeHtml(err.message)}</div>`;
+  }
+}
+function accessLogDayLabel(d) {
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const yesterday = new Date(today); yesterday.setDate(yesterday.getDate() - 1);
+  const day = new Date(d); day.setHours(0, 0, 0, 0);
+  if (day.getTime() === today.getTime()) return t('access_log_today');
+  if (day.getTime() === yesterday.getTime()) return t('access_log_yesterday');
+  return day.toLocaleDateString(t('locale'), { day: '2-digit', month: '2-digit' });
+}
+function renderAccessLog(entries) {
+  const wrap = el('a-access-log');
+  if (!entries.length) { wrap.innerHTML = `<div class="row">${escapeHtml(t('access_log_empty'))}</div>`; return; }
+  const roleClass = { admin: 'adm', inspector: 'insp', viewer: 'view' };
+  const roleLabel = { admin: t('admin_role_admin'), inspector: t('admin_role_inspector'), viewer: t('admin_role_viewer') };
+  let lastDay = null;
+  let html = '';
+  entries.forEach(e => {
+    const at = new Date(e.at);
+    const dayLbl = accessLogDayLabel(at);
+    if (dayLbl !== lastDay) { html += `<div class="day-sep">${escapeHtml(dayLbl)}</div>`; lastDay = dayLbl; }
+    const initial = (e.name || '?').trim().charAt(0).toUpperCase();
+    const time = at.toLocaleTimeString(t('locale'), { hour: '2-digit', minute: '2-digit' });
+    html += `<div class="log-row">
+      <div class="log-avatar">${escapeHtml(initial)}</div>
+      <div class="log-body"><div class="log-name">${escapeHtml(e.name)}<span class="role-tag ${roleClass[e.role] || 'view'}">${escapeHtml(roleLabel[e.role] || e.role)}</span></div></div>
+      <div class="log-when">${escapeHtml(time)}</div>
+    </div>`;
+  });
+  wrap.innerHTML = html;
 }
 
 // Tracciamento accessi (13.08.2026, richiesta Rino da admin - "chi sta usando l'app",
