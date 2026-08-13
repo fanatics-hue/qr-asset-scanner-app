@@ -1,5 +1,5 @@
 const API_BASE = 'https://qr-scanner-api.fanatics.workers.dev';
-const APP_VERSION = 108;
+const APP_VERSION = 109;
 // Più foto (09.08.2026): limite scelto con Rino, ragionevole per non appesantire i
 // caricamenti su rete di cantiere. Stesso limite ricontrollato lato Worker.
 const PHOTO_MAX = 4;
@@ -1363,6 +1363,7 @@ function startNewAssetsPolling() {
 function renderToolsBadges() {
   el('tools-menu-dot').classList.toggle('hidden', !(state.tallyHasUpdate || state.prodHasUpdate));
   el('fi-tally-new-tag').classList.toggle('hidden', !state.tallyHasUpdate);
+  el('fi-tally-new-pill').classList.toggle('hidden', !state.tallyHasUpdate);
   // Stato Ordine (07.08.2026, richiesta di Rino): a differenza di Tally List FI qui
   // l'etichetta non sparisce mai aprendo la schermata - resta sempre visibile con
   // data/ora dell'ultima sincronizzazione, e il colore segnala quanto e' vecchia (non

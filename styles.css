@@ -842,6 +842,7 @@ textarea.field { resize: vertical; font-family: inherit; }
 .tag-warn { color: var(--orange); background: var(--orange-bg); }
 .tag-bad { color: var(--red); background: var(--red-bg); }
 .tag-neutral { color: var(--text-secondary); background: var(--border); }
+.tag-info { color: var(--blue-c); background: var(--blue-bg); }
 .tag-ic { width: 10px; height: 10px; flex-shrink: 0; display: none; }
 .tag-ic.ic-ok, .tag-ic.ic-warn { display: none; }
 .tag.tag-ok .ic-ok { display: inline-block; }
