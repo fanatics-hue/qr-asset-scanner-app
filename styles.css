@@ -846,7 +846,14 @@ textarea.field { resize: vertical; font-family: inherit; }
 .tag-ic.ic-ok, .tag-ic.ic-warn { display: none; }
 .tag.tag-ok .ic-ok { display: inline-block; }
 .tag.tag-warn .ic-warn, .tag.tag-bad .ic-warn { display: inline-block; }
-.tag.tag-bad > .tag-ic:not(.ic-ok):not(.ic-warn) { display: inline-block; }
+
+/* Pallino "novita'" sull'angolo dell'icona (07.08.2026 polish, scelta finale "C" dopo
+   aver provato pillola rossa piena e blu - il pallino segnala senza gridare). */
+.icon-badge-wrap { position: relative; }
+.icon-badge-dot {
+  position: absolute; top: -2px; right: -2px; width: 9px; height: 9px; border-radius: 50%;
+  background: var(--red); border: 2px solid var(--bg-card);
+}
 .tools-menu-wrap { position: relative; display: inline-block; }
 .tools-menu-dot {
   position: absolute; top: -1px; right: -1px; width: 8px; height: 8px; border-radius: 50%;
