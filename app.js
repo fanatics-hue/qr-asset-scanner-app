@@ -1,5 +1,5 @@
 const API_BASE = 'https://qr-scanner-api.fanatics.workers.dev';
-const APP_VERSION = 119;
+const APP_VERSION = 120;
 // Più foto (09.08.2026): limite scelto con Rino, ragionevole per non appesantire i
 // caricamenti su rete di cantiere. Stesso limite ricontrollato lato Worker.
 const PHOTO_MAX = 4;
@@ -4494,6 +4494,16 @@ async function exportRecordPdf(rec) {
   if (rec.comment) {
     y = pdfBand(doc, y, t('field_comments'));
     y = pdfNote(doc, y, rec.comment);
+    // Traduzione EN (13.08.2026): dimenticata nel primo giro della feature - si vedeva nel
+    // Dettaglio ma non nel PDF, segnalato da Rino dopo aver aperto un export reale.
+    if (rec.commentEn) {
+      doc.setTextColor(...PDF_INK_SOFT);
+      doc.setFontSize(7);
+      doc.setFont('helvetica', 'bold');
+      doc.text(t('comment_en_label').toUpperCase(), PDF_MARGIN, y + 3);
+      doc.setFont('helvetica', 'normal');
+      y = pdfNote(doc, y + 5, rec.commentEn);
+    }
   }
 
   const photos = recordPhotos(rec);
@@ -4566,6 +4576,7 @@ async function exportAllDataExcel() {
     'CR': xlsxBool(r.cr),
     'Nota NCR/CR': r.ncrCrComment || '',
     'Commenti': r.comment || '',
+    'Commenti (EN)': r.commentEn || '',
     'Emesso da': r.scannedBy || '',
     'Emesso il': xlsxDate(r.scannedAt),
     'Modificato da': r.editedBy || '',
@@ -4577,7 +4588,7 @@ async function exportAllDataExcel() {
     'Foto': Array.isArray(r.photos) ? r.photos.map(p => p.url).join('; ') : ''
   }));
   XLSX.utils.book_append_sheet(wb, xlsxSheet(recordsRows,
-    [22, 9, 9, 10, 10, 10, 18, 14, 10, 14, 14, 6, 6, 22, 30, 14, 16, 14, 16, 14, 16, 26, 10, 40],
+    [22, 9, 9, 10, 10, 10, 18, 14, 10, 14, 14, 6, 6, 22, 30, 30, 14, 16, 14, 16, 14, 16, 26, 10, 40],
     ['Emesso il', 'Modificato il', 'Chiuso il']), 'Dataset');
 
   if (state.fiTallyEntries && state.fiTallyEntries.length) {
