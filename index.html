@@ -13,7 +13,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=73">
+<link rel="stylesheet" href="styles.css?v=74">
 </head>
 <body>
 <div id="app">
@@ -164,11 +164,27 @@
         <div class="row" style="border-top:0.5px solid var(--border-light);display:block;padding-bottom:12px">
           <div class="field-label-row">
             <label data-i18n="field_comments">Commenti</label>
-            <!-- Dettatura vocale (07.08.2026, idea "WOW" #2): utile con i guanti o in
-                 quota - nascosto da solo se il telefono/browser non supporta l'API. -->
-            <button type="button" class="voice-btn hidden" id="f-comment-voice-btn" data-target="f-comment" title="Dettatura vocale">&#127908;</button>
+            <div style="display:flex;gap:6px;">
+              <!-- Dettatura vocale (07.08.2026, idea "WOW" #2): utile con i guanti o in
+                   quota - nascosto da solo se il telefono/browser non supporta l'API. -->
+              <button type="button" class="voice-btn hidden" id="f-comment-voice-btn" data-target="f-comment" title="Dettatura vocale">&#127908;</button>
+              <button type="button" class="voice-btn" id="f-comment-translate-btn" data-i18n-title="translate_btn_title" title="Traduci con Gemini AI in inglese tecnico">&#127760;</button>
+            </div>
           </div>
           <textarea id="f-comment" class="field" rows="3" data-i18n-ph="comments_ph"></textarea>
+          <!-- Traduzione commento (13.08.2026, richiesta Rino): "🌐 Traduci" chiama Gemini via
+               Worker, mostra il risultato editabile + eventuali termini del vocabolario tecnico
+               trovati nel testo originale come riferimento veloce - non si salva niente finche'
+               non si preme "Conferma traduzione". -->
+          <div id="comment-translate-box" class="translate-box hidden">
+            <div class="translate-box-lbl"><span data-i18n="translate_box_label">Traduzione proposta (EN) — verificala prima di confermare</span><span class="gemini-badge">✨ Gemini AI</span></div>
+            <textarea id="comment-translate-text" class="field" rows="3"></textarea>
+            <div id="comment-glossary-hints" class="glossary-hints hidden"></div>
+            <div class="fi-reject-actions" style="margin-top:8px;">
+              <button type="button" class="link-btn" id="comment-translate-cancel" data-i18n="cancel_btn">Annulla</button>
+              <button type="button" class="btn-status-toggle btn-status-close" id="comment-translate-confirm" data-i18n="translate_confirm_btn">Conferma traduzione</button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -293,6 +309,13 @@
     <div class="card hidden" id="d-comment-card">
       <div class="card-header"><span class="section-title" data-i18n="field_comments">Commenti</span></div>
       <div class="row" style="border-top:none" id="d-comment"></div>
+      <div class="row hidden" id="d-comment-en-row" style="display:block;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:2px;">
+          <span style="font-size:11px;color:var(--text-tertiary);font-weight:700;" data-i18n="comment_en_label">Commento (EN)</span>
+          <span class="gemini-badge">✨ Gemini AI</span>
+        </div>
+        <div id="d-comment-en"></div>
+      </div>
     </div>
     <div class="card hidden" id="d-photo-card">
       <div class="card-header"><span class="section-title" data-i18n="confirm_section_photo">Foto (opzionale)</span></div>
@@ -592,6 +615,6 @@
 
 <script src="vendor/jspdf.umd.min.js"></script>
 <script src="vendor/xlsx.mini.min.js"></script>
-<script src="app.js?v=117"></script>
+<script src="app.js?v=118"></script>
 </body>
 </html>

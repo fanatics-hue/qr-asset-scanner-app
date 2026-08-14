@@ -556,6 +556,19 @@ textarea.field { resize: vertical; font-family: inherit; }
 .fi-reject-prompt { margin: -4px 0 10px; padding: 10px 12px; background: var(--bg-input); border: 1px solid var(--red); border-radius: 10px; }
 .fi-reject-prompt textarea { margin-bottom: 8px; }
 .fi-reject-actions { display: flex; justify-content: flex-end; gap: 14px; align-items: center; }
+
+/* Traduzione commento (13.08.2026) - stesso linguaggio visivo di .fi-reject-prompt ma blu
+   (proposta/informativo) invece di rosso (azione distruttiva). */
+.translate-box { margin-top: 10px; padding: 10px 12px; background: var(--bg-input); border: 1px solid var(--blue); border-radius: 10px; }
+.translate-box-lbl { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 11px; color: var(--blue-c); font-weight: 700; margin-bottom: 6px; }
+.gemini-badge {
+  font-size: 9.5px; font-weight: 800; color: #a78bfa; background: rgba(167,139,250,0.15);
+  border: 1px solid rgba(167,139,250,0.4); border-radius: 20px; padding: 2px 8px; flex-shrink: 0; white-space: nowrap;
+}
+.translate-box textarea { margin-bottom: 8px; }
+.glossary-hints { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.glossary-chip { font-size: 10.5px; color: var(--text-secondary); background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 4px 9px; }
+.glossary-chip b { color: var(--text-primary); font-weight: 600; }
 .fi-tally-summary {
   display: flex; flex-direction: column; align-items: center; text-align: center; gap: 8px;
   background: linear-gradient(180deg, var(--bg-card-top) 0%, var(--bg-card-bottom) 100%);

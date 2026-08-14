@@ -1,5 +1,5 @@
 const API_BASE = 'https://qr-scanner-api.fanatics.workers.dev';
-const APP_VERSION = 117;
+const APP_VERSION = 118;
 // Più foto (09.08.2026): limite scelto con Rino, ragionevole per non appesantire i
 // caricamenti su rete di cantiere. Stesso limite ricontrollato lato Worker.
 const PHOTO_MAX = 4;
@@ -21,6 +21,11 @@ const TRANSLATIONS = {
     field_condition: 'Condizione *',
     field_comments: 'Commenti',
     comments_ph: 'Note su condizioni, danni, manutenzione...',
+    translate_btn_title: 'Traduci in inglese tecnico',
+    translate_box_label: 'Traduzione proposta (EN) — verificala prima di confermare',
+    translate_confirm_btn: 'Conferma traduzione',
+    translate_err: 'Errore traduzione: ',
+    comment_en_label: 'Commento (EN)',
     whatsapp_share: 'Condividi su WhatsApp',
     confirm_section_todo: 'Da completare',
     dataset_title: 'Equipment Master Data',
@@ -351,6 +356,11 @@ const TRANSLATIONS = {
     field_condition: 'Condition *',
     field_comments: 'Comments',
     comments_ph: 'Notes on condition, damage, maintenance...',
+    translate_btn_title: 'Translate to technical English',
+    translate_box_label: 'Proposed translation (EN) — check it before confirming',
+    translate_confirm_btn: 'Confirm translation',
+    translate_err: 'Translation error: ',
+    comment_en_label: 'Comment (EN)',
     whatsapp_share: 'Share on WhatsApp',
     confirm_section_todo: 'To complete',
     dataset_title: 'Equipment Master Data',
@@ -812,6 +822,58 @@ const BACKEND_ERR_MAP = {
   'Nome ordine mancante': { it: 'Nome ordine mancante', en: 'Order name missing' },
   'Ordine non trovato': { it: 'Ordine non trovato', en: 'Order not found' }
 };
+
+// Vocabolario tecnico IT->EN per la traduzione dei commenti (13.08.2026, richiesta Rino) -
+// pensato per essere ampliato nel tempo: basta aggiungere una riga qui sotto, non serve
+// nessun ordine particolare. Usato in due modi: (1) mandato a Gemini nel prompt cosi'
+// preferisce questi termini a sinonimi generici, (2) mostrato come riferimento veloce
+// sotto la traduzione proposta, per i termini trovati nel testo originale.
+const TECH_GLOSSARY_IT_EN = {
+  // Difetti
+  'ammaccatura': 'dent', 'rigatura': 'scoring', 'graffio': 'scratch', 'cricca': 'crack',
+  'cricca a caldo': 'hot crack', 'porosità': 'porosity', 'inclusione': 'inclusion',
+  'inclusione di scoria': 'slag inclusion', 'mancanza di fusione': 'lack of fusion',
+  'mancanza di penetrazione': 'lack of penetration', 'sottosquadro': 'undercut',
+  'laminazione': 'lamination', 'vaiolatura': 'pitting', 'corrosione': 'corrosion',
+  'ovalizzazione': 'ovality', 'disallineamento': 'misalignment', 'incisione': 'gouge',
+  'bava': 'burr', 'bruciatura': 'burn-through',
+  // Saldatura
+  'saldatura': 'weld', 'saldatura circonferenziale': 'circumferential weld',
+  'saldatura longitudinale': 'longitudinal weld', 'cordone di saldatura': 'weld bead',
+  'cappa di saldatura': 'weld cap', 'radice di saldatura': 'weld root',
+  'zona termicamente alterata': 'heat affected zone (HAZ)', 'ripristino': 'repair',
+  'rilavorazione': 'rework', 'molatura': 'grinding',
+  // Dimensionale
+  'spessore parete': 'wall thickness', 'diametro esterno': 'outer diameter (OD)',
+  'diametro interno': 'inner diameter (ID)', 'lunghezza': 'length', 'profondità': 'depth',
+  'smusso': 'bevel',
+  // Prove
+  'esame macrografico': 'macro examination', 'prova di durezza': 'hardness test',
+  'prova di trazione': 'tensile test', 'prova di resilienza': 'impact test (Charpy)',
+  'controllo visivo': 'visual inspection', 'liquidi penetranti': 'penetrant testing (PT)',
+  'ultrasuoni': 'ultrasonic testing (UT)', 'radiografia': 'radiographic testing (RT)',
+  'prova idraulica': 'hydrostatic test', 'controllo dimensionale': 'dimensional check',
+  // Materiale
+  'colata': 'heat', 'lotto': 'batch', 'certificato di collaudo': 'mill test certificate (MTC)',
+  'tracciabilità': 'traceability',
+};
+// Trova i termini del vocabolario presenti in un testo (frasi piu' lunghe prima, cosi'
+// "saldatura circonferenziale" non viene anche contata come "saldatura" da sola).
+function findGlossaryTerms(text) {
+  const lower = (text || '').toLowerCase();
+  const keys = Object.keys(TECH_GLOSSARY_IT_EN).sort((a, b) => b.length - a.length);
+  const found = [];
+  const covered = [];
+  keys.forEach(k => {
+    const idx = lower.indexOf(k);
+    if (idx === -1) return;
+    const overlaps = covered.some(([s, e]) => idx < e && idx + k.length > s);
+    if (overlaps) return;
+    covered.push([idx, idx + k.length]);
+    found.push({ it: k, en: TECH_GLOSSARY_IT_EN[k] });
+  });
+  return found;
+}
 
 const CONDITION_CODES = ['excellent', 'good', 'needs-review', 'damaged'];
 const ITP_STEPS_FALLBACK = ['Milling', 'Welding Base', 'Welding Clad', 'Hydro', 'UT', 'RT', 'PT', 'FI (Final Inspection)'];
@@ -1475,7 +1537,7 @@ function recordPhotos(rec) {
 
 function openConfirm(parsed) {
   state.editingId = null;
-  state.draft = Object.assign({ itpStep: null, condition: null, comment: '', defectType: null, disposition: null, ncr: false, cr: false, ncrCrComment: '' }, parsed);
+  state.draft = Object.assign({ itpStep: null, condition: null, comment: '', commentEn: '', defectType: null, disposition: null, ncr: false, cr: false, ncrCrComment: '' }, parsed);
   state.draft._autoFields = new Set(); // campi attualmente auto-compilati, mai toccati a mano dall'utente
   el('f-itemNo').value = parsed.itemNo || '';
   el('f-pipeNo').value = parsed.pipeNo || '';
@@ -1484,6 +1546,7 @@ function openConfirm(parsed) {
   el('f-length').value = parsed.length || '';
   el('f-scannedAt').textContent = new Date().toLocaleString(t('locale'));
   el('f-comment').value = '';
+  el('comment-translate-box').classList.add('hidden');
   el('f-ncr-cr-comment').value = '';
   el('defect-details-toggle').closest('.accordion').classList.remove('collapsed');
   el('prod-progress-row').classList.add('hidden');
@@ -1504,6 +1567,7 @@ function openEditRecord(rec) {
     itemNo: rec.itemNo || '', pipeNo: rec.pipeNo || '', csHeat: rec.csHeat || '',
     craHeat: rec.craHeat || '', length: rec.length || '',
     itpStep: rec.itpStep || null, condition: rec.condition || null, comment: rec.comment || '',
+    commentEn: rec.commentEn || '',
     defectType: rec.defectType || null, disposition: rec.disposition || null,
     ncr: !!rec.ncr, cr: !!rec.cr, ncrCrComment: rec.ncrCrComment || '',
     _autoFields: new Set()
@@ -1515,6 +1579,7 @@ function openEditRecord(rec) {
   el('f-length').value = rec.length || '';
   el('f-scannedAt').textContent = rec.scannedAt ? new Date(rec.scannedAt).toLocaleString(t('locale')) : '-';
   el('f-comment').value = rec.comment || '';
+  el('comment-translate-box').classList.add('hidden');
   el('f-ncr-cr-comment').value = rec.ncrCrComment || '';
   el('defect-details-toggle').closest('.accordion').classList.remove('collapsed');
   el('prod-progress-row').classList.add('hidden');
@@ -1970,6 +2035,39 @@ if (SpeechRecognitionCtor) {
     recognition.start();
   });
 }
+// Traduzione tecnica del commento (13.08.2026, richiesta Rino): il testo tradotto va sempre
+// confermato (eventualmente modificato) prima di essere salvato - questi commenti finiscono
+// in documenti ufficiali (NCR/IRN/MDR), niente traduzione automatica silenziosa.
+el('f-comment-translate-btn').addEventListener('click', async () => {
+  const text = el('f-comment').value.trim();
+  if (!text) return;
+  const btn = el('f-comment-translate-btn');
+  btn.disabled = true;
+  try {
+    const { translated } = await api('/api/translate', { method: 'POST', body: JSON.stringify({ text }) });
+    el('comment-translate-text').value = translated;
+    const hints = findGlossaryTerms(text);
+    const hintsWrap = el('comment-glossary-hints');
+    if (hints.length) {
+      hintsWrap.innerHTML = hints.map(h => `<span class="glossary-chip">${escapeHtml(h.it)} → <b>${escapeHtml(h.en)}</b></span>`).join('');
+      hintsWrap.classList.remove('hidden');
+    } else {
+      hintsWrap.classList.add('hidden');
+    }
+    el('comment-translate-box').classList.remove('hidden');
+  } catch (err) {
+    alert(t('translate_err') + err.message);
+  } finally {
+    btn.disabled = false;
+  }
+});
+el('comment-translate-cancel').addEventListener('click', () => {
+  el('comment-translate-box').classList.add('hidden');
+});
+el('comment-translate-confirm').addEventListener('click', () => {
+  state.draft.commentEn = el('comment-translate-text').value.trim();
+  el('comment-translate-box').classList.add('hidden');
+});
 el('f-ncr-cr-comment').addEventListener('input', () => { state.draft.ncrCrComment = el('f-ncr-cr-comment').value; });
 el('defect-details-toggle').addEventListener('click', () => {
   el('defect-details-toggle').closest('.accordion').classList.toggle('collapsed');
@@ -2435,6 +2533,8 @@ function openDetail(id) {
   if (rec.comment) {
     el('d-comment-card').classList.remove('hidden');
     el('d-comment').textContent = rec.comment;
+    el('d-comment-en-row').classList.toggle('hidden', !rec.commentEn);
+    if (rec.commentEn) el('d-comment-en').textContent = rec.commentEn;
   } else {
     el('d-comment-card').classList.add('hidden');
   }
