@@ -1,5 +1,5 @@
 const API_BASE = 'https://qr-scanner-api.fanatics.workers.dev';
-const APP_VERSION = 118;
+const APP_VERSION = 119;
 // Più foto (09.08.2026): limite scelto con Rino, ragionevole per non appesantire i
 // caricamenti su rete di cantiere. Stesso limite ricontrollato lato Worker.
 const PHOTO_MAX = 4;
@@ -2043,6 +2043,7 @@ el('f-comment-translate-btn').addEventListener('click', async () => {
   if (!text) return;
   const btn = el('f-comment-translate-btn');
   btn.disabled = true;
+  btn.classList.add('translating');
   try {
     const { translated } = await api('/api/translate', { method: 'POST', body: JSON.stringify({ text }) });
     el('comment-translate-text').value = translated;
@@ -2059,6 +2060,7 @@ el('f-comment-translate-btn').addEventListener('click', async () => {
     alert(t('translate_err') + err.message);
   } finally {
     btn.disabled = false;
+    btn.classList.remove('translating');
   }
 });
 el('comment-translate-cancel').addEventListener('click', () => {

@@ -180,6 +180,10 @@ html, body {
 }
 .voice-btn.recording { background: var(--red-bg); border-color: var(--red); color: var(--red); animation: voice-pulse 1s infinite; }
 @keyframes voice-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
+/* Traduzione in corso (13.08.2026, feedback Rino: "non c'e' conferma visiva", la chiamata a
+   Gemini puo' metterci parecchi secondi sul livello gratuito - senza questo sembra bloccato. */
+.voice-btn.translating { background: var(--blue-bg); border-color: var(--blue); animation: translate-spin 0.9s linear infinite; }
+@keyframes translate-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 .field {
   background: var(--bg-input);
   color: var(--text-primary);
