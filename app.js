@@ -1,5 +1,5 @@
 const API_BASE = 'https://qr-scanner-api.fanatics.workers.dev';
-const APP_VERSION = 116;
+const APP_VERSION = 117;
 // Più foto (09.08.2026): limite scelto con Rino, ragionevole per non appesantire i
 // caricamenti su rete di cantiere. Stesso limite ricontrollato lato Worker.
 const PHOTO_MAX = 4;
@@ -3040,10 +3040,10 @@ function fiDefectWarning(pipeNo) {
   const rec = state.records.find(r =>
     normProdNum(r.pipeNo) === normPipe && r.status === 'open' && isDefectCondition(r.condition)
   );
-  if (!rec) return '';
+  if (!rec) return null;
   const parts = [condLabel(rec.condition)];
   if (rec.disposition) parts.push(t('disp_' + rec.disposition));
-  return parts.join(' / ');
+  return { id: rec.id, label: parts.join(' / ') };
 }
 
 function parseDdMmYyyy(s) {
@@ -3554,7 +3554,7 @@ function renderFiTallyList(entries) {
       <div>
         <div class="pn">${escapeHtml(e.pipeNo)}</div>
         <div class="sub">${escapeHtml(e.grade || '')} ${e.od ? '· OD ' + escapeHtml(e.od) : ''}</div>
-        ${warn ? `<div class="warn">${escapeHtml(t('fi_tally_warn').replace('{label}', warn))}</div>` : ''}
+        ${warn ? `<button type="button" class="warn" data-open-record="${escapeHtml(warn.id)}">${escapeHtml(t('fi_tally_warn').replace('{label}', warn.label))} <span class="chev">›</span></button>` : ''}
         ${whoLine}
       </div>
       ${isViewer()
@@ -3577,6 +3577,18 @@ function renderFiTallyList(entries) {
         <button type="button" class="btn-status-toggle btn-status-close" data-confirm-id="${escapeHtml(e.id)}" data-i18n="fi_tally_confirm_reject_btn">Conferma scarto</button>
       </div>`;
     list.appendChild(rejectPrompt);
+  });
+
+  // Apri la scheda del difetto direttamente dalla Tally List FI (13.08.2026, richiesta
+  // Rino da screenshot): prima bisognava tornare al Dataset e cercare a mano il Pipe N°.
+  // openDetail() e' la stessa funzione gia' usata da Dataset e da Cerca tubo - "Indietro"
+  // sul Dettaglio torna sempre al Dataset per convenzione gia' esistente nell'app, non a
+  // Tally List FI, coerente con quello che gia' fa "Cerca tubo".
+  list.querySelectorAll('[data-open-record]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openDetail(btn.dataset.openRecord);
+    });
   });
 
   list.querySelectorAll('.fi-flag-btn').forEach(btn => {
