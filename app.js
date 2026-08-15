@@ -1,5 +1,5 @@
 const API_BASE = 'https://qr-scanner-api.fanatics.workers.dev';
-const APP_VERSION = 120;
+const APP_VERSION = 121;
 // Più foto (09.08.2026): limite scelto con Rino, ragionevole per non appesantire i
 // caricamenti su rete di cantiere. Stesso limite ricontrollato lato Worker.
 const PHOTO_MAX = 4;
@@ -2686,6 +2686,17 @@ el('admin-gear').addEventListener('click', async () => {
   await loadAccessLog();
   showScreen('admin');
 });
+// Storico accessi: fisarmonica chiusa di default (13.08.2026 v2) - stesso pattern gia'
+// usato per health-card, cosi' non occupa spazio in Gestione ispettori finche' non serve.
+el('access-log-toggle-btn').addEventListener('click', () => {
+  const card = el('access-log-card');
+  const open = card.classList.toggle('open');
+  el('access-log-body').classList.toggle('hidden', !open);
+});
+el('access-log-filter').addEventListener('change', () => {
+  state.accessLogFilterUser = el('access-log-filter').value;
+  renderAccessLog();
+});
 el('admin-back').addEventListener('click', () => showScreen('dataset'));
 
 // ---------------- Guida ----------------
@@ -3843,6 +3854,19 @@ async function loadAccessLog() {
     const data = await api('/api/admin/access-log');
     state.accessLogEntries = data.entries || [];
     state.accessLogExpanded = false;
+    // Filtro persona (13.08.2026 v2, feedback Rino: "diventera' lunghissima" anche col
+    // raggruppamento per giorno gia' fatto, con 6 persone attive ogni giorno cresce comunque
+    // linearmente col tempo) - elenco utenti derivato dalle voci stesse, non da GET /api/admin/users
+    // (un utente disattivato che compare nello storico va comunque filtrabile).
+    const byUser = new Map();
+    state.accessLogEntries.forEach(e => { if (!byUser.has(e.username)) byUser.set(e.username, e.name); });
+    const people = [...byUser.entries()].sort((a, b) => a[1].localeCompare(b[1]));
+    const sel = el('access-log-filter');
+    const prevValue = sel.value;
+    sel.innerHTML = `<option value="">${escapeHtml(t('filter_all'))}</option>` +
+      people.map(([username, name]) => `<option value="${escapeHtml(username)}">${escapeHtml(name)}</option>`).join('');
+    sel.value = people.some(([u]) => u === prevValue) ? prevValue : '';
+    state.accessLogFilterUser = sel.value;
     renderAccessLog();
   } catch (err) {
     el('a-access-log').innerHTML = `<div class="row">${escapeHtml(err.message)}</div>`;
@@ -3861,7 +3885,10 @@ function accessLogDayLabel(dayKey) {
 }
 function renderAccessLog() {
   const wrap = el('a-access-log');
-  const entries = state.accessLogEntries || [];
+  const allEntries = state.accessLogEntries || [];
+  const entries = state.accessLogFilterUser
+    ? allEntries.filter(e => e.username === state.accessLogFilterUser)
+    : allEntries;
   if (!entries.length) { wrap.innerHTML = `<div class="row">${escapeHtml(t('access_log_empty'))}</div>`; return; }
   const groups = new Map(); // dayKey -> Map(username -> {name, role, times[]})
   entries.forEach(e => {

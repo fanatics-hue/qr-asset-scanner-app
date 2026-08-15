@@ -13,7 +13,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=75">
+<link rel="stylesheet" href="styles.css?v=76">
 </head>
 <body>
 <div id="app">
@@ -353,9 +353,17 @@
       <div class="card-header"><span class="section-title" data-i18n="admin_history_title">Storico ispettori</span></div>
       <div id="a-user-history"></div>
     </div>
-    <div class="card">
-      <div class="card-header"><span class="section-title" data-i18n="admin_access_log_title">Storico accessi</span></div>
-      <div id="a-access-log"></div>
+    <div class="card" id="access-log-card">
+      <button type="button" class="health-summary" id="access-log-toggle-btn">
+        <span class="section-title" style="flex:1;" data-i18n="admin_access_log_title">Storico accessi</span>
+        <span class="chev" id="access-log-chev">&rsaquo;</span>
+      </button>
+      <div id="access-log-body" class="hidden">
+        <div style="padding:0 14px 8px;">
+          <select id="access-log-filter" class="field" style="text-align:left;"></select>
+        </div>
+        <div id="a-access-log"></div>
+      </div>
     </div>
   </section>
 
@@ -615,6 +623,6 @@
 
 <script src="vendor/jspdf.umd.min.js"></script>
 <script src="vendor/xlsx.mini.min.js"></script>
-<script src="app.js?v=120"></script>
+<script src="app.js?v=121"></script>
 </body>
 </html>

@@ -971,6 +971,7 @@ textarea.field { resize: vertical; font-family: inherit; }
 .health-summary .summary-text.danger { color: var(--red); }
 .health-summary .chev { color: var(--text-tertiary); font-size: 14px; transition: transform 0.15s ease; }
 .health-card.open .chev { transform: rotate(90deg); }
+.access-log-card.open .chev { transform: rotate(90deg); }
 .health-row { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-top: 1px solid var(--border-light); cursor: pointer; }
 .health-row:active { background: var(--bg-input); }
 .health-row .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; background: var(--green); }
