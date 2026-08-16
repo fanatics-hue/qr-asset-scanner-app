@@ -13,7 +13,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=76">
+<link rel="stylesheet" href="styles.css?v=77">
 </head>
 <body>
 <div id="app">
@@ -394,6 +394,21 @@
            approfondita fuori dall'app - non un altro PDF, un vero .xlsx multi-foglio. -->
       <button id="export-excel-btn" class="pdf-export-btn hidden" type="button"><span class="pdf-badge xlsx-badge">XLS</span><span data-i18n="excel_export_btn">Esporta Excel</span></button>
     </div>
+    <!-- Report periodico condivisibile (solo admin), 16.08.2026: infografica generata via
+         canvas e condivisa in un tocco (Web Share API) - per quando serve mandare un
+         aggiornamento al management in fretta, senza laptop. -->
+    <div class="card report-card hidden" id="report-card">
+      <div class="card-header"><span class="section-title" data-i18n="report_title">Report periodico</span></div>
+      <div class="report-chips">
+        <button class="report-chip" data-period="daily" type="button" data-i18n="report_period_daily">Giornaliero</button>
+        <button class="report-chip active" data-period="weekly" type="button" data-i18n="report_period_weekly">Settimanale</button>
+        <button class="report-chip" data-period="monthly" type="button" data-i18n="report_period_monthly">Mensile</button>
+      </div>
+      <div class="report-preview-wrap">
+        <canvas id="report-canvas" width="720" height="1280"></canvas>
+      </div>
+      <button id="report-share-btn" class="pdf-export-btn" type="button"><span class="pdf-badge report-share-badge">IMG</span><span data-i18n="report_share_btn">Condividi immagine</span></button>
+    </div>
     <div class="stats-summary">
       <div class="stats-summary-card">
         <div class="stats-summary-value" id="stats-total">0</div>
@@ -623,6 +638,6 @@
 
 <script src="vendor/jspdf.umd.min.js"></script>
 <script src="vendor/xlsx.mini.min.js"></script>
-<script src="app.js?v=121"></script>
+<script src="app.js?v=122"></script>
 </body>
 </html>

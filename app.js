@@ -1,5 +1,5 @@
 const API_BASE = 'https://qr-scanner-api.fanatics.workers.dev';
-const APP_VERSION = 121;
+const APP_VERSION = 122;
 // Più foto (09.08.2026): limite scelto con Rino, ragionevole per non appesantire i
 // caricamenti su rete di cantiere. Stesso limite ricontrollato lato Worker.
 const PHOTO_MAX = 4;
@@ -74,6 +74,27 @@ const TRANSLATIONS = {
     stats_weekly_title: 'Rilievi per settimana',
     stats_defects_open: 'Difetti aperti',
     stats_closure_pct: '% chiusura',
+    report_title: 'Report periodico',
+    report_period_daily: 'Giornaliero',
+    report_period_weekly: 'Settimanale',
+    report_period_monthly: 'Mensile',
+    report_share_btn: 'Condividi immagine',
+    report_title_daily: 'Report Giornaliero',
+    report_title_weekly: 'Report Settimanale',
+    report_title_monthly: 'Report Mensile',
+    report_week_range: '{start} — {end} (Lun–Dom)',
+    report_kpi_new: 'Schede nuove',
+    report_kpi_open: 'Aperti',
+    report_kpi_closed: 'Chiusi',
+    report_kpi_total: 'Totale',
+    report_order_status_label: 'Stato ordine',
+    report_target_label: 'Target',
+    report_go: 'GO',
+    report_risk: 'RISK',
+    report_defects_watch: '{n} difetti aperti da seguire',
+    report_no_order_data: 'Nessun dato di produzione sincronizzato',
+    report_share_text: '{period} {order} — {n} schede, {open} difetti aperti.',
+    report_share_fail: 'Condivisione non disponibile su questo dispositivo, immagine scaricata.',
     status_open: 'Aperto',
     status_closed: 'Chiuso',
     status_close_btn: 'Segna come chiuso',
@@ -409,6 +430,27 @@ const TRANSLATIONS = {
     stats_weekly_title: 'Findings per week',
     stats_defects_open: 'Open defects',
     stats_closure_pct: '% closed',
+    report_title: 'Periodic report',
+    report_period_daily: 'Daily',
+    report_period_weekly: 'Weekly',
+    report_period_monthly: 'Monthly',
+    report_share_btn: 'Share image',
+    report_title_daily: 'Daily Report',
+    report_title_weekly: 'Weekly Report',
+    report_title_monthly: 'Monthly Report',
+    report_week_range: '{start} — {end} (Mon–Sun)',
+    report_kpi_new: 'New records',
+    report_kpi_open: 'Open',
+    report_kpi_closed: 'Closed',
+    report_kpi_total: 'Total',
+    report_order_status_label: 'Order status',
+    report_target_label: 'Target',
+    report_go: 'GO',
+    report_risk: 'RISK',
+    report_defects_watch: '{n} open defects to follow up',
+    report_no_order_data: 'No production data synced',
+    report_share_text: '{period} {order} — {n} records, {open} open defects.',
+    report_share_fail: 'Sharing not available on this device, image downloaded instead.',
     status_open: 'Open',
     status_closed: 'Closed',
     status_close_btn: 'Mark as closed',
@@ -919,7 +961,8 @@ const state = {
   currentOrderId: localStorage.getItem('qr_order_id') || 'default',
   justArrivedIds: new Set(),
   audioCtx: null,
-  datasetFilter: 'all'
+  datasetFilter: 'all',
+  reportPeriod: 'weekly'
 };
 
 const normProdNum = (v) => { const n = parseInt(String(v || '').trim(), 10); return isNaN(n) ? String(v || '').trim() : String(n); };
@@ -1068,6 +1111,7 @@ el('login-btn').addEventListener('click', async () => {
     saveSession(data);
     el('admin-gear').classList.toggle('hidden', data.role !== 'admin');
     el('export-excel-btn').classList.toggle('hidden', data.role !== 'admin');
+    el('report-card').classList.toggle('hidden', data.role !== 'admin');
     await afterLogin();
   } catch (err) {
     el('login-error').textContent = err.message;
@@ -2842,7 +2886,325 @@ function renderStats() {
   // L'elenco righe-per-riga dei difetti e' stato tolto da qui (era una copia quasi identica
   // di Equipment Master Data, stessa lista/stesso tap-per-aprire) - per vedere i difetti uno
   // per uno ora si usa il filtro "Solo difetti" nel Dataset, non serve piu' duplicarli qui.
+
+  renderReportCard();
 }
+
+// ---------------- Report periodico (solo admin) ----------------
+// 16.08.2026, richiesta di Rino: un'infografica condivisibile (non un altro PDF) per quando
+// non ha il laptop e deve mandare in fretta un aggiornamento al management. Riusa i dati gia'
+// caricati in state (records + phaseForecast di Stato Ordine), nessuna chiamata API in piu'.
+function reportPeriodRange(type) {
+  const now = new Date();
+  let start, end, prevStart, prevEnd;
+  if (type === 'monthly') {
+    start = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+    end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+    prevStart = new Date(now.getFullYear(), now.getMonth() - 1, 1, 0, 0, 0, 0);
+    prevEnd = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
+  } else if (type === 'weekly') {
+    start = mondayOf(now);
+    end = new Date(start); end.setDate(end.getDate() + 6); end.setHours(23, 59, 59, 999);
+    prevStart = new Date(start); prevStart.setDate(prevStart.getDate() - 7);
+    prevEnd = new Date(end); prevEnd.setDate(prevEnd.getDate() - 7);
+  } else { // daily
+    start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+    end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+    prevStart = new Date(start); prevStart.setDate(prevStart.getDate() - 1);
+    prevEnd = new Date(end); prevEnd.setDate(prevEnd.getDate() - 1);
+  }
+  return { start, end, prevStart, prevEnd };
+}
+
+function reportPeriodTitle(type) {
+  return t(type === 'daily' ? 'report_title_daily' : type === 'monthly' ? 'report_title_monthly' : 'report_title_weekly');
+}
+
+function reportPeriodSubtitle(type, range) {
+  const loc = t('locale');
+  if (type === 'daily') return range.start.toLocaleDateString(loc, { day: '2-digit', month: 'long', year: 'numeric' });
+  if (type === 'monthly') return range.start.toLocaleDateString(loc, { month: 'long', year: 'numeric' });
+  const startStr = range.start.toLocaleDateString(loc, { day: '2-digit', month: '2-digit' });
+  const endStr = range.end.toLocaleDateString(loc, { day: '2-digit', month: '2-digit', year: 'numeric' });
+  return t('report_week_range').replace('{start}', startStr).replace('{end}', endStr);
+}
+
+function computeReportData(type) {
+  const range = reportPeriodRange(type);
+  const records = state.records || [];
+  const inRange = (d, s, e) => { if (!d) return false; const dt = new Date(d); return dt >= s && dt <= e; };
+  const periodRecords = records.filter(r => inRange(r.scannedAt, range.start, range.end));
+  const prevRecords = records.filter(r => inRange(r.scannedAt, range.prevStart, range.prevEnd));
+  const closedInPeriod = records.filter(r => r.status === 'closed' && inRange(r.closedAt, range.start, range.end)).length;
+  const closedInPrev = records.filter(r => r.status === 'closed' && inRange(r.closedAt, range.prevStart, range.prevEnd)).length;
+
+  let orderStatus = null;
+  const pf = state.phaseForecast;
+  if (pf && pf.phases && pf.phases.length) {
+    const last = pf.phases[pf.phases.length - 1];
+    const total = pf.phases[0].totalPipes || 0;
+    orderStatus = {
+      itemNo: pf.itemNo || '-',
+      pct: total ? Math.round((last.completed / total) * 100) : null,
+      targetDate: pf.contractualDate || null,
+      forecastDate: last.forecastDate || null,
+      statusCode: last.status === 'OK' ? 'go' : (last.status === 'DELAY' ? 'risk' : 'na')
+    };
+  }
+
+  return {
+    type, range,
+    schedeCount: periodRecords.length,
+    schedePrevCount: prevRecords.length,
+    openedInPeriod: periodRecords.filter(r => isDefectCondition(r.condition)).length,
+    openedInPrev: prevRecords.filter(r => isDefectCondition(r.condition)).length,
+    closedInPeriod, closedInPrev,
+    openNow: records.filter(r => isDefectCondition(r.condition) && r.status !== 'closed').length,
+    totalAll: records.length,
+    orderStatus
+  };
+}
+
+function trendPct(curr, prev, higherIsGood) {
+  if (!prev || curr === prev) return null;
+  const delta = curr - prev;
+  const pct = Math.round((delta / prev) * 100);
+  const good = higherIsGood ? delta > 0 : delta < 0;
+  return { text: (delta > 0 ? '↑' : '↓') + Math.abs(pct) + '%', color: good ? '#7dd3a8' : '#fbbf7a' };
+}
+
+function trendDelta(curr, prev, higherIsGood) {
+  const delta = curr - prev;
+  if (delta === 0) return null;
+  const good = higherIsGood ? delta > 0 : delta < 0;
+  return { text: (delta > 0 ? '↑' : '↓') + Math.abs(delta), color: good ? '#7dd3a8' : '#fbbf7a' };
+}
+
+function roundRectPath(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+function drawReportCanvas(data) {
+  const canvas = el('report-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  ctx.fillStyle = 'rgb(' + PDF_NAVY.join(',') + ')';
+  ctx.fillRect(0, 0, W, H);
+  const grad = ctx.createRadialGradient(W * 0.2, 0, 0, W * 0.2, 0, W * 0.9);
+  grad.addColorStop(0, 'rgba(63,130,102,0.35)');
+  grad.addColorStop(1, 'rgba(63,130,102,0)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+
+  const pad = 46;
+  let y = 60;
+
+  ctx.fillStyle = '#ffffff';
+  roundRectPath(ctx, pad, y, 62, 30, 6); ctx.fill();
+  ctx.fillStyle = 'rgb(' + PDF_NAVY.join(',') + ')';
+  ctx.font = '900 15px Arial';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('IQS', pad + 12, y + 16);
+  ctx.fillStyle = '#ffffff';
+  ctx.font = '700 15px Arial';
+  ctx.fillText('Field Inspector', pad + 74, y + 16);
+  y += 60;
+  ctx.textBaseline = 'alphabetic';
+
+  ctx.fillStyle = 'rgba(255,255,255,0.6)';
+  ctx.font = '700 13px Arial';
+  ctx.fillText((currentOrderName() || '').toUpperCase(), pad, y);
+  y += 34;
+
+  ctx.fillStyle = '#ffffff';
+  ctx.font = '800 40px Arial';
+  ctx.fillText(reportPeriodTitle(data.type), pad, y);
+  y += 30;
+
+  ctx.fillStyle = 'rgba(255,255,255,0.65)';
+  ctx.font = '600 16px Arial';
+  ctx.fillText(reportPeriodSubtitle(data.type, data.range), pad, y);
+  y += 40;
+
+  const kpis = [
+    { n: data.schedeCount, l: t('report_kpi_new'), trend: trendPct(data.schedeCount, data.schedePrevCount, true), color: '#ffffff' },
+    { n: data.openNow, l: t('report_kpi_open'), trend: trendDelta(data.openedInPeriod, data.openedInPrev, false), color: '#fbbf7a' },
+    { n: data.closedInPeriod, l: t('report_kpi_closed'), trend: trendDelta(data.closedInPeriod, data.closedInPrev, true), color: '#7dd3a8' },
+    { n: data.totalAll, l: t('report_kpi_total'), trend: null, color: '#ffffff' }
+  ];
+  const gridW = W - pad * 2, gap = 14, cellW = (gridW - gap) / 2, cellH = 108;
+  kpis.forEach((k, i) => {
+    const cx = pad + (i % 2) * (cellW + gap);
+    const cy = y + Math.floor(i / 2) * (cellH + gap);
+    ctx.fillStyle = 'rgba(255,255,255,0.07)';
+    roundRectPath(ctx, cx, cy, cellW, cellH, 14); ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.12)'; ctx.lineWidth = 1;
+    roundRectPath(ctx, cx, cy, cellW, cellH, 14); ctx.stroke();
+    ctx.fillStyle = k.color;
+    ctx.font = '800 34px Arial';
+    ctx.fillText(String(k.n), cx + 18, cy + 48);
+    if (k.trend) {
+      const numW = ctx.measureText(String(k.n)).width;
+      ctx.font = '700 13px Arial';
+      ctx.fillStyle = k.trend.color;
+      ctx.fillText(k.trend.text, cx + 18 + numW + 8, cy + 48);
+    }
+    ctx.fillStyle = 'rgba(255,255,255,0.6)';
+    ctx.font = '700 12px Arial';
+    ctx.fillText(k.l.toUpperCase(), cx + 18, cy + 74);
+  });
+  y += cellH * 2 + gap + 34;
+
+  ctx.fillStyle = 'rgba(255,255,255,0.5)';
+  ctx.font = '700 12px Arial';
+  ctx.fillText(t('report_order_status_label').toUpperCase(), pad, y);
+  y += 16;
+
+  const boxH = data.orderStatus ? 140 : 70;
+  ctx.fillStyle = 'rgba(255,255,255,0.06)';
+  roundRectPath(ctx, pad, y, gridW, boxH, 14); ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,0.12)'; ctx.lineWidth = 1;
+  roundRectPath(ctx, pad, y, gridW, boxH, 14); ctx.stroke();
+
+  if (data.orderStatus) {
+    const os = data.orderStatus;
+    const bx = pad + 20, by = y + 26;
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '700 17px Arial';
+    ctx.fillText(t('os_item_label').replace('{item}', os.itemNo), bx, by);
+    ctx.fillStyle = '#7dd3a8';
+    ctx.font = '800 24px Arial';
+    ctx.textAlign = 'right';
+    ctx.fillText(os.pct !== null ? os.pct + '%' : '-', pad + gridW - 20, by);
+    ctx.textAlign = 'left';
+
+    const barY = by + 14, barW = gridW - 40, barH = 8;
+    ctx.fillStyle = 'rgba(255,255,255,0.15)';
+    roundRectPath(ctx, bx, barY, barW, barH, 4); ctx.fill();
+    if (os.pct !== null) {
+      const fillGrad = ctx.createLinearGradient(bx, 0, bx + barW, 0);
+      fillGrad.addColorStop(0, '#3f8266'); fillGrad.addColorStop(1, '#7dd3a8');
+      ctx.fillStyle = fillGrad;
+      roundRectPath(ctx, bx, barY, barW * (os.pct / 100), barH, 4); ctx.fill();
+    }
+
+    const rowY = barY + 34;
+    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    ctx.font = '700 10px Arial';
+    ctx.fillText(t('report_target_label').toUpperCase(), bx, rowY);
+    ctx.font = '700 14px Arial';
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText(os.targetDate ? parseISODate(os.targetDate).toLocaleDateString(t('locale')) : '-', bx, rowY + 18);
+
+    ctx.textAlign = 'right';
+    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    ctx.font = '700 10px Arial';
+    ctx.fillText(t('os_forecast_label').toUpperCase(), pad + gridW - 20, rowY);
+    ctx.font = '700 14px Arial';
+    ctx.fillStyle = os.statusCode === 'risk' ? '#fbbf7a' : '#7dd3a8';
+    ctx.fillText(os.forecastDate ? parseISODate(os.forecastDate).toLocaleDateString(t('locale')) : '-', pad + gridW - 20, rowY + 18);
+    ctx.textAlign = 'left';
+
+    if (os.statusCode !== 'na') {
+      const chipText = os.statusCode === 'risk' ? t('report_risk') : t('report_go');
+      ctx.font = '800 11px Arial';
+      const chipW = ctx.measureText(chipText).width + 22;
+      const chipX = pad + gridW - 20 - chipW, chipY = rowY + 30;
+      ctx.fillStyle = os.statusCode === 'risk' ? 'rgba(251,191,122,0.2)' : 'rgba(125,211,168,0.2)';
+      roundRectPath(ctx, chipX, chipY, chipW, 22, 11); ctx.fill();
+      ctx.strokeStyle = os.statusCode === 'risk' ? 'rgba(251,191,122,0.5)' : 'rgba(125,211,168,0.5)';
+      roundRectPath(ctx, chipX, chipY, chipW, 22, 11); ctx.stroke();
+      ctx.fillStyle = os.statusCode === 'risk' ? '#fbbf7a' : '#7dd3a8';
+      ctx.textAlign = 'center';
+      ctx.fillText(chipText, chipX + chipW / 2, chipY + 15);
+      ctx.textAlign = 'left';
+    }
+  } else {
+    ctx.fillStyle = 'rgba(255,255,255,0.55)';
+    ctx.font = '600 14px Arial';
+    ctx.fillText(t('report_no_order_data'), pad + 20, y + 40);
+  }
+  y += boxH + 20;
+
+  if (data.openNow > 0) {
+    const semH = 52;
+    ctx.fillStyle = 'rgba(251,191,122,0.15)';
+    roundRectPath(ctx, pad, y, gridW, semH, 12); ctx.fill();
+    ctx.strokeStyle = 'rgba(251,191,122,0.4)'; ctx.lineWidth = 1;
+    roundRectPath(ctx, pad, y, gridW, semH, 12); ctx.stroke();
+    ctx.fillStyle = '#fbbf7a';
+    ctx.beginPath(); ctx.arc(pad + 22, y + semH / 2, 5, 0, Math.PI * 2); ctx.fill();
+    ctx.font = '700 15px Arial';
+    ctx.fillText(t('report_defects_watch').replace('{n}', data.openNow), pad + 38, y + semH / 2 + 5);
+  }
+
+  ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+  ctx.beginPath(); ctx.moveTo(pad, H - 70); ctx.lineTo(W - pad, H - 70); ctx.stroke();
+  ctx.fillStyle = 'rgba(255,255,255,0.45)';
+  ctx.font = '600 12px Arial';
+  ctx.fillText('IQS S.r.l.', pad, H - 44);
+  ctx.textAlign = 'right';
+  ctx.fillText('Field Inspector', W - pad, H - 44);
+  ctx.textAlign = 'left';
+}
+
+function renderReportCard() {
+  if (!state.session || state.session.role !== 'admin') return;
+  if (!el('report-card')) return;
+  document.querySelectorAll('.report-chip').forEach(chip => {
+    chip.classList.toggle('active', chip.dataset.period === state.reportPeriod);
+  });
+  drawReportCanvas(computeReportData(state.reportPeriod));
+}
+
+async function shareReportImage() {
+  const canvas = el('report-canvas');
+  const btn = el('report-share-btn');
+  if (!canvas) return;
+  btn.disabled = true;
+  try {
+    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+    if (!blob) throw new Error('canvas empty');
+    const data = computeReportData(state.reportPeriod);
+    const shareText = t('report_share_text')
+      .replace('{period}', reportPeriodTitle(state.reportPeriod))
+      .replace('{order}', currentOrderName())
+      .replace('{n}', data.schedeCount)
+      .replace('{open}', data.openNow);
+    const file = new File([blob], 'report-' + state.reportPeriod + '-' + new Date().toISOString().slice(0, 10) + '.png', { type: 'image/png' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({ files: [file], title: reportPeriodTitle(state.reportPeriod), text: shareText });
+    } else {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = file.name;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
+      alert(t('report_share_fail'));
+    }
+  } catch (err) {
+    if (err && err.name !== 'AbortError') alert(t('err_generic') + err.message);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+document.querySelectorAll('.report-chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    state.reportPeriod = chip.dataset.period;
+    renderReportCard();
+  });
+});
+if (el('report-share-btn')) el('report-share-btn').addEventListener('click', shareReportImage);
 
 el('stats-btn').addEventListener('click', () => {
   renderStats();
@@ -4075,6 +4437,7 @@ el('a-bulk-deactivate-btn').addEventListener('click', async () => {
   if (state.session && state.session.token) {
     el('admin-gear').classList.toggle('hidden', state.session.role !== 'admin');
     el('export-excel-btn').classList.toggle('hidden', state.session.role !== 'admin');
+    el('report-card').classList.toggle('hidden', state.session.role !== 'admin');
     try {
       await afterLogin();
       return;

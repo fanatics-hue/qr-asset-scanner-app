@@ -972,6 +972,26 @@ textarea.field { resize: vertical; font-family: inherit; }
 .health-summary .chev { color: var(--text-tertiary); font-size: 14px; transition: transform 0.15s ease; }
 .health-card.open .chev { transform: rotate(90deg); }
 .access-log-card.open .chev { transform: rotate(90deg); }
+
+/* Report periodico condivisibile (16.08.2026): card con selettore periodo + anteprima
+   dell'infografica (canvas) + pulsante condividi. */
+.report-card { padding-bottom: 14px; }
+.report-chips { display: flex; gap: 8px; padding: 0 14px 10px; flex-wrap: wrap; }
+.report-chip {
+  border: 1px solid var(--border); background: var(--bg-input); color: var(--text-secondary);
+  border-radius: 999px; padding: 7px 14px; font-size: 13px; font-weight: 600;
+  font-family: var(--font-body); cursor: pointer; transition: all 0.12s ease;
+}
+.report-chip:hover { border-color: var(--text-tertiary); }
+.report-chip:active { transform: scale(0.97); }
+.report-chip.active { background: var(--green); border-color: var(--green); color: #fff; }
+.report-preview-wrap { display: flex; justify-content: center; padding: 4px 14px 14px; }
+#report-canvas {
+  width: 100%; max-width: 260px; height: auto; aspect-ratio: 9 / 16;
+  border-radius: 12px; box-shadow: var(--shadow-card); display: block;
+}
+.report-share-badge { background: var(--blue); width: 24px; font-size: 8px; }
+.report-card .pdf-export-btn { margin: 0 14px; }
 .health-row { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-top: 1px solid var(--border-light); cursor: pointer; }
 .health-row:active { background: var(--bg-input); }
 .health-row .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; background: var(--green); }
