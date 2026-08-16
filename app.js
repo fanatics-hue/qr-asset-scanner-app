@@ -1,5 +1,5 @@
 const API_BASE = 'https://qr-scanner-api.fanatics.workers.dev';
-const APP_VERSION = 122;
+const APP_VERSION = 123;
 // Più foto (09.08.2026): limite scelto con Rino, ragionevole per non appesantire i
 // caricamenti su rete di cantiere. Stesso limite ricontrollato lato Worker.
 const PHOTO_MAX = 4;
@@ -93,6 +93,13 @@ const TRANSLATIONS = {
     report_risk: 'RISK',
     report_defects_watch: '{n} difetti aperti da seguire',
     report_no_order_data: 'Nessun dato di produzione sincronizzato',
+    report_bottleneck_label: 'Collo di bottiglia',
+    report_bottleneck_queue: '{n} pezzi in coda',
+    report_bottleneck_forecast: 'Previsto {date}',
+    report_top_defects_label: 'Top difetti (periodo)',
+    report_health_label: 'Salute difetti',
+    report_health_aging: '+5gg fermi',
+    report_health_avg_close: 'Gg medi chiusura',
     report_share_text: '{period} {order} — {n} schede, {open} difetti aperti.',
     report_share_fail: 'Condivisione non disponibile su questo dispositivo, immagine scaricata.',
     status_open: 'Aperto',
@@ -449,6 +456,13 @@ const TRANSLATIONS = {
     report_risk: 'RISK',
     report_defects_watch: '{n} open defects to follow up',
     report_no_order_data: 'No production data synced',
+    report_bottleneck_label: 'Bottleneck',
+    report_bottleneck_queue: '{n} pipes in queue',
+    report_bottleneck_forecast: 'Forecast {date}',
+    report_top_defects_label: 'Top defects (period)',
+    report_health_label: 'Defect health',
+    report_health_aging: '+5d stuck',
+    report_health_avg_close: 'Avg days to close',
     report_share_text: '{period} {order} — {n} records, {open} open defects.',
     report_share_fail: 'Sharing not available on this device, image downloaded instead.',
     status_open: 'Open',
@@ -2939,6 +2953,7 @@ function computeReportData(type) {
   const closedInPrev = records.filter(r => r.status === 'closed' && inRange(r.closedAt, range.prevStart, range.prevEnd)).length;
 
   let orderStatus = null;
+  let bottleneck = null;
   const pf = state.phaseForecast;
   if (pf && pf.phases && pf.phases.length) {
     const last = pf.phases[pf.phases.length - 1];
@@ -2950,7 +2965,34 @@ function computeReportData(type) {
       forecastDate: last.forecastDate || null,
       statusCode: last.status === 'OK' ? 'go' : (last.status === 'DELAY' ? 'risk' : 'na')
     };
+    // Stessa logica di renderOrderStatusFromPhaseForecast (Stato Ordine): la fase con
+    // piu' pezzi ancora da fare, non il calo cumulativo tra step.
+    let maxPhase = pf.phases[0];
+    pf.phases.forEach(p => { if ((p.remaining || 0) > (maxPhase.remaining || 0)) maxPhase = p; });
+    if (maxPhase && maxPhase.remaining > 0) {
+      bottleneck = { phase: maxPhase.phase, remaining: maxPhase.remaining, forecastDate: maxPhase.forecastDate || null };
+    }
   }
+
+  const allDefects = records.filter(r => isDefectCondition(r.condition));
+  const periodDefectTypeCounts = {};
+  periodRecords.filter(r => isDefectCondition(r.condition)).forEach(r => {
+    if (r.defectType) periodDefectTypeCounts[r.defectType] = (periodDefectTypeCounts[r.defectType] || 0) + 1;
+  });
+  const topDefects = Object.entries(periodDefectTypeCounts)
+    .sort((a, b) => b[1] - a[1]).slice(0, 3)
+    .map(([code, count]) => ({ code, count }));
+
+  const closedWithDates = allDefects.filter(r => r.status === 'closed' && r.closedAt && r.scannedAt);
+  const avgCloseDays = closedWithDates.length
+    ? closedWithDates.reduce((sum, r) => sum + (new Date(r.closedAt) - new Date(r.scannedAt)) / 86400000, 0) / closedWithDates.length
+    : null;
+  const health = {
+    aging: allDefects.filter(r => r.status !== 'closed' && r.scannedAt && (Date.now() - new Date(r.scannedAt).getTime()) / 86400000 >= 5).length,
+    avgCloseDays,
+    ncrCount: allDefects.filter(r => r.ncr).length,
+    crCount: allDefects.filter(r => r.cr).length
+  };
 
   return {
     type, range,
@@ -2959,9 +3001,9 @@ function computeReportData(type) {
     openedInPeriod: periodRecords.filter(r => isDefectCondition(r.condition)).length,
     openedInPrev: prevRecords.filter(r => isDefectCondition(r.condition)).length,
     closedInPeriod, closedInPrev,
-    openNow: records.filter(r => isDefectCondition(r.condition) && r.status !== 'closed').length,
+    openNow: allDefects.filter(r => r.status !== 'closed').length,
     totalAll: records.length,
-    orderStatus
+    orderStatus, bottleneck, topDefects, health
   };
 }
 
@@ -3145,6 +3187,95 @@ function drawReportCanvas(data) {
     ctx.beginPath(); ctx.arc(pad + 22, y + semH / 2, 5, 0, Math.PI * 2); ctx.fill();
     ctx.font = '700 15px Arial';
     ctx.fillText(t('report_defects_watch').replace('{n}', data.openNow), pad + 38, y + semH / 2 + 5);
+    y += semH + 20;
+  }
+
+  if (data.bottleneck) {
+    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    ctx.font = '700 12px Arial';
+    ctx.fillText(t('report_bottleneck_label').toUpperCase(), pad, y);
+    y += 16;
+    const boxH2 = 72;
+    ctx.fillStyle = 'rgba(251,191,122,0.1)';
+    roundRectPath(ctx, pad, y, gridW, boxH2, 14); ctx.fill();
+    ctx.strokeStyle = 'rgba(251,191,122,0.5)'; ctx.lineWidth = 1;
+    roundRectPath(ctx, pad, y, gridW, boxH2, 14); ctx.stroke();
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '700 17px Arial';
+    ctx.fillText(data.bottleneck.phase, pad + 20, y + 30);
+    ctx.font = '600 13px Arial';
+    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+    ctx.fillText(t('report_bottleneck_queue').replace('{n}', data.bottleneck.remaining), pad + 20, y + 54);
+    ctx.textAlign = 'right';
+    ctx.fillStyle = '#fbbf7a';
+    ctx.font = '700 13px Arial';
+    ctx.fillText(t('report_bottleneck_forecast').replace('{date}', data.bottleneck.forecastDate ? parseISODate(data.bottleneck.forecastDate).toLocaleDateString(t('locale')) : '-'), pad + gridW - 20, y + 54);
+    ctx.textAlign = 'left';
+    y += boxH2 + 20;
+  }
+
+  if (data.topDefects && data.topDefects.length) {
+    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    ctx.font = '700 12px Arial';
+    ctx.fillText(t('report_top_defects_label').toUpperCase(), pad, y);
+    y += 16;
+    const rowH = 26, boxH3 = 20 + data.topDefects.length * rowH;
+    ctx.fillStyle = 'rgba(255,255,255,0.06)';
+    roundRectPath(ctx, pad, y, gridW, boxH3, 14); ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.12)'; ctx.lineWidth = 1;
+    roundRectPath(ctx, pad, y, gridW, boxH3, 14); ctx.stroke();
+    const maxCount = Math.max(...data.topDefects.map(d => d.count));
+    const barX = pad + 190, barMaxW = gridW - 190 - 70, barH = 8;
+    data.topDefects.forEach((d, i) => {
+      const ry = y + 22 + i * rowH;
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '600 14px Arial';
+      ctx.fillText(defectTypeLabel(d.code), pad + 20, ry);
+      ctx.fillStyle = 'rgba(255,255,255,0.15)';
+      roundRectPath(ctx, barX, ry - 10, barMaxW, barH, 4); ctx.fill();
+      const fillGrad2 = ctx.createLinearGradient(barX, 0, barX + barMaxW, 0);
+      fillGrad2.addColorStop(0, '#3f8266'); fillGrad2.addColorStop(1, '#7dd3a8');
+      ctx.fillStyle = fillGrad2;
+      roundRectPath(ctx, barX, ry - 10, barMaxW * (d.count / maxCount), barH, 4); ctx.fill();
+      ctx.fillStyle = '#7dd3a8';
+      ctx.font = '700 14px Arial';
+      ctx.textAlign = 'right';
+      ctx.fillText(String(d.count), pad + gridW - 20, ry);
+      ctx.textAlign = 'left';
+    });
+    y += boxH3 + 20;
+  }
+
+  {
+    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    ctx.font = '700 12px Arial';
+    ctx.fillText(t('report_health_label').toUpperCase(), pad, y);
+    y += 16;
+    const boxH4 = 78;
+    ctx.fillStyle = 'rgba(255,255,255,0.06)';
+    roundRectPath(ctx, pad, y, gridW, boxH4, 14); ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.12)'; ctx.lineWidth = 1;
+    roundRectPath(ctx, pad, y, gridW, boxH4, 14); ctx.stroke();
+    const h = data.health;
+    const cells = [
+      { n: h.aging, l: t('report_health_aging'), warn: h.aging > 0 },
+      { n: h.avgCloseDays !== null ? h.avgCloseDays.toFixed(1).replace('.', ',') : '-', l: t('report_health_avg_close'), warn: false },
+      { n: h.ncrCount, l: t('ncr_label'), warn: h.ncrCount > 0 },
+      { n: h.crCount, l: t('cr_label'), warn: h.crCount > 0 }
+    ];
+    const cellW2 = gridW / 4;
+    ctx.textAlign = 'center';
+    cells.forEach((c, i) => {
+      const cx = pad + cellW2 * i + cellW2 / 2;
+      ctx.fillStyle = c.warn ? '#fbbf7a' : '#ffffff';
+      ctx.font = '800 20px Arial';
+      ctx.fillText(String(c.n), cx, y + 32);
+      ctx.fillStyle = 'rgba(255,255,255,0.55)';
+      ctx.font = '700 9px Arial';
+      ctx.fillText(c.l.toUpperCase(), cx, y + 52);
+    });
+    ctx.textAlign = 'left';
+    y += boxH4 + 20;
   }
 
   ctx.strokeStyle = 'rgba(255,255,255,0.12)';
