@@ -1,5 +1,5 @@
 const API_BASE = 'https://qr-scanner-api.fanatics.workers.dev';
-const APP_VERSION = 123;
+const APP_VERSION = 124;
 // Più foto (09.08.2026): limite scelto con Rino, ragionevole per non appesantire i
 // caricamenti su rete di cantiere. Stesso limite ricontrollato lato Worker.
 const PHOTO_MAX = 4;
@@ -461,7 +461,7 @@ const TRANSLATIONS = {
     report_bottleneck_forecast: 'Forecast {date}',
     report_top_defects_label: 'Top defects (period)',
     report_health_label: 'Defect health',
-    report_health_aging: '+5d stuck',
+    report_health_aging: '5+ days open',
     report_health_avg_close: 'Avg days to close',
     report_share_text: '{period} {order} — {n} records, {open} open defects.',
     report_share_fail: 'Sharing not available on this device, image downloaded instead.',
