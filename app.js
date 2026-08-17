@@ -1,5 +1,5 @@
 const API_BASE = 'https://qr-scanner-api.fanatics.workers.dev';
-const APP_VERSION = 124;
+const APP_VERSION = 125;
 // Più foto (09.08.2026): limite scelto con Rino, ragionevole per non appesantire i
 // caricamenti su rete di cantiere. Stesso limite ricontrollato lato Worker.
 const PHOTO_MAX = 4;
@@ -100,6 +100,8 @@ const TRANSLATIONS = {
     report_health_label: 'Salute difetti',
     report_health_aging: '+5gg fermi',
     report_health_avg_close: 'Gg medi chiusura',
+    refresh_prod_btn_title: 'Aggiorna da dati produzione (riempie Lunghezza/CS Heat/CRA Heat mancanti)',
+    refresh_prod_done: 'Aggiornate {n} schede da dati produzione.',
     report_share_text: '{period} {order} — {n} schede, {open} difetti aperti.',
     report_share_fail: 'Condivisione non disponibile su questo dispositivo, immagine scaricata.',
     status_open: 'Aperto',
@@ -463,6 +465,8 @@ const TRANSLATIONS = {
     report_health_label: 'Defect health',
     report_health_aging: '5+ days open',
     report_health_avg_close: 'Avg days to close',
+    refresh_prod_btn_title: 'Refresh from production data (fills missing Length/CS Heat/CRA Heat)',
+    refresh_prod_done: 'Updated {n} records from production data.',
     report_share_text: '{period} {order} — {n} records, {open} open defects.',
     report_share_fail: 'Sharing not available on this device, image downloaded instead.',
     status_open: 'Open',
@@ -1126,6 +1130,7 @@ el('login-btn').addEventListener('click', async () => {
     el('admin-gear').classList.toggle('hidden', data.role !== 'admin');
     el('export-excel-btn').classList.toggle('hidden', data.role !== 'admin');
     el('report-card').classList.toggle('hidden', data.role !== 'admin');
+    el('dataset-refresh-prod-btn').classList.toggle('hidden', data.role !== 'admin');
     await afterLogin();
   } catch (err) {
     el('login-error').textContent = err.message;
@@ -2215,6 +2220,55 @@ function tryAutoFillFromProduction() {
   }
 }
 ['f-itemNo', 'f-pipeNo'].forEach(id => el(id).addEventListener('input', tryAutoFillFromProduction));
+
+// 17.08.2026, richiesta di Rino (tubo 3239: Lunghezza vuota in una scheda gia' creata, pur
+// essendo presente nei dati produzione risincronizzati dopo): l'auto-compilazione sopra
+// scatta una volta sola quando si digita il Pipe N°. Se in quel momento la produzione non
+// aveva ancora Lunghezza/CS Heat/CRA Heat, la scheda resta con quei campi vuoti per sempre,
+// anche quando il dato arriva dopo. Questo pulsante (solo admin) ripassa su TUTTE le schede
+// esistenti e riempie solo i campi ancora vuoti con l'ultimo dato produzione disponibile -
+// non tocca mai un valore gia' presente (inserito a mano o auto-compilato in precedenza).
+async function refreshRecordsFromProduction() {
+  const btn = el('dataset-refresh-prod-btn');
+  if (!btn || btn.disabled) return;
+  btn.disabled = true;
+  btn.classList.add('spinning');
+  let updated = 0;
+  try {
+    for (const rec of state.records) {
+      const needsCsHeat = !rec.csHeat, needsCraHeat = !rec.craHeat, needsLength = !rec.length;
+      if (!needsCsHeat && !needsCraHeat && !needsLength) continue;
+      let match = null;
+      if (rec.itemNo) match = state.productionMap.get(prodKey(rec.itemNo, rec.pipeNo));
+      if (!match) match = state.productionByPipe.get(normProdNum(rec.pipeNo));
+      if (!match) continue;
+      const newCsHeat = needsCsHeat && match.csHeat ? match.csHeat : (rec.csHeat || '');
+      const newCraHeat = needsCraHeat && match.craHeat ? match.craHeat : (rec.craHeat || '');
+      const newLength = needsLength && match.length ? match.length : (rec.length || '');
+      if (newCsHeat === rec.csHeat && newCraHeat === rec.craHeat && newLength === rec.length) continue;
+      const payload = {
+        itemNo: rec.itemNo || '', pipeNo: rec.pipeNo,
+        csHeat: newCsHeat, craHeat: newCraHeat, length: newLength,
+        itpStep: rec.itpStep, condition: rec.condition,
+        comment: rec.comment || '', commentEn: rec.commentEn || '',
+        defectType: rec.defectType || '', disposition: rec.disposition || '',
+        ncr: !!rec.ncr, cr: !!rec.cr, ncrCrComment: rec.ncrCrComment || ''
+      };
+      try {
+        const { record } = await api('/api/records/' + encodeURIComponent(rec.id), { method: 'PUT', body: JSON.stringify(payload) });
+        const idx = state.records.findIndex(r => r.id === rec.id);
+        if (idx >= 0) state.records[idx] = record;
+        updated++;
+      } catch (e) { /* un record fallito non blocca gli altri */ }
+    }
+    renderDatasetList();
+    alert(t('refresh_prod_done').replace('{n}', updated));
+  } finally {
+    btn.disabled = false;
+    btn.classList.remove('spinning');
+  }
+}
+el('dataset-refresh-prod-btn').addEventListener('click', refreshRecordsFromProduction);
 
 el('confirm-cancel').addEventListener('click', () => {
   state.draft = null;
@@ -4569,6 +4623,7 @@ el('a-bulk-deactivate-btn').addEventListener('click', async () => {
     el('admin-gear').classList.toggle('hidden', state.session.role !== 'admin');
     el('export-excel-btn').classList.toggle('hidden', state.session.role !== 'admin');
     el('report-card').classList.toggle('hidden', state.session.role !== 'admin');
+    el('dataset-refresh-prod-btn').classList.toggle('hidden', state.session.role !== 'admin');
     try {
       await afterLogin();
       return;

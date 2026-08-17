@@ -13,7 +13,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=77">
+<link rel="stylesheet" href="styles.css?v=78">
 </head>
 <body>
 <div id="app">
@@ -233,6 +233,11 @@
     <div class="filter-row">
       <button class="filter-chip active" id="filter-all" type="button"><svg class="chip-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg><span data-i18n="filter_all">Tutti</span></button>
       <button class="filter-chip" id="filter-defects" type="button"><svg class="chip-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l9 16H3z"/><line x1="12" y1="10" x2="12" y2="14"/><line x1="12" y1="17" x2="12" y2="17"/></svg><span data-i18n="filter_defects_only">Solo difetti</span></button>
+      <!-- Solo admin (17.08.2026): riempie Lunghezza/CS Heat/CRA Heat mancanti sulle schede
+           gia' create, dai dati produzione piu' recenti - l'auto-compilazione normale scatta
+           una sola volta alla digitazione del Pipe N°, mai piu' dopo. Icona tonda separata
+           dai chip di filtro apposta, per non sembrare una terza opzione di filtro. -->
+      <button id="dataset-refresh-prod-btn" class="icon-btn-round hidden" type="button" data-i18n-title="refresh_prod_btn_title" title="Aggiorna da dati produzione"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><polyline points="21 3 21 9 15 9"/></svg></button>
     </div>
     <div class="pdf-export-row">
       <button id="dataset-export-btn" class="pdf-export-btn"><span class="pdf-badge">PDF</span><span data-i18n="pdf_export_btn">Esporta PDF</span></button>
@@ -638,6 +643,6 @@
 
 <script src="vendor/jspdf.umd.min.js"></script>
 <script src="vendor/xlsx.mini.min.js"></script>
-<script src="app.js?v=124"></script>
+<script src="app.js?v=125"></script>
 </body>
 </html>
