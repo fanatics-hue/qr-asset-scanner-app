@@ -1,5 +1,5 @@
 const API_BASE = 'https://qr-scanner-api.fanatics.workers.dev';
-const APP_VERSION = 125;
+const APP_VERSION = 126;
 // Più foto (09.08.2026): limite scelto con Rino, ragionevole per non appesantire i
 // caricamenti su rete di cantiere. Stesso limite ricontrollato lato Worker.
 const PHOTO_MAX = 4;
@@ -139,6 +139,8 @@ const TRANSLATIONS = {
     access_log_empty: 'Nessun accesso registrato',
     access_log_single: '1 accesso alle {when}',
     access_log_multi: '{n} accessi tra le {from} e le {to}',
+    access_log_week_label: 'Settimana {start}–{end}',
+    access_log_week_count: '{n} accessi questa settimana',
     access_log_show_more: 'Mostra accessi più vecchi ›',
     admin_disabled_on: 'Disattivato il {date}',
     err_save: 'Errore salvataggio: ',
@@ -504,6 +506,8 @@ const TRANSLATIONS = {
     access_log_empty: 'No access recorded yet',
     access_log_single: '1 access at {when}',
     access_log_multi: '{n} accesses between {from} and {to}',
+    access_log_week_label: 'Week {start}–{end}',
+    access_log_week_count: '{n} accesses this week',
     access_log_show_more: 'Show older accesses ›',
     admin_disabled_on: 'Deactivated on {date}',
     err_save: 'Save error: ',
@@ -4430,6 +4434,25 @@ function accessLogDayLabel(dayKey) {
   if (dayKey === yesterday.getTime()) return t('access_log_yesterday');
   return new Date(dayKey).toLocaleDateString(t('locale'), { day: '2-digit', month: '2-digit' });
 }
+// Settimana di una data, per il raggruppamento "piu' vecchio di ieri" sotto - riusa
+// isoWeekNumber()/mondayOf() gia' definite piu' sotto per il grafico Statistiche (function
+// declaration, l'ordine nel file non conta).
+function accessLogWeekKey(d) {
+  const { week, year } = isoWeekNumber(new Date(d));
+  return year * 100 + week;
+}
+function accessLogWeekLabel(d) {
+  const monday = mondayOf(d);
+  const sunday = new Date(monday); sunday.setDate(sunday.getDate() + 6);
+  const fmt = x => x.toLocaleDateString(t('locale'), { day: '2-digit', month: '2-digit' });
+  return t('access_log_week_label').replace('{start}', fmt(monday)).replace('{end}', fmt(sunday));
+}
+// 21.08.2026, v2 (feedback Rino: anche col raggruppamento per giorno+filtro persona gia'
+// fatti, la lista tornava a diventare lunga man mano che passavano i giorni - 6 persone
+// attive ogni giorno cresce comunque linearmente). Oggi e Ieri restano identici a prima
+// (dettaglio orari); da "l'altro ieri" in poi si raggruppa per persona+SETTIMANA (solo un
+// conteggio, niente orari) invece che per persona+giorno - una settimana intera di storico
+// per 6 persone sta in poche righe invece di 15-20.
 function renderAccessLog() {
   const wrap = el('a-access-log');
   const allEntries = state.accessLogEntries || [];
@@ -4437,40 +4460,65 @@ function renderAccessLog() {
     ? allEntries.filter(e => e.username === state.accessLogFilterUser)
     : allEntries;
   if (!entries.length) { wrap.innerHTML = `<div class="row">${escapeHtml(t('access_log_empty'))}</div>`; return; }
-  const groups = new Map(); // dayKey -> Map(username -> {name, role, times[]})
+  const today = accessLogDayKey(Date.now());
+  const yesterday = today - 86400000;
+  const dayGroups = new Map(); // dayKey (oggi/ieri) -> Map(username -> {name, role, times[]})
+  const weekGroups = new Map(); // weekKey -> {label, people: Map(username -> {name, role, count, lastAt})}
   entries.forEach(e => {
     const dayKey = accessLogDayKey(e.at);
-    if (!groups.has(dayKey)) groups.set(dayKey, new Map());
-    const dayGroups = groups.get(dayKey);
-    if (!dayGroups.has(e.username)) dayGroups.set(e.username, { name: e.name, role: e.role, times: [] });
-    dayGroups.get(e.username).times.push(new Date(e.at));
+    if (dayKey === today || dayKey === yesterday) {
+      if (!dayGroups.has(dayKey)) dayGroups.set(dayKey, new Map());
+      const dg = dayGroups.get(dayKey);
+      if (!dg.has(e.username)) dg.set(e.username, { name: e.name, role: e.role, times: [] });
+      dg.get(e.username).times.push(new Date(e.at));
+    } else {
+      const wKey = accessLogWeekKey(e.at);
+      if (!weekGroups.has(wKey)) weekGroups.set(wKey, { label: accessLogWeekLabel(new Date(e.at)), people: new Map() });
+      const wp = weekGroups.get(wKey).people;
+      if (!wp.has(e.username)) wp.set(e.username, { name: e.name, role: e.role, count: 0, lastAt: 0 });
+      const p = wp.get(e.username);
+      p.count++;
+      p.lastAt = Math.max(p.lastAt, new Date(e.at).getTime());
+    }
   });
-  const dayKeys = [...groups.keys()].sort((a, b) => b - a);
-  const sevenDaysAgo = accessLogDayKey(Date.now() - 6 * 24 * 3600000);
-  const visibleDayKeys = state.accessLogExpanded ? dayKeys : dayKeys.filter(k => k >= sevenDaysAgo);
+  const dayKeys = [...dayGroups.keys()].sort((a, b) => b - a);
+  const weekKeys = [...weekGroups.keys()].sort((a, b) => b - a);
+  const DEFAULT_WEEKS_SHOWN = 3;
+  const visibleWeekKeys = state.accessLogExpanded ? weekKeys : weekKeys.slice(0, DEFAULT_WEEKS_SHOWN);
   const roleClass = { admin: 'adm', inspector: 'insp', viewer: 'view' };
   const roleLabel = { admin: t('admin_role_admin'), inspector: t('admin_role_inspector'), viewer: t('admin_role_viewer') };
   const fmtTime = d => d.toLocaleTimeString(t('locale'), { hour: '2-digit', minute: '2-digit' });
+  const personRow = (name, role, sub) => {
+    const initial = (name || '?').trim().charAt(0).toUpperCase();
+    return `<div class="log-row">
+      <div class="log-avatar">${escapeHtml(initial)}</div>
+      <div class="log-body">
+        <div class="log-name">${escapeHtml(name)}<span class="role-tag ${roleClass[role] || 'view'}">${escapeHtml(roleLabel[role] || role)}</span></div>
+        <div class="log-sub">${escapeHtml(sub)}</div>
+      </div>
+    </div>`;
+  };
   let html = '';
-  visibleDayKeys.forEach(dayKey => {
+  dayKeys.forEach(dayKey => {
     html += `<div class="day-sep">${escapeHtml(accessLogDayLabel(dayKey))}</div>`;
-    const people = [...groups.get(dayKey).entries()].sort((a, b) => Math.max(...b[1].times) - Math.max(...a[1].times));
+    const people = [...dayGroups.get(dayKey).entries()].sort((a, b) => Math.max(...b[1].times) - Math.max(...a[1].times));
     people.forEach(([, g]) => {
       const times = g.times.slice().sort((a, b) => a - b);
-      const initial = (g.name || '?').trim().charAt(0).toUpperCase();
       const sub = times.length > 1
         ? t('access_log_multi').replace('{n}', times.length).replace('{from}', fmtTime(times[0])).replace('{to}', fmtTime(times[times.length - 1]))
         : t('access_log_single').replace('{when}', fmtTime(times[0]));
-      html += `<div class="log-row">
-        <div class="log-avatar">${escapeHtml(initial)}</div>
-        <div class="log-body">
-          <div class="log-name">${escapeHtml(g.name)}<span class="role-tag ${roleClass[g.role] || 'view'}">${escapeHtml(roleLabel[g.role] || g.role)}</span></div>
-          <div class="log-sub">${escapeHtml(sub)}</div>
-        </div>
-      </div>`;
+      html += personRow(g.name, g.role, sub);
     });
   });
-  if (visibleDayKeys.length < dayKeys.length) {
+  visibleWeekKeys.forEach(wKey => {
+    const wg = weekGroups.get(wKey);
+    html += `<div class="day-sep">${escapeHtml(wg.label)}</div>`;
+    const people = [...wg.people.entries()].sort((a, b) => b[1].lastAt - a[1].lastAt);
+    people.forEach(([, g]) => {
+      html += personRow(g.name, g.role, t('access_log_week_count').replace('{n}', g.count));
+    });
+  });
+  if (visibleWeekKeys.length < weekKeys.length) {
     html += `<a href="#" class="more-link" id="access-log-more">${escapeHtml(t('access_log_show_more'))}</a>`;
   }
   wrap.innerHTML = html;
