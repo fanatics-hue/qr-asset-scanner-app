@@ -1,5 +1,5 @@
 const API_BASE = 'https://qr-scanner-api.fanatics.workers.dev';
-const APP_VERSION = 126;
+const APP_VERSION = 127;
 // Più foto (09.08.2026): limite scelto con Rino, ragionevole per non appesantire i
 // caricamenti su rete di cantiere. Stesso limite ricontrollato lato Worker.
 const PHOTO_MAX = 4;
@@ -984,7 +984,9 @@ const state = {
   justArrivedIds: new Set(),
   audioCtx: null,
   datasetFilter: 'all',
-  reportPeriod: 'weekly'
+  reportPeriod: 'weekly',
+  lastSeenRecordsVersion: null,
+  lastSeenFiTallyVersion: null
 };
 
 const normProdNum = (v) => { const n = parseInt(String(v || '').trim(), 10); return isNaN(n) ? String(v || '').trim() : String(n); };
@@ -1474,8 +1476,20 @@ function playChime() {
     });
   } catch (e) { /* rumore non essenziale, non deve mai bloccare nient'altro */ }
 }
+// 26.08.2026: prima di rileggere tutte le schede, un controllo minimo (endpoint
+// /api/versions, 2 letture KV in tutto) - se il numero non e' cambiato dall'ultima volta,
+// nessuno ha scritto nulla nel frattempo e si salta il controllo vero e proprio. Con 6
+// persone e un controllo ogni 50s, questo taglia drasticamente le letture KV senza mai
+// rischiare un dato sbagliato: quando l'ispettore apre davvero il Dataset, il caricamento
+// normale (loadRecords/loadFiTally) non passa da qui e rilegge sempre tutto fresco.
+async function fetchVersions() {
+  try { return await api('/api/versions'); } catch (e) { return null; }
+}
 async function checkForNewAssets() {
   if (!state.session || !state.currentOrderId) return;
+  const versions = await fetchVersions();
+  if (versions && versions.records === state.lastSeenRecordsVersion) return;
+  if (versions) state.lastSeenRecordsVersion = versions.records;
   let data;
   try { data = await api('/api/records'); } catch (e) { return; }
   const records = data.records || [];
@@ -1539,7 +1553,13 @@ function renderToolsBadges() {
 }
 async function checkToolsUpdates() {
   if (!state.session || !state.currentOrderId) return;
-  try {
+  // GET /api/fi-tally rilegge OGNI voce di OGNI Tally List mai caricata (centinaia ormai) -
+  // stesso controllo minimo di checkForNewAssets sopra, salta la rilettura completa se la
+  // versione non e' cambiata dall'ultima volta.
+  const versions = await fetchVersions();
+  const fiTallyChanged = !versions || versions.fiTally !== state.lastSeenFiTallyVersion;
+  if (versions) state.lastSeenFiTallyVersion = versions.fiTally;
+  if (fiTallyChanged) try {
     const data = await api('/api/fi-tally');
     const entries = data.entries || [];
     state.fiTallyEntries = entries; // tenuto aggiornato anche fuori dalla schermata Tally List FI, serve alla card Stato generale
