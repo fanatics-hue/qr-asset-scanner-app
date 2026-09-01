@@ -1,5 +1,5 @@
 const API_BASE = 'https://qr-scanner-api.fanatics.workers.dev';
-const APP_VERSION = 127;
+const APP_VERSION = 128;
 // Più foto (09.08.2026): limite scelto con Rino, ragionevole per non appesantire i
 // caricamenti su rete di cantiere. Stesso limite ricontrollato lato Worker.
 const PHOTO_MAX = 4;
@@ -4057,11 +4057,19 @@ function bestAcceptanceRateWeek(entries) {
 // Cert-No con la data piu' recente tra tutte le voci - stessa logica usata sia per decidere
 // quale lista mostrare come "attiva" (loadFiTally) sia per il controllo di avviso novita'
 // (checkToolsUpdates), tenuta in un solo posto per non farle divergere.
+// 26.08.2026, bug reale (primo cambio di mese di questa Tally List: agosto->settembre):
+// confrontare "dateStr" (gg/mm/aaaa) come TESTO funziona per caso finche' i giorni restano
+// dentro lo stesso mese in ordine crescente, ma "01/09/2026" < "24/08/2026" da testo (il
+// carattere '0' viene prima di '2') anche se 1 settembre e' cronologicamente dopo il 24
+// agosto - la Tally List piu' recente perdeva il confronto ed "ultima" restava quella
+// vecchia. Fix: confronto su vere Date via parseDdMmYyyy(), non su stringhe.
 function latestTallyCertNo(entries) {
   return entries.reduce((acc, e) => {
     if (!acc) return e.certNo;
     const a = entries.find(x => x.certNo === acc);
-    return (e.dateStr || '') > (a.dateStr || '') ? e.certNo : acc;
+    const dateE = parseDdMmYyyy(e.dateStr) || new Date(0);
+    const dateA = parseDdMmYyyy(a.dateStr) || new Date(0);
+    return dateE > dateA ? e.certNo : acc;
   }, null);
 }
 
