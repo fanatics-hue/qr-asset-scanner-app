@@ -1,5 +1,5 @@
 const API_BASE = 'https://qr-scanner-api.fanatics.workers.dev';
-const APP_VERSION = 128;
+const APP_VERSION = 129;
 // Più foto (09.08.2026): limite scelto con Rino, ragionevole per non appesantire i
 // caricamenti su rete di cantiere. Stesso limite ricontrollato lato Worker.
 const PHOTO_MAX = 4;
@@ -291,7 +291,7 @@ const TRANSLATIONS = {
     os_funnel_title_phase: 'Avanzamento per fase',
     os_forecast_label: 'Previsto',
     os_days_vs_po: 'gg vs PO',
-    os_remaining_word: 'rimanenti',
+    os_remaining_word: 'tubi rimanenti in questa fase',
     os_remaining_at_phase: '{n} rimanenti',
     os_status_ok: 'OK',
     os_status_delay: 'RITARDO',
@@ -656,7 +656,7 @@ const TRANSLATIONS = {
     os_funnel_title_phase: 'Progress by phase',
     os_forecast_label: 'Forecast',
     os_days_vs_po: 'd vs PO',
-    os_remaining_word: 'remaining',
+    os_remaining_word: 'pipes left in this phase',
     os_remaining_at_phase: '{n} remaining',
     os_status_ok: 'OK',
     os_status_delay: 'DELAY',
