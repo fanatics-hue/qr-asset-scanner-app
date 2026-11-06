@@ -184,6 +184,9 @@ const TRANSLATIONS = {
     defect_details_title: 'Dettagli difetto',
     close_note_ph: 'Causa e azione correttiva (obbligatorio)',
     cancel_btn: 'Annulla',
+    logout_btn: 'Esci',
+    logout_confirm: 'Uscire dall\'account?',
+    logout_pending_warn: 'Attenzione: ci sono {n} scan non ancora inviati. Restano salvati su questo dispositivo e verranno inviati al prossimo accesso.',
     confirm_close_btn: 'Conferma chiusura',
     err_close_note_required: 'Inserisci causa e azione correttiva prima di chiudere.',
     retest_confirm_label: 'Disposizione: Ripara. Confermo che il tubo è stato ri-collaudato dopo la riparazione e trovato conforme.',
@@ -549,6 +552,9 @@ const TRANSLATIONS = {
     defect_details_title: 'Defect details',
     close_note_ph: 'Root cause and corrective action (required)',
     cancel_btn: 'Cancel',
+    logout_btn: 'Log out',
+    logout_confirm: 'Log out of your account?',
+    logout_pending_warn: 'Warning: {n} scan(s) have not been sent yet. They stay saved on this device and will be sent at your next login.',
     confirm_close_btn: 'Confirm closure',
     err_close_note_required: 'Enter root cause and corrective action before closing.',
     retest_confirm_label: 'Disposition: Repair. I confirm the pipe was retested after the repair and found conforming.',
@@ -1269,6 +1275,21 @@ el('tools-sheet-close').addEventListener('click', () => el('tools-sheet').classL
 el('tools-sheet').addEventListener('click', (e) => { if (e.target.id === 'tools-sheet') el('tools-sheet').classList.add('hidden'); });
 document.querySelectorAll('#tools-sheet .tools-row').forEach(btn => {
   btn.addEventListener('click', () => el('tools-sheet').classList.add('hidden'));
+});
+// Esci (logout): toglie solo la sessione di accesso. La coda offline (IndexedDB) NON viene toccata,
+// cosi' gli scan registrati senza rete non si perdono e partono al prossimo login.
+el('logout-btn').addEventListener('click', async () => {
+  let msg = t('logout_confirm');
+  try {
+    const pending = await idbGetAllPending();
+    if (pending && pending.length) msg += '\n\n' + t('logout_pending_warn').replace('{n}', pending.length);
+  } catch (e) { /* senza IndexedDB si procede con la sola conferma */ }
+  if (!confirm(msg)) return;
+  state.session = null;
+  try { localStorage.removeItem('qr_session'); } catch (e) {}
+  el('login-password').value = '';
+  el('login-error').textContent = '';
+  showScreen('login');
 });
 el('order-new-btn').addEventListener('click', async () => {
   const name = el('order-new-input').value.trim();
